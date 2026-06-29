@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AETHERMASTER // 技術仕様・DSPシグナルパス詳細</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css?v=3.24.0">
+  <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
+  <style>
+    .doc-container {
+      max-width: 950px;
+      width: 100%;
+      margin: 40px auto;
+      padding: 30px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: var(--panel-shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all var(--transition-speed);
+      margin-bottom: 30px;
+      cursor: pointer;
+    }
+    .btn-back:hover {
+      background: rgba(0, 242, 254, 0.1);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+    }
+    .doc-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .doc-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .doc-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 3px solid var(--accent-purple);
+      padding-left: 12px;
+    }
+    .section-title i {
+      color: var(--accent-purple);
+    }
+    p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+    }
+    ol, ul {
+      margin-left: 20px;
+      margin-bottom: 24px;
+    }
+    li {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+    li strong {
+      color: #fff;
+    }
+    .highlight-card {
+      background: rgba(255, 0, 85, 0.04);
+      border: 1px dashed rgba(255, 0, 85, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 24px 0;
+      line-height: 1.6;
+    }
+    .highlight-card h4 {
+      color: var(--accent-red);
+      margin-bottom: 8px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tech-spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.9rem;
+    }
+    .tech-spec-table th, .tech-spec-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .tech-spec-table th {
+      background: rgba(255, 255, 255, 0.02);
+      color: #fff;
+      font-weight: 600;
+    }
+    .tech-spec-table td {
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+    .tech-spec-table tr:hover {
+      background: rgba(255, 255, 255, 0.01);
+    }
+    .tag {
+      background: rgba(157, 78, 221, 0.15);
+      color: var(--accent-purple);
+      border: 1px solid rgba(157, 78, 221, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: var(--font-tech);
+      font-weight: 600;
+    }
+    .tag-cyan {
+      background: rgba(0, 242, 254, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: var(--font-tech);
+      font-weight: 600;
+    }
+    .tag-orange {
+      background: rgba(247, 127, 0, 0.1);
+      color: var(--accent-orange);
+      border: 1px solid rgba(247, 127, 0, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: var(--font-tech);
+      font-weight: 600;
+    }
+    .tag-red {
+      background: rgba(255, 0, 85, 0.1);
+      color: var(--accent-red);
+      border: 1px solid rgba(255, 0, 85, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: var(--font-tech);
+      font-weight: 600;
+    }
+    .code-block {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      padding: 16px;
+      font-family: var(--font-tech);
+      font-size: 0.85rem;
+      color: var(--accent-cyan);
+      line-height: 1.5;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+    @media (max-width: 768px) {
+      .doc-container {
+        padding: 16px;
+        margin: 15px auto;
+        border-radius: 8px;
+      }
+      .tech-spec-table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="doc-container">
+    <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> AetherMaster に戻る</a>
+    
+    <header class="doc-header">
+      <h1 class="doc-title">AetherMaster 技術仕様 & DSP分析</h1>
+      <div class="doc-subtitle">Web Audio API 信号フロー、実装されたアルゴリズム、および非採用技術に関する解説</div>
+    </header>
+
+    <section>
+      <p>AetherMaster は、最新のブラウザ標準である <strong>Web Audio API</strong> を用いて、クライアントサイド（ブラウザ内）だけで極めて低遅延・高音質なマスタリングを実行する仮想ハードウェア/DSPスイートです。</p>
+      <p>サーバーに音声を送ることなく、ローカルのCPUとブラウザのオーディオスレッドを使用してリアルタイムに処理を実行します。以下に、本ツールが採用している音声信号パス（Signal Chain）と技術仕様の詳細を解説します。</p>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-route"></i> DSP シグナルパス (信号フロー)</h2>
+      <p>音声信号は、デコードされた `AudioBuffer` から再生（またはオフラインレンダリング）される際、以下の順序で直列・並列に接続された各DSPノードを通過します。</p>
+      
+      <table class="tech-spec-table">
+        <thead>
+          <tr>
+            <th style="width: 25%">セクション</th>
+            <th style="width: 30%">使用Web Audio APIノード</th>
+            <th>処理概要と目的</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Input Gain</strong></td>
+            <td><span class="tag-cyan">GainNode</span></td>
+            <td>入力音源の音量を事前にゲイン調整し、マスタリングチェーンに入る前段のヘッドルームを確保します。</td>
+          </tr>
+          <tr>
+            <td><strong>2. Noise Cleaner (Rumble & Hiss)</strong></td>
+            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 2, <span class="tag-cyan">WaveShaperNode</span> (整流器), <span class="tag-cyan">GainNode</span> (変調量)</td>
+            <td>
+              定常的な背景雑音を除去するノイズクリーニング段。
+              <ul>
+                <li><strong>Rumble Cut (HPF)</strong>：80Hz以下の超低域空調ノイズや電源ハム音を急峻に物理遮断。</li>
+                <li><strong>Hiss Reducer (動的VCF)</strong>：2,000Hz以上の高域エネルギーを監視するサイドチェーン検知器（HPF＋絶対値整流器＋10Hz平滑フィルター）がメインライン of LPFカットオフ周波数をダイナミックに変調（0%〜100%可変）。AIのデフォルト推奨最大値である <strong>`80%` 設定時に最低カットオフを `7,000Hz`</strong>、最大 `100%` 設定時には `3,750Hz` まで拡張制限することで、高音に混ざる金属音や耳障りなノイズ（8kHz〜10kHz付近）を自動で外科的に遮断しつつ、演奏音がある瞬間は20kHzまで瞬時に全開にして超高域ノイズのみを自然に消去します。</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>3. Parallel Saturator</strong></td>
+            <td><span class="tag-cyan">WaveShaperNode</span> (並列), <span class="tag-cyan">GainNode</span> (Dry/Wet)</td>
+            <td>倍音を付加する飽和器。`WaveShaperNode`の伝達関数（カスタムシェイピングカーブ）を用いて、偶数・奇数倍音を生成。アナログテープ（Tape）や真空管（Tube）の質感をDry音にブレンドします。フィルター遅延による位相干渉を防ぐため、オーバーサンプリングは無効 (`none`) に設計されています。</td>
+          </tr>
+          <tr>
+            <td><strong>4. 3-Band Equalizer</strong></td>
+            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 3</td>
+            <td>`lowshelf` (低域 EQ)、`peaking` (中域 EQ, 可変 Q: 0.3〜5.0)、`highshelf` (高域 EQ) の3つのフィルターを直列に接続。ジャンル特性に応じた音楽的な周波数のブースト/カットに加え、中域のQ値（帯域幅）を調整可能です。</td>
+          </tr>
+          <tr>
+            <td><strong>5. AI Corrective Notches</strong></td>
+            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 8 (直列)</td>
+            <td>
+              AI が検出した高音域の鋭い不快ピーク（耳障りなレゾナンス音）をピンポイントで除去する、鋭いQ値（Q=12.0）の直列ノッチフィルター。Suno AI 特有の `9kHz〜10kHz` 付近のハーシュネスを優先的に検出してカットします。
+              <strong>(v3.21.4以降)</strong>：HISS REDUCERの動作量とリアルタイムに自動連動し、ノイズ低減が多い曲ではノッチフィルターのカット深さを最大65%自動緩和（ダッキング）し、高音の過剰カットや曇りを完全に防止します。
+            </td>
+          </tr>
+          <tr>
+            <td><strong>6. Glue Compressor</strong></td>
+            <td><span class="tag-cyan">DynamicsCompressorNode</span></td>
+            <td>ゆるやかなコンプレッションによりダイナミクスを均一化。ソフトアタック（30ms前後）によりトランジェント（打楽器のアタック感）を残しつつ、全体をまとめ上げ（Glue）ます。</td>
+          </tr>
+          <tr>
+            <td><strong>7. M/S Stereo Imager</strong></td>
+            <td><span class="tag-cyan">ChannelSplitterNode</span>, <span class="tag-cyan">ChannelMergerNode</span>, <span class="tag-cyan">GainNode</span> (Mid/Side), <span class="tag-cyan">BiquadFilterNode</span> (Side HPF)</td>
+            <td>
+              音源のL/Rを Mid（センター）と Side（広がり）にマトリックス変換して独立処理。
+              <ul>
+                <li><strong>Mid</strong>：センター定位のボーカル・キックの輪郭を維持するため、ゲインは完全に `1.0` に固定。</li>
+                <li><strong>Side</strong>：`width` スライダーで広がり幅を調整。さらに、低域の左右の位相干渉による低域のボヤけ（シュワシュワ音）を防ぐため、<strong>Side成分をカットする可変ハイパスフィルター（90Hz〜150Hz）</strong>を搭載。EDMやHipHopなどのクラブ系では150Hz、生楽器系では90Hzなど、ジャンル別で自動的に最適化されます。これにより低域はモノラル付近にタイトに保たれつつ、豊かな空間表現を可能にしています。</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>8. Maximizer Pre-Gain</strong></td>
+            <td><span class="tag-cyan">GainNode</span></td>
+            <td>Brickwall Limiter に対してどれだけ突っ込むか（音圧の押し上げ）をデシベル（`limiterBoost`）単位で調整する増幅段です。</td>
+          </tr>
+          <tr>
+            <td><strong>9. Brickwall Limiter</strong></td>
+            <td><span class="tag-cyan">DynamicsCompressorNode</span></td>
+            <td>マスタリングの最終段で音圧を押し出すリミッター。`threshold=-3.0dB` に設定し、応答を滑らかにするため `knee=3.0dB`、`ratio=20.0:1` に設計。超過エネルギーを滑らかに先回り圧縮する3dBのクッション（Look-aheadエミュレーション）を設けています。アタックタイムは最速の `0.1ms`、リリースタイムは低域の歪みを防ぐ最適な `80ms` に設計されています。</td>
+          </tr>
+          <tr>
+            <td><strong>10. Safety Soft-Clipper</strong></td>
+            <td><span class="tag-cyan">WaveShaperNode</span></td>
+            <td>最終段で発生するデジタルクリッピング（ビビリ音）を完全に防止する安全装置。2倍オーバーサンプリングされたWaveShaperを使用し、振幅 `0.96` (-0.35dB) までは完全直線（透明）、それを超える突発的なピークのみを三次関数で滑らかにサチュレーションさせます。これにより、ベースなどの定常波をクリップさせずにクリアに出力します。</td>
+          </tr>
+          <tr>
+            <td><strong>11. Ceiling Gain</strong></td>
+            <td><span class="tag-cyan">GainNode</span></td>
+            <td>デジタル配信サービス（Spotify、YouTube 等）にアップロードした際、非可逆圧縮（AAC/MP3）への変換時に生じるクリッピングを回避するため、最終出力の上限（天井）を `-1.0dB` 前後に制御してマスタリング処理を完了します。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-arrows-split-up-and-left"></i> 左右L/R独立ピーク検出 ＆ 自動インプットゲイン調整</h2>
+      <p>ステレオ音源において、左右に広くパンニングされた楽器（ダブルトラッキングされたギター等）が含まれる場合、従来のL+R平均（Mid信号）のみのピーク検出では真の最大音量を過小評価し、マスタリング回路への過入力（歪みの原因）を招いていました。AetherMasterでは、左右（L/R）それぞれのチャンネルの最大振幅値を独立して走査し、真のステレオピークを正確に検出します。</p>
+      
+      <div class="code-block">
+        // 左右独立ピーク検出と自動インプットゲイン算出
+        PeakL = Math.abs(SampleL);
+        PeakR = Math.abs(SampleR);
+        TruePeak = Math.max(PeakL, PeakR);
+        SuggestedInputGainDb = -6.0dB - 20 * Math.log10(TruePeak);
+      </div>
+      
+      <p>このロジックにより、どのような広いステレオ広がりを持つ楽曲であっても、デジタルクリッピングから100%保護されるヘッドルーム（-6.0 dBFS）をマスタリング回路に入る手前で完璧に確保します。</p>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-code"></i> テープ・チューブサチュレーションの数式シミュレーション</h2>
+      <p>サチュレーターで使用されている `WaveShaper` 用の伝達関数（カーブ計算）は、以下の代数式を用いて対称・非対称の非線形歪みをリアルタイムに生成しています。</p>
+      
+      <div class="code-block">
+        // Tape モード (Math.tanh によるソフトクリッピング。滑らかな倍音)
+        f(x) = tanh(k * x) / tanh(k)   [k = 0.5 + (Drive / 100) * 5.5]
+
+        // Tube モード (非対称設計により偶数倍音を強調。温かく太い音)
+        f(x) = (x < 0) ? (tanh(k * x) / tanh(k)) : (0.8 * x + 0.2 * x^2)
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-ban"></i> 本格的だけど「あえて」やっていないこと（非採用技術）</h2>
+      <p>プロ仕様のマスタリング機材やDAWプラグインでは定番とされていますが、AetherMaster において<strong>クライアント動作の安定性と音質維持のために意図的に採用を見送った機能</strong>と、その技術的背景を公開します。</p>
+
+      <div class="highlight-card">
+        <h4><i class="fa-solid fa-eye"></i> 1. 先読みリミッター (Look-Ahead Limiter) の非採用</h4>
+        <p><strong>Look-Ahead とは</strong>：数ミリ秒（例：2〜5ms）先の信号を事前に読み取ることで、突発的なピーク（アタック）がスレッショルドを越える前にリミッターのゲインリダクションを立ち上げ、完全に「ノークリップ（超過ゼロ）」にする技術です。</p>
+        <p><strong>非採用の理由と解決策</strong>：</p>
+        <ul>
+          <li>Web Audio API の標準 `DynamicsCompressorNode` はリアルタイム処理用であり、Look-Ahead 時間を動的に設定するパラメータを持ちません。</li>
+          <li>これを手動（`AudioWorklet` など）で再現しようとすると、JSメインスレッドと音声スレッド間のバッファ遅延が発生し、リアルタイムでのスムーズなスライダー追従やスマホ動作時のCPU負荷（発熱）が許容値を超えてしまいます。</li>
+          <li><strong>代替アプローチ</strong>：AetherMaster では、リミッターの `attack` を限界まで速い `1ms` に設定し、かつ出力の最終段に `-1.0dB` の **Ceiling（天井）マージン** を設けることで、ルックアヘッド無しでもデジタルクリッピング（音割れ）を極めて効果的に防ぐアプローチをとっています。</li>
+        </ul>
+      </div>
+
+      <div class="highlight-card">
+        <h4><i class="fa-solid fa-wave-square"></i> 2. マルチバンド・コンプレッサー (Multi-Band Compressor) の非採用</h4>
+        <p><strong>Multi-Band とは</strong>：音を「低域」「中域」「高域」などの周波数帯に分割し、それぞれの帯域に独立したコンプレッサーをかけてダイナミクスを制御する技術です。</p>
+        <p><strong>非採用の理由と解決策</strong>：</p>
+        <ul>
+          <li>Web Audio API 内で音域を分割する場合、複数の `BiquadFilterNode`（クロスオーバーフィルター）を使用しますが、Web Audio の基本フィルターはクロスオーバー領域で急峻な**位相の回転（Phase Distortion / コームフィルター現象）**を引き起こします。これにより、マスタリング後の音が全体的に痩せたり、特定の周波数が打ち消し合って音が不自然になるリスクがあります。</li>
+          <li>高精度な Linkwitz-Riley フィルターを JS / Web Assembly で実装する手法もありますが、特に非力なスマートフォン端末において劇的な負荷上昇と発熱を招きます。</li>
+          <li><strong>代替アプローチ</strong>：単一の優れた **Glue Compressor**（シングルのまとまり重視）を使用し、その前段で **3バンドEQ** および **AIの8連 notch フィルター** であらかじめ問題となる共鳴帯域やバランスを高度に整えておくことで、マルチバンドを使用しなくても濁りのないクリアな音圧を実現しています。</li>
+        </ul>
+      </div>
+
+      <div class="highlight-card">
+        <h4><i class="fa-solid fa-percent"></i> 3. ディザリング (Dithering / Noise Shaping) の非採用</h4>
+        <p><strong>Dithering とは</strong>：マスタリングデータの最終書き出し時（例：32bit float から 16bit integer に落とす時）に、極めて微小なホワイトノイズ（ディザー）を意図的に加え、デジタル量子化歪みを人間の耳に聞こえないノイズでマスキングする処理です。</p>
+        <p><strong>非採用の理由と解決策</strong>：</p>
+        <ul>
+          <li>AetherMaster からエクスポートされる 16bit WAV ファイル（`wav-exporter.js` 内で変換）は、浮動小数点数から `0x7FFF / 0x8000` への丸め処理（単純切り捨て・四捨五入）を行っています。</li>
+          <li>現代のリスニング環境（特にユーザーの多くが Suno AI 等の生成音源をベースにしている点）や、最終配布先となるストリーミング配信サイト（Spotify、YouTube、TikTok 等）では、アップロード後に音源が必ず AAC/MP3 などの**非可逆圧縮形式（Lossy）に再エンコード**されます。</li>
+          <li>非可逆圧縮コーデックのプロセスにおいては、ディザリングで加えた超微小ノイズは「不要な高域成分」として圧縮アルゴリズムにより真っ先に消去されるため、ディザリングの効果は理論上ほぼ完全に無効化されます。</li>
+          <li>そのため、書き出し処理の軽量化とコードサイズ削減を優先し、複雑なノイズシェイピング・ディザリングはあえて非搭載としています。</li>
+        </ul>
+      </div>
+
+    <footer class="app-footer" style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+      <div class="footer-links">
+        <a href="index.html"><i class="fa-solid fa-house"></i> AetherMaster ホーム</a>
+        <span class="separator">|</span>
+        <a href="guide.html"><i class="fa-solid fa-book-open"></i> 初心者向けガイド</a>
+        <span class="separator">|</span>
+        <a href="updates.html"><i class="fa-solid fa-clock-rotate-left"></i> 更新記録</a>
+      </div>
+      <p>&copy; 2026 AETHERMASTER. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

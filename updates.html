@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AETHERMASTER // アップデート履歴・更新記録</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css?v=3.24.0">
+  <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
+  <style>
+    .doc-container {
+      max-width: 900px;
+      width: 100%;
+      margin: 40px auto;
+      padding: 30px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: var(--panel-shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all var(--transition-speed);
+      margin-bottom: 30px;
+      cursor: pointer;
+    }
+    .btn-back:hover {
+      background: rgba(0, 242, 254, 0.1);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+    }
+    .doc-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .doc-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .doc-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+    .timeline {
+      position: relative;
+      margin: 30px 0;
+      padding-left: 30px;
+      border-left: 2px solid rgba(255, 255, 255, 0.05);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 40px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -37px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #080a10;
+      border: 2px solid var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan-glow);
+    }
+    .timeline-item.major::before {
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 8px var(--accent-purple-glow);
+    }
+    .version-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .version-tag {
+      font-family: var(--font-tech);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #080a10;
+      background: var(--accent-cyan);
+      padding: 2px 10px;
+      border-radius: 4px;
+      box-shadow: 0 0 6px var(--accent-cyan-glow);
+    }
+    .version-tag.major {
+      background: var(--accent-purple);
+      color: #fff;
+      box-shadow: 0 0 6px var(--accent-purple-glow);
+    }
+    .version-date {
+      font-family: var(--font-tech);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .version-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .update-list {
+      list-style-type: none;
+      margin-left: 0;
+      padding-left: 0;
+    }
+    .update-list li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+      line-height: 1.6;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .update-list li::before {
+      content: '•';
+      position: absolute;
+      left: 6px;
+      color: var(--accent-cyan);
+      font-weight: bold;
+    }
+    .badge-add {
+      background: rgba(6, 214, 160, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(6, 214, 160, 0.3);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      margin-right: 6px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .badge-fix {
+      background: rgba(255, 0, 85, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(255, 0, 85, 0.3);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      margin-right: 6px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .badge-change {
+      background: rgba(247, 127, 0, 0.15);
+      color: var(--accent-orange);
+      border: 1px solid rgba(247, 127, 0, 0.3);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      margin-right: 6px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    @media (max-width: 768px) {
+      .doc-container {
+        padding: 16px;
+        margin: 15px auto;
+        border-radius: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="doc-container">
+    <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> AetherMaster に戻る</a>
+    
+    <header class="doc-header">
+      <h1 class="doc-title">AetherMaster アップデート履歴</h1>
+      <div class="doc-subtitle">AetherMaster の機能更新、追加、調整の記録をタイムラインでご紹介します</div>
+    </header>
+
+    <div class="timeline">
+      
+      <!-- v3.24.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.24.0</span>
+          <span class="version-date">2026.06.29</span>
+          <span class="version-title">ルックアヘッド・リミッタークッション ＆ ハイブリッド動的プリセットAIの搭載</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">機能</span><strong>ルックアヘッド・リミッタークッションの搭載</strong>：リミッターコンプレッサーのしきい値を `-3.0 dBFS` に引き下げ、Web Audio API の自動メイクアップゲインと連携。波形が `0.0 dBFS` を超える 3dB 手前から先回りして滑らかに圧縮することで、EDM や ROCK などの強めのプリセットをかけた際の突発的なデジタル歪みやチリチリ音を物理的に完全防止。</li>
+          <li><span class="badge-add">機能</span><strong>ハイブリッド動的プリセットAI</strong>：初期状態の AI AUTO はジャンルを狙わずに、中立なフラット特性（Studio Reference）で安全かつ高音質な基準点を提供。そこからユーザーがプリセット（EDM や ROCK 等）を選択すると、AI がそのジャンル特有のターゲット（例: EDMなら+5.5dBブースト等）に合わせてパラメータをリアルタイムに自動最適化する仕様へアップグレード。AI 補正による圧倒的な音圧・パンチと、ユーザーの好みのスタイル変更を完璧に両立しました。</li>
+          <li><span class="badge-fix">修正</span><strong>L/R独立ピーク測定への根本修正</strong>：AI による入力音量測定時、従来のMid（モノラル平均）ピーク検出から、左右チャンネル（L/R）それぞれ独立した「真の最大値」を測定する設計へ修正。ステレオ幅の広い音源（左右に広がったギターなど）での音量の過小評価による入力過負荷・歪みバグを解消。</li>
+          <li><span class="badge-change">改善</span><strong>セーフティクリッパーの作動しきい値の最適化</strong>：マスターソフトクリッパーの作動しきい値を `0.85`（-1.4dBFS）から `0.96`（-0.35dBFS）へ引き上げ。リミッターによって処理されたベースやキックの持続音を無傷で通過させ、不要な突発スパイクのみをセーフティネットで丸めるプロ仕様の設計へと修正。</li>
+          <li><span class="badge-change">改善</span><strong>AI AUTO 基準プリセットの音質強化（低音・高音の伸び）</strong>：AI AUTOにおけるイコライザー周波数を、低域は `120Hz` ➔ `90Hz`（超低域サブベース）、高域は `10kHz` ➔ `11kHz`（シルキーな抜け感）へシフト。サチュレータも温かみのある真空管（Tube）へと変更し、低域の引き締まった深みと高域の伸びやかさを大幅に強化。</li>
+          <li><span class="badge-change">改善</span><strong>グルーコンプレッサーのポンピング防止再調整</strong>：全プリセットのコンプレッサーしきい値を安全な範囲（`-7.5dB` 〜 `-9.0dB`）に緩和し、圧縮比率を低減。キックドラムの打撃によって全体の音が不自然に揺らぐ「ポンピング（ほわほわ音）」を完全に解消。</li>
+          <li><span class="badge-change">改善</span><strong>ステレオ相関値（Correlation）によるジャンル判定の高度化</strong>：AI のジャンル分類ロジックにおいて、ステレオ相関値の検出を導入。これにより、ダイナミクスが大きく高域が強めなロック/メタル楽曲が、アコースティックやアンビエントと誤判定されるのを防ぐ高い分類精度を実現。</li>
+        </ul>
+      </div>
+
+      <!-- v3.23.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.23.0</span>
+          <span class="version-date">2026.06.29</span>
+          <span class="version-title">AIジャンル自動判定（オートクラス分類） ＆ 音圧・圧感のプリセット最適化</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">機能</span><strong>AIジャンル自動判定（Heuristic Genre Classifier）</strong>：AI自動解析実行時に波形の周波数バランス（低域・高域エネルギー比）およびクレストファクター（ダイナミクス幅）から楽曲ジャンル（EDM、Hiphop、Rock、Metal、Pops、Classic、Jazz、Acoustic、Ambient、Podcast）を全自動判定。UIドロップダウンを検出ジャンルへ自動的に変更し、そのジャンルに最適化されたターゲットでマスタリングが開始されるよう改善。</li>
+          <li><span class="badge-change">改善</span><strong>音圧・密度のプリセット二極化調整</strong>：マスタリングプリセットを「音圧を重視する商業・電子音系」と「ダイナミクスを重視する生音系」に再定義しました。</li>
+          <li><span class="badge-change">改善</span><strong>EDM / HIPHOP / METAL / ROCK 等の音圧と圧感の復元</strong>：EDM等のダンス・商業系ジャンルのアタックタイムを速め（15ms〜20ms）、圧縮比を引き上げ、リミッターの最大ゲインを `+5.5dB` などへ引き上げることで、商業クオリティの「迫力ある密度の壁（音圧）」を完全復元。サチュレーターのブレンド率（mix）もバンプさせ、高域の倍音のジリジリとした圧感を濃密化しました。</li>
+          <li><span class="badge-change">改善</span><strong>CLASSIC / JAZZ / AMBIENT 等のダイナミクス温存</strong>：生楽器や空気感が主体のジャンルは、v3.22.0で構築したダイナミクス（クレストファクター 12dB以上）を大切にする緩やかなコンプレッサー・マスタリングを継続適用します。</li>
+        </ul>
+      </div>
+
+      <!-- v3.22.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.22.0</span>
+          <span class="version-date">2026.06.29</span>
+          <span class="version-title">マスタリングエンジンの高品位・シンプル化再設計（完全機能維持）</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>全機能・全UIコントロールの完全維持</strong>：画面上のスライダー、ジャンルプリセット、各種サウンドスパイス、リアルタイム波形、AI自動解析などの全操作機能と見た目をそのままキープ。</li>
+          <li><span class="badge-change">改善</span><strong>音響処理エンジンのシンプル・高品位化</strong>：過剰な相互補正（Hiss Reducerによる高中域EQの自動変調など）をすべて廃止し、透明で予測しやすく、自然な周波数レスポンスを確保しました。</li>
+          <li><span class="badge-fix">修正</span><strong>高域の耳痛さ（サ行の刺さり）の解消</strong>：Hiss Reducer（VCF LPF）の最低カットオフ周波数を10kHzに固定制限。ボーカルのプレゼンス（4kHz〜8kHz）を無加工で保護し、過剰な自動ハイシェルフブーストを廃止したことで、耳を刺さない滑らかな高音を実現。</li>
+          <li><span class="badge-fix">修正</span><strong>低域の不自然な音量ムラ（ポンピング）の解消</strong>：グルーコンプレッサーのアタックタイム（35ms〜80ms）およびリリースタイム（150ms〜250ms）を遅めに再設計し、低音レシオを1.4〜1.6に緩和。キックのアタック感を潰さず、ベースの強弱が一貫して滑らかに出力されるプロ仕様の動作に改善。</li>
+          <li><span class="badge-fix">修正</span><strong>中低域のスカスカ感（位相干渉）の完全解消</strong>：サチュレーター並列パスのハイパスフィルターを廃止し、全帯域において完全同位相でDry/Wetミックスを実行。位相ズレによるローミッドの中抜けを物理的に100%解決。</li>
+        </ul>
+      </div>
+
+      <!-- v3.21 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.21</span>
+          <span class="version-date">2026.06.28</span>
+          <span class="version-title">エクスポートファイル名の接頭辞化 ＆ 利便性の向上</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>エクスポートファイル名規則の変更</strong>：オフライン書き出し時のファイル出力名を、従来の接尾辞型（`[FileName]_mastered.wav`）から、ファイル整理や並び替え時に管理しやすい接頭辞型（`mastered_[FileName].wav`）に変更しました。</li>
+          <li><span class="badge-fix">修正</span><strong>システム割り込み時の再生復帰処理</strong>：スマホで他の音声アプリが再生された際、AudioContext がブラウザ（iOS Safari/Android Chrome）によって自動で中断/一時停止（interrupted/suspended）された場合でも、アプリに戻って「再生」ボタンを押した際に自動的に AudioContext をアクティブ化して正常に再生再開できるよう復帰ロジックを強化しました。</li>
+          <li><span class="badge-change">改善</span><strong>超省電力設計（バッテリー消費の削減）</strong>：再生が一時停止（Pause）または停止（Stop）したタイミングで自動的に AudioContext をサスペンド状態にし、デバイスのオーディオ用ハードウェアをスリープさせます。これにより、アプリを開いたまま放置した際などの余計なバッテリー・電力量の消費を完全に防止します。</li>
+          <li><span class="badge-add">追加</span><strong>オーディオ接続ルート切断（Bluetooth切断など）時の自動停止機能</strong>：Bluetoothイヤホン・スピーカーが切断されたり、ヘッドホンが抜かれたりした際のデバイス接続変更（`devicechange`）を検知し、自動的に再生を一時停止（Pause）する機能を搭載しました。予期せぬ端末スピーカーからの音漏れを防ぎ、車のエンジン停止時などのデバイス切断に連動して音楽をスマートに停止させます。</li>
+          <li><span class="badge-fix">修正</span><strong>再生自然終了時のUIステートリセットバグの解消</strong>：楽曲が最後まで再生し終わった際に、浮動小数点数（ミリ秒単位の再生精度）の微小な誤差によって終了判定がバイパスされ、再生マーク（一時停止アイコン）のままUIがフリーズしてしまうバグを解消しました。曲が終わった時点で確実にシステムが停止（SYSTEM READY / 停止状態）へ復帰します。</li>
+          <li><span class="badge-add">追加</span><strong>専用コントロール「ノイズクリーナー（NOISE CLEANER）」の搭載</strong>：マスタリングコンソールに新セクションとして「NOISE CLEANER」を追加しました。低周波ノイズを物理遮断する「Rumble Cut」スイッチと、プロ用アナログ機器のように演奏レベルに連動して動的に動作する高性能VCF「Hiss Reducer」スライダー（0%-100%）を備え、原音のクリアさを極限まで保ったまま雑音を外科的に除去します。AI自動マスタリング実行時は、音源の無音部分のノイズフロア測定を科学的に行い、RumbleとHissの適用量を自動判定します。</li>
+          <li><span class="badge-change">改善</span><strong>ノイズリダクション相互補正ロジックの導入</strong>：HISS REDUCERの強度と連動して、8連ノッチEQ of カット量を動的に最大65%自動緩和し、高域の艶感が過剰に失われる「オーバープロセス」を完璧に防止する相互干渉防止システムを実装しました。</li>
+          <li><span class="badge-change">改善</span><strong>動的高低域補正（Dynamic Brilliance & Midrange Compensation）</strong>：Hiss Reducer使用時に高域・中域が痩せる（もっさりする、あるいは中がスカスカになる）現象を解消するため、ノイズ軽減強度と連動する二重補正回路を搭載。
+            <ul>
+              <li><strong>高域輝き補正（Brilliance Compensation）</strong>：ハイシェルフEQのカットオフ周波数を動的に引き下げ（最大8,000Hz）、同時にゲインを最大+2.5dB自動ブースト。</li>
+              <li><strong>中域実体感補正（Midrange Body Recovery）</strong>：中域ピーキングEQのゲインを動的に最大+1.0dB自動引き上げ、ボーカルや楽器の芯となる帯域の「中抜け（V字スクープ）」を防ぎ、実体感のある密度の高いサウンドを維持。</li>
+            </ul>
+          </li>
+          <li><span class="badge-fix">修正</span><strong>強烈な低域によるビビリ・歪み防止対策（超低域制御の最適化）</strong>：
+            <ul>
+              <li><strong>サチュレーター・クロスオーバーHPF（40Hz）</strong>：Saturatorウェットパスのハイパスフィルターを40Hzに設定し、ベース・キックの厚み（40Hz〜）を豊かにサチュレートさせつつ、サブベースの超低周波によるスピーカーの歪み・ビビリ音を的確に排除。また、ドライ音との並列ミックス時の位相干渉（低中域のスカスカ感）を物理的に解消しました。</li>
+              <li><strong>常時サブソニックフィルター（18Hz）</strong>：Rumble CutがOFFの時も、可聴域外のDCオフセットや超低周波泥（18Hz以下）を安全にカットし、ヒップホップやEDMなどの深いサブベースの質感（30Hz〜40Hz）を100%保護しながら、リミッターやクリッパーへのピーク過負荷を削減。</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <!-- v3.20 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.20</span>
+          <span class="version-date">2026.06.27</span>
+          <span class="version-title">新世代エフェクト「AUDIO SPICES（オーディオ・スパイス）」キャビネットの完全実装 ＆ 画面レイアウトの最適化</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>新機能「AUDIO SPICES」の搭載</strong>：ワンタップで手軽な味付け・A/B比較ができる6つの音響スパイス（高音の抜け感、キックの抜け感、空間の広がり、ボーカルの存在感、アナログの温かみ、音圧プッシュ）を新たに搭載しました。プリセットや手動パラメータを汚さことなく、独立したレイヤーとして重ねて試聴でき、オフライン書き出し時にも100%連動します。特に「キックの抜け感（KICK PUNCH）」には専用の狭帯域 peaking フィルター（55Hz, Q=2.0, +4.5dB）とコンプレッサーダイナミクスを実装し、ベースライン等の他の低域を濁らせずにキックドラムの打撃音のみをピンポイントで独立ブーストできます。</li>
+          <li><span class="badge-add">追加</span><strong>UI・操作コントローラーの統合と最適化</strong>：パラメーター調整中もその場で簡単に別曲を再アップロードできる「クイックファイル選択ボタン（Folderアイコン）」をプレイヤー内に統合。また、スマートフォンなどの縦画面スクロール時に、現在編集中のファイル名（曲名）が最上部に自動追従する機能を実装しました。</li>
+          <li><span class="badge-change">改善</span><strong>洗練されたコンソールレイアウトとDOM構造の分離</strong>：未ロード時はアップロード用の点線ドラッグ枠（静的）のみを表示してスクロールで上部へ流し、ロード後は点線枠自体が自動非表示になり、クリーンなプレイヤーパネル（曲名・再生情報含む）とビジュアライザーのみが上部に横並び追従（Sticky）する完璧なセクション分離構造を実現しました。スクロール時にはヘッダー縦幅が極小（高さ65px）に折りたたまれます。</li>
+          <li><span class="badge-change">改善</span><strong>モバイル端末の横揺れ解消 ＆ ライセンス警告の設置</strong>：スマホ等の縦画面表示において画面が左右にスライドしてしまう現象をCSSで根本修正。また、著作権保護を明文化した「Proprietary Source Code Notice（無断転載・改変禁止警告）」をライセンス表記エリアに新設しました。</li>
+          <li><span class="badge-change">改善</span><strong>AI SMART ASSISTANCE を独立した専用パネルに分離</strong>：マスタリング適用後にAI解析結果が表示された際、プリセット選択パネル（PRESETS & LOUDNESS）が縦長に間延びしてしまうレイアウトの問題を解決するため、AIスマートアシスタント機能を単独のコントロールカードへと完全分離しました。</li>
+          <li><span class="badge-fix">修正</span><strong>スクロール吸着（Sticky）境界の閾値バグおよびチャタリングの完全解消</strong>：PC上の特定の画面アスペクト比や解像度において、スクロールした瞬間にビジュアライザーがチャタリングを起こして画面トップへと引き戻されてしまう挙動を、静的要素（ヘッダー底面）基準の座標算出とCSSの全体スクロールアンカリング無効化（`overflow-anchor: none`）によって完全に修正しました。</li>
+          <li><span class="badge-fix">修正</span><strong>モバイルブラウザでのヘルプ表示の被り解消</strong>：iOS/Androidの Safari や Chrome において、画面下部のナビゲーションツールバーやホーム操作インジケーターがスライドアップヘルプシートの下部領域に重なってしまう問題を、`100dvh` (Dynamic Viewport Height) の採用と `env(safe-area-inset-bottom)` に連動したセーフエリア余白の動的確保によって解消しました。</li>
+        </ul>
+      </div>
+
+      <!-- v3.19 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.19</span>
+          <span class="version-date">2026.06.27</span>
+          <span class="version-title">ジャンル適応型 Side HPF（低域モノラル化可変制御）の導入 ＆ プリセット・サチュレーター配合率の最適化</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>ジャンル適応型 Side High-Pass Filter の実装</strong>：Side成分のローカット周波数を一律 `110Hz` から、ジャンル別の音響特性に合わせた <strong>`90Hz〜150Hz` の動的スイープ制御</strong> へとアップグレード。EDMやHipHop、Hardcoreなどの重低音が要となるクラブ系では `150Hz` までハイパス周波数を上げて超低域のステレオ位相ズレを強力に防ぎ、アコースティックやジャズ、クラシックなどの生楽器系では `90Hz` まで下げることで、ベースやコントラバスの豊かな空気感・ステレオ幅を自動保護します。</li>
+          <li><span class="badge-change">改善</span><strong>ジャンル別プリセットのサチュレーター配合率（satMix）の個別調整</strong>：前バージョンで一律に抑えすぎたサチュレーション配合量をジャンルに合わせて最適化。パンチや歪みの質感が重要な **EDM** は `15%`、**HIPHOP** は `14%`、**HARDCORE** は `18%` へと引き上げ、ダイナミックで力強い倍音感を付与。一方で、**POPS** は `10%`、**AMBIENT** は `8%`、**JAZZ** は `15%`（従来25%）へと調整し、透明感のある繊細なトーンを徹底しました。</li>
+          <li><span class="badge-change">改善</span><strong>AI自動解析およびリセット機能の適応型連動</strong>：AIオートマスタリングによる推奨パラメータ提案時、および「RESET」ボタン実行時にも、各ジャンルに応じた最適な Side HPF 周波数とサチュレーター配合率がシームレスに同期・再現されるようシステム設計を拡張しました。</li>
+        </ul>
+      </div>
+
+      <!-- v3.18 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.18</span>
+          <span class="version-date">2026.06.26</span>
+          <span class="version-title">Peaking EQ への Q値（帯域幅）調整機能の追加（セミ・パラメトリック化） & プリセット別最適化</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>3バンドEQの中域（MID PEAK）への Q-Factor（帯域幅）調整スライダーの追加</strong>：中音域フィルターの帯域幅（鋭さ）を `0.3`（非常に広範囲・滑らか）から `5.0`（ピンポイント・鋭い共鳴カット/ブースト）まで `0.1` 刻みで手動調整可能なスライダーを追加。3バンドEQをセミ・パラメトリックEQへとアップグレード。</li>
+          <li><span class="badge-change">改善</span><strong>ジャンル別プリセットへの最適な初期 Q値の適用</strong>：ROCK/METAL/AMBIENTなど各ジャンルの音響特性に合わせて、EQ Mid Qの初期値をプリセット化。例えば、ROCKでは中域の噛みつき感を出すため `1.2`（やや鋭め）に、METALではドンシャリ（ミッドスクープ）を広く行うため `0.8`（広め）に、AMBIENTでは中域を滑らかに補正するため `0.7`（極めて広め）に設定。</li>
+          <li><span class="badge-change">改善</span><strong>AI自動解析とリセット機能のパラメトリック対応</strong>：AIアシスタント機能およびリセット機能において、プリセットのQ値を正しく同期・再現し、マスタリング時にシームレスに動作するよう信号フローをアップグレード。</li>
+        </ul>
+      </div>
+
+      <!-- v3.17 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.17</span>
+          <span class="version-date">2026.06.26</span>
+          <span class="version-title">Sideハイパス(モノラル化)周波数の最適化 & サチュレーター適正化 & ROCKプリセット中域調整</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>Sideハイパスフィルターの周波数最適化（200Hz ➡ 110Hz）</strong>：低域の位相干渉を防ぐためのSide成分のハイパス周波数を、従来の `200Hz` から <strong>`110Hz`</strong> へと最適化。ベースの引き締まり感を維持したまま、120Hz〜250Hzの低中音域（ギター、キーボード、ボーカルのリバーブ等）が持つ自然で豊かなステレオの広がりを100%保護。</li>
+          <li><span class="badge-change">改善</span><strong>各マスタリング系プリセットのサチュレーター配合率の微量化</strong>：主要プリセットのブレンド率（`satMix`）の規定値を <strong>`8%〜12%`</strong> に微量化（例: ROCK: 18% ➡ 10%）。マスタリング工程としての透明感を極限まで高め、トランジェントの打撃感を保護。</li>
+          <li><span class="badge-change">改善</span><strong>ROCKプリセットの中域イコライザー調整（+1.0dB ➡ +0.6dB）</strong>：ROCKプリセットの 2.5kHz（Mid Peaking EQ）のブーストゲインを <strong>`+0.6 dB`</strong> にマイルド化し、歪みギターやボーカルが滑らかに抜ける上品な音響バランスへ調整。</li>
+        </ul>
+      </div>
+
+      <!-- v3.16 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.16</span>
+          <span class="version-date">2026.06.26</span>
+          <span class="version-title">中音域ビビリ音の完全解消 & 安全用ソフトクリッパー導入 & 高域カットの周波数別最適化</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>最終出力段への安全用ソフトクリッパー（Safety Soft-Clipper）の導入</strong>：DynamicsCompressorによるリミッティング時の瞬間的なオーバーシュートやデジタルクリッピングを防ぐため、最終段に2倍オーバーサンプリング仕様の `WaveShaperNode` によるソフトクリッパーを追加。振幅 0.85 (-1.4dBFS) までは完全直線（歪みなし）、それを超えるピークのみを三次関数で滑らかに飽和（サチュレーション）させ、音割れ（ビビリ音）を根本から排除。</li>
+          <li><span class="badge-change">改善</span><strong>イコライザー高域カット（ノッチ）の周波数別強度の最適化</strong>：高域の痛いシャリ感を抑制しつつ音源本来の抜け感を保つため、<strong>8500Hz未満のカット強度を従来の50%に緩和（かなりマイルド化）</strong>。8500Hz以上の鋭い共鳴ピークおよびSuno特有帯域（8.8kHz〜10.2kHz）は、従来通りの十分な強度でピンポイント除去を実行。</li>
+          <li><span class="badge-change">改善</span><strong>全ジャンルプリセットのダイナミクスパラメータ再設計</strong>：特にROCKやMETAL、EDMなど音圧の強いプリセット適用時に、コンプレッサーの過剰な自動メイクアップゲインや過大なリミッターブーストが引き起こす中音域のビビリ音・音割れを防止するため、全プリセットのコンプレッサー閾値（例: ROCK: -18dB ➡ -14dB）、圧縮比（ROCK: 2.5 ➡ 1.8）、およびリミッターブースト量（ROCK: +4.8dB ➡ +3.8dB）をクリアでダイナミックかつ実用的な音圧設定へ全面的に見直し。</li>
+          <li><span class="badge-change">改善</span><strong>リミッターパラメータの平滑化</strong>：リミッターの応答を滑らかにし、瞬間的な圧縮による歪みを抑えるため、`knee`（スレッショルド前後の変化の滑らかさ）を `0.0 dB` (ハード) ➡ <strong>`3.0 dB` (ソフト)</strong> に設定し、`attack` タイムを `1ms` ➡ <strong>`0.1ms`</strong> へ高速化し、ピークを瞬時に検知。</li>
+          <li><span class="badge-change">改善</span><strong>AI分析自動補正におけるコンプレッサーの最適化</strong>：AIオートマスタリング時の音響分析で、ダイナミクスが非常に広い（動的な）トラックを処理する際の `compThreshold` 推奨値を `-18.0dB` ➡ `-14.0dB`、`compRatio` 推奨値を `2.0` ➡ `1.8` に抑え、歪みの発生を自動で回避。</li>
+        </ul>
+      </div>
+
+      <!-- v3.15 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.15</span>
+          <span class="version-date">2026.06.26</span>
+          <span class="version-title">8連ノッチ拡張 & シャリ感マイルドカット調整 & 中域ビビリ歪みの解消</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>8連 AI Corrective Notch フィルターへの拡張</strong>：AIによる自動ノッチ補正フィルター数を 5連から <strong>8連</strong> に拡張し、より多くの微細な高域レゾナンスピークを同時にピンポイントで除去できるように強化（※自動補正の同時適用数は高域の抜け感を守るため最大 <strong>6個</strong> に制限）。</li>
+          <li><span class="badge-change">改善</span><strong>シャリ感（ハーシュネス）検出感度としきい値のマイルド調整</strong>：高音域の「抜け感（明瞭さ）」を確保するため、Suno等の生成AI音源のノイズ検出感度のしきい値倍率を `1.03倍` ➡ <strong>`1.08倍`</strong> に、その他の高音域全体（5kHz〜12kHz）のしきい値も `1.12倍` ➡ <strong>`1.18倍`</strong> に引き上げ。過剰なカットを避け、自然な空気感を残しつつ耳に痛い部分だけを除去。</li>
+          <li><span class="badge-change">改善</span><strong>ノッチ選択優先度と減衰量の強化</strong>：Suno帯域ピークの優先検知スコアを `1.6倍` から <strong>`2.0倍`</strong> に引き上げ、ノッチカット量の上限を最大 `-5.0dB` から <strong>`-6.0dB`</strong> へ拡大（通常帯域も最大 `-4.0dB` から <strong>`-5.0dB`</strong> へ拡大）。また、近接するノッチ周波数の最小間隔を `600Hz` から <strong>`400Hz`</strong> に縮小し、複雑な耳障りな倍音ピーク群をくまなく相殺。</li>
+          <li><span class="badge-fix">修正</span><strong>中域ビビリ感・歪みの根本解消（音量補正付きクロスフェードの導入）</strong>：サチュレーターのブレンド回路において、DryとWetの単純加算による不要な音量ブースト（最大+2dB超）が発生し、後段のEQやリミッターを過剰駆動させて中域の「音のビビリ・歪み」を誘発していた問題を修正。入力音量を超えない完全音量補正付きの線形クロスフェード（`1.0 - blend` と `blend`）へ移行し、音が歪まずクリアに倍音が付加されるように改善。</li>
+          <li><span class="badge-change">改善</span><strong>各種プリセットパラメータの適正化</strong>：特に中域エネルギーが強く、歪みやすかった `ROCK`, `METAL`, `HARDCORE` 等のプリセットにおいて、サチュレーターのドライブ感（`satDrive`）やブレンド比率（`satMix`）、および最終リミッターブースト量（`limiterBoost`）をより上品で音楽的な範囲へと微調整し、音割れ・ビビリ感を完全に排除。</li>
+          <li><span class="badge-add">追加</span><strong>各解説ドキュメントの相互リンク追加</strong>：初心者ガイド・技術仕様詳細・本アップデート履歴ページのフッターに相互リンク用のフッターメニューを追加し、簡単に巡回できるように調整。</li>
+        </ul>
+      </div>
+
+      <!-- v3.14 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag major">v3.14</span>
+          <span class="version-date">2026.06.26</span>
+          <span class="version-title">Suno音源対策強化 & 停止中リアルタイム描画 & 公式ドキュメント追加</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>Suno AI音源特有のハーシュネス対策強化</strong>：Suno等の生成AI音源で耳に刺さりやすい 9kHz〜10kHz 帯域（8.8kHz〜10.2kHz）の自動検知しきい値を `1.10倍` に緩和して検出感度を向上。さらにAIが補正するノッチフィルター数を 3連から <strong>5連</strong> に拡張し、カット量を最大 `-5.0dB` まで拡大、優先検知スコアを `1.6倍` に引き上げて耳が痛くなるシャリシャリ音を徹底排除。</li>
+          <li><span class="badge-change">改善</span><strong>停止（一時停止）中パラメータ変更時の波形リアルタイム描画</strong>：再生が停止している状態でスライダーを操作したり、プリセットやラウドネス設定を変更した際も、即座に Cyan のWet波形が変形して追従するように改善（`invalidatePeakCache` のフック強化）。</li>
+          <li><span class="badge-fix">修正</span><strong>ビジュアライザ描画の例外保護</strong>：Canvas リサイズや描画コンテキスト一時喪失によるビジュアライザ停止を防ぐため、`draw` ループ全体を `try/catch` で保護し、フリーズを防止。</li>
+          <li><span class="badge-add">追加</span><strong>公式ガイド・技術仕様・更新記録ページの作成</strong>：ユーザー向けにマスタリングをわかりやすく説明した「初心者ガイド」、上級者向けに信号処理を解説した「技術仕様」、そして本「アップデート履歴」ページを新規作成し、フッターにリンク。</li>
+        </ul>
+      </div>
+
+      <!-- v3.13 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.13</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">METAL / PUNK 専用プリセットの追加</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>METAL / PUNK プリセット</strong>：ツーバス連打や高速ビートに追従してポンピング（余計な音量変化）を防ぐ超高速コンプレッション（Attack 15ms, Release 80ms）、不要な泥臭さを取り払うミッド・スクープイコライジング（400Hzを-0.8dB）、ラウドな仕上がりを両立する専用マスタリング設定を搭載。</li>
+        </ul>
+      </div>
+
+      <!-- v3.12 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.12</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">R&B / SOUL, Acoustic, Podcast プリセットの追加</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>R&B / SOUL プリセット</strong>：豊かな低音グルーヴとシルキーな歌声を引き立てるアナログライクなテープサチュレーション設計。</li>
+          <li><span class="badge-add">追加</span><strong>ACOUSTIC / FOLK プリセット</strong>：生楽器のダイナミクス（強弱の幅）を最大限に活かし、コンプ比率を `1.3:1` に留めたアンプラグド向け設定。</li>
+          <li><span class="badge-add">追加</span><strong>PODCAST / VOICE プリセット</strong>：低音の空調ノイズやマイク吹かれを自動カット（Low Shelf -2.0dB/80Hz）し、声の通りをよくしつつ、定位を完全モノラル（Width 100%）に固定して配信時の聞き取りやすさを特化。</li>
+        </ul>
+      </div>
+
+      <!-- v3.11 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.11</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">AI重複加算バグ修正 & 重低音歪みの根本改善</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-fix">修正</span><strong>AI解析ごとのリミッター重複加算バグ修正</strong>：解析を実行するたびにリミッターのゲインが上がり続けてしまう問題を、`baseLoudnessTarget` の導入によって基準値を保持するようにし根本修正。</li>
+          <li><span class="badge-change">改善</span><strong>重低音歪み防止（ノイズ割れの解消）</strong>：リミッター（マキシマイザー）の `release` 時間を `50ms` から `80ms` に延長。低音の波形に追従して生じるウェーブシェイピング歪みを完全に防ぎ、EDMやROCKの低音ブーンという歪みをクリーンに解消。また、低音の自動ブーストの上限を最大 `+3.5dB` に制限。</li>
+        </ul>
+      </div>
+
+      <!-- v3.10 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.10</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">発熱対策・モバイルパフォーマンス最適化</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>波形演算のキャッシュ機構</strong>：再生中パラメータに変更がない時は波形データの毎フレーム再計算をスキップし、CPU・バッテリー負荷を劇的に削減してスマートフォンの発熱を防止。</li>
+          <li><span class="badge-change">改善</span><strong>モバイル制限の導入</strong>：スマホ画面（768px以下）ではCanvasのネオンシャドウ描画をバイパスし、フレームレートを最大30 FPSに自動調整してGPU/CPUへの過負荷を回避。</li>
+          <li><span class="badge-change">改善</span><strong>VUメーターのGPU描画移行</strong>：メーター描画に起因する再レイアウト（Reflow）コストを排除するため、CSSの `height` から GPU 処理される `transform: scaleY()` の更新に変更。</li>
+        </ul>
+      </div>
+
+      <!-- v3.9 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.9</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">モバイルバックグラウンド再生 & 消音モード対応</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>iOS/Android バックグラウンド再生</strong>：iOS Safari等の制約を回避するため、オーディオセッションタイプを明示的に `playback` に設定。スマホの画面をスリープにしたり他のタブを開いてもマスタリング音声が裏で鳴り続け、本体側面のサイレントスイッチ（マナーモード）がONでも正常に音が出るよう対応。</li>
+        </ul>
+      </div>
+
+      <!-- v3.8 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.8</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">スマホ上部固定コントロールの追記</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>再生ボタン群のヘッダー合流</strong>：スマホでのスクロール時に、上部に固定されたビジュアライザーパネルの中に、再生・一時停止・停止・ループ・バイパス（A/Bテスト）ボタン群が自動で合流（リロケート）するよう追記。</li>
+          <li><span class="badge-change">改善</span><strong>ボタンの自動略記（BYP）</strong>：横幅の狭いスマホ画面では、BYPASSボタンを「BYP」へCSS制御によって自動的に略記変換。</li>
+        </ul>
+      </div>
+
+      <!-- v3.7 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.7</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">スマホ上部固定（Sticky）モニター ＆ 横型スライダー自動変換</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>上部固定モニター & 開閉トグル</strong>：スマホ画面において、ビジュアライザー部分を画面最上部に固定。さらに右上のChevronボタンで折りたためるように設計。</li>
+          <li><span class="badge-change">改善</span><strong>コンプレッサーの横スライダー化</strong>：スマホで引っかかりやすい縦型スライダー（コンプレッサーのAttack, Release）を、自動でタッチしやすい横型スライダーレイアウトへとCSSで変換。</li>
+        </ul>
+      </div>
+
+      <!-- v3.6 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.6</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">スマホ版リセットボタン改善 & シーク位置ズレの修正</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>スマホ版RESETボタンの動作改善</strong>：モバイルでのRESETボタンタップ時に、説明ボトムシートが開いて邪魔にならないようポップアップをスキップし、タップですぐにリセットが走るよう調整。</li>
+          <li><span class="badge-fix">修正</span><strong>再生線（プレイヘッド）シーク時の位置ズレ修正</strong>：波形をクリックして再生位置を変更した際、紫色の再生ラインとマウスカーソル位置が徐々にズレてしまう計算誤差を解消し、完全に一致するように修正。</li>
+        </ul>
+      </div>
+
+      <!-- v3.5 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.5</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">スペースキーによるグローバル再生/一時停止ショートカット</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>Spaceキーショートカット</strong>：DAW同様にスペースキーで再生・一時停止をトグル可能に。イコライザーの周波数入力フォームやセレクトボックス等に文字入力・操作している最中は誤爆しないようフォーカス制御を徹底。</li>
+        </ul>
+      </div>
+
+      <!-- v3.4 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.4</span>
+          <span class="version-date">2026.06.25</span>
+          <span class="version-title">Loudness Target 優先ロック & AIオートラン・リセット統合</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>Loudness Target 優先ロック</strong>：ジャンルプリセットを切り替えても、設定した「STREAMING (-14 LUFS)」や「LOUD (-7 LUFS)」などのボリュームターゲット設定が勝手に書き換わらないようにロック機能を実装。</li>
+          <li><span class="badge-add">追加</span><strong>AI AUTO RUNトグル</strong>：ONに設定しておけば、ファイルを読み込んだ際やジャンル・ターゲットを変更した際に、自動でAI解析からノッチフィルター適用、イコライジング自動補正まで全自動で走るように機能拡張。</li>
+          <li><span class="badge-add">追加</span><strong>RESET（リセット）ボタン</strong>：スライダーをいじりすぎた際に、ファイルを読み込んだ直後のAIによる自動初期最適化状態に一発でリセットできるボタンをPRESETSパネル横に追加。</li>
+          <li><span class="badge-add">追加</span><strong>ベース・ラウドネス表示</strong>：AIがスライダー値を自動補正してドロップダウンが `CUSTOM` になった状態でも、AIが元々どのラウドネス目標をベースにして調整したのか（例：`Base: LOUD` など）がひと目でわかるようAIレポートに追記。</li>
+        </ul>
+      </div>
+
+      <!-- v3.0 ~ v3.3 -->
+      <div class="timeline-item">
+        <div class="version-header">
+          <span class="version-tag">v3.0 - v3.3</span>
+          <span class="version-date">2026.06.24</span>
+          <span class="version-title">AI スマートアシスタント機能の誕生 & モバイルツールチップ追加</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">追加</span><strong>AI 3連ノッチフィルター & 32スライスFFT分析</strong>：楽曲の32箇所をスキャンし、高域のシャリシャリした痛い周波数（共鳴ピーク）を最大3つ自動算出し、狭いQ値（Q=6.0）でピンポイントで減衰させる 3連 AI Corrective Notch フィルターをWeb Audioに実装。</li>
+          <li><span class="badge-add">追加</span><strong>日本語ツールチップ（ヘルプポップアップ）</strong>：すべてのマスタリングパラメータの横に「？」マークを追加。デスクトップではグラスモフィズム（背景ぼかし）仕様のポップアップ、モバイルではスライドアップする<strong>「モバイル用ボトムシート（ヘルプカード）」</strong>で日本語解説を表示。</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <footer class="app-footer" style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+      <div class="footer-links">
+        <a href="index.html"><i class="fa-solid fa-house"></i> AetherMaster ホーム</a>
+        <span class="separator">|</span>
+        <a href="guide.html"><i class="fa-solid fa-book-open"></i> 初心者向けガイド</a>
+        <span class="separator">|</span>
+        <a href="tech.html"><i class="fa-solid fa-circle-info"></i> 技術仕様・DSP詳細</a>
+      </div>
+      <p>&copy; 2026 AETHERMASTER. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

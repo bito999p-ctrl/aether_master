@@ -1,0 +1,12 @@
+{
+  "name": "aethermaster",
+  "version": "1.0.0",
+  "description": "Professional Web Audio Mastering Suite",
+  "main": "app.js",
+  "scripts": {
+    "dev": "npx http-server -p 8080"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

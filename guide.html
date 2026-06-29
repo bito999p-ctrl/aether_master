@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AETHERMASTER // 初心者向けユーザーガイド</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css?v=3.24.0">
+  <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
+  <style>
+    .doc-container {
+      max-width: 900px;
+      width: 100%;
+      margin: 40px auto;
+      padding: 30px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: var(--panel-shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all var(--transition-speed);
+      margin-bottom: 30px;
+      cursor: pointer;
+    }
+    .btn-back:hover {
+      background: rgba(0, 242, 254, 0.1);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+    }
+    .doc-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .doc-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .doc-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 3px solid var(--accent-cyan);
+      padding-left: 12px;
+    }
+    .section-title i {
+      color: var(--accent-cyan);
+    }
+    p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+    }
+    ol, ul {
+      margin-left: 20px;
+      margin-bottom: 24px;
+    }
+    li {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+    li strong {
+      color: #fff;
+    }
+    .highlight-card {
+      background: rgba(0, 242, 254, 0.04);
+      border: 1px dashed rgba(0, 242, 254, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 24px 0;
+      line-height: 1.6;
+    }
+    .highlight-card h4 {
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-badge {
+      display: inline-block;
+      background: var(--accent-cyan);
+      color: #080a10;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 8px;
+      font-size: 0.8rem;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 24px 0;
+    }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 16px;
+      transition: all var(--transition-speed);
+    }
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    .feature-card h4 {
+      color: #fff;
+      margin-bottom: 8px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feature-card h4 i {
+      color: var(--accent-purple);
+    }
+    .feature-card p {
+       font-size: 0.85rem;
+    }
+    @media (max-width: 768px) {
+      .doc-container {
+        padding: 16px;
+        margin: 15px auto;
+        border-radius: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="doc-container">
+    <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> AetherMaster に戻る</a>
+    
+    <header class="doc-header">
+      <h1 class="doc-title">AetherMaster 初心者ガイド</h1>
+      <div class="doc-subtitle">マスタリングの基本と、本ツールの使い方をやさしく解説します</div>
+    </header>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> マスタリングって何？</h2>
+      <p>マスタリングとは、作った曲を世界中の人が心地よく聴けるように仕上げる<strong>「音楽制作の最終仕上げ工程」</strong>です。</p>
+      <p>ミックスされた音源の音量や音質を整え、スマホのスピーカー、高級ヘッドホン、カーステレオなど、どのような再生環境で聴いても「迫力があり、かつバランスの取れた良い音」で鳴るように、様々な音響処理を施します。</p>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-list-ol"></i> 3ステップでできる簡単操作</h2>
+      <p>AetherMaster は、高度な AI アシスタントを搭載しているため、専門知識がなくても以下の3ステップでプロ級のマスタリングを実行できます。</p>
+      
+      <ol>
+        <li>
+          <p><strong><span class="step-badge">1</span>音源ファイルを読み込む</strong><br>
+          マスタリングしたい曲（WAV、MP3、M4Aなど）を画面上の点線枠内にドラッグ＆ドロップするか、クリックしてファイルを選択します。</p>
+        </li>
+        <li>
+          <p><strong><span class="step-badge">2</span>ジャンルプリセットを選択する</strong><br>
+          「GENRE PRESET」メニューから、あなたの曲のスタイル（POPS, EDM, ROCK, HIP HOP など）を選択します。選択すると、AI が自動でそのジャンルに最も適した音響バランスの解析とパラメーター調整を実行します。</p>
+        </li>
+        <li>
+          <p><strong><span class="step-badge">3</span>書き出してダウンロードする</strong><br>
+          好みのエクスポートフォーマット（高音質な WAV、または軽量な MP3）を選択し、「BAKE & DOWNLOAD MASTER」ボタンをクリックします。処理が終わると、自動的にマスタリング済みのファイルが保存されます。</p>
+        </li>
+      </ol>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-brain"></i> AI オートコレクト（AI SMART ASSISTANCE）とは？</h2>
+      <p>画面の「ANALYZE & AUTO-CORRECT EQ」ボタンをクリック（またはAUTOスイッチがONの状態でジャンル・ラウドネスを切り替え）すると、AI が一瞬で楽曲全体をスキャンし、人間では判断が難しい以下の調整を自動で行います。</p>
+      
+      <ul>
+        <li><strong>耳障りな周波数（シャリシャリ音）の除去</strong>：特に高音域で耳に刺さる嫌なピーク（共鳴）を検出し、ピンポイントで削ることで、音をすっきりクリアにします。</li>
+        <li><strong>ダイナミクス（強弱の幅）の最適化</strong>：音の強弱の幅を計算し、音割れ（歪み）しないギリギリのラインまで音圧を引き上げます。</li>
+        <li><strong>周波数バランスの修正</strong>：ジャンル別の理想的な音響バランス（ターゲット）と元の音源を比較し、低音（Bass）や高音（Treble）を自然な量に微調整します。</li>
+      </ul>
+
+      <div class="highlight-card">
+        <h4><i class="fa-solid fa-circle-exclamation"></i> Suno AI 音源の「シャリシャリ音」対策について</h4>
+        <p>Suno などの AI 作曲ツールで生成された楽曲は、<strong>「9kHz〜10kHz」付近に強い金属的なシャリシャリした雑音（耳が痛くなる帯域）</strong>が発生しやすい傾向があります。</p>
+        <p>AetherMaster の AI アシスタントは、この帯域を特別に注視して検知するチューニングが施されています。AI 解析を走らせることで、この不快な雑音を狙い撃ちで優しくカットし、長時間のリスニングでも疲れない自然な仕上がりに自動で補正します。</p>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-sliders"></i> 主要コントロールの解説</h2>
+      <p>手動で音を追い込みたい方向けに、代表的なエフェクトの役割を解説します。</p>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-fire"></i> サチュレーター</h4>
+          <p>音にアナログテープや真空管（Tube）の温かみと「ジリッ」とした倍音成分を加えます。音がふくよかになり、全体のまとまり感が増します。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-broom"></i> ノイズクリーナー (NOISE CLEANER)</h4>
+          <p>「Rumble Cut」で不要な低域の空調・電源ハム音をカットし、「Hiss Reducer」で無音部分の「サー」というヒスノイズを消去します。演奏中は自動でフィルターが全開になるため、高音の艶感を損なわないプロ仕様です。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-sliders"></i> 3バンドEQ (イコライザー)</h4>
+          <p>低域（キックやベース）、中域（ボーカルや楽器のボディ）、高域（空気感や煌びやかさ）の3つの帯域の音量を調整し、音色をデザインします。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-compress"></i> Glue コンプレッサー</h4>
+          <p>飛び出た突発的な音量を自動で圧縮し、曲全体の音量のばらつきを抑えて「1つの楽曲としてのまとまり（Glue）」を生み出します。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-arrows-left-right"></i> ステレオイメージャー</h4>
+          <p>音が左右に広がる幅を調整します。100%以上に広げることで壮大な空間を作れますが、ベース等の重低音は自動でセンターに集めるため、音がスカスカになるのを防ぎます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-volume-high"></i> マキシマイザー＆リミッター</h4>
+          <p>最終段で全体の音量を商業用CDや配信サイトで流れるレベルまで引き上げます。どれだけ音量を上げても、設定した上限（OUTPUT CEILING）を超えないように制限し、音割れを防ぎます。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title"><i class="fa-solid fa-circle-question"></i> よくある質問とトラブル解決</h2>
+      <ul>
+        <li><strong>音が割れている・ビリビリ聞こえる</strong>：音量（LIMITER GAIN BOOST）を上げすぎているか、元音源の低音が大きすぎます。プリセットを「POPS」などにするか、リミッターブーストを下げてください。また、RESETボタンを押すとAI推奨値にすぐ戻せます。</li>
+        <li><strong>設定をいじりすぎて音が分からなくなった</strong>：パネル右上にある「RESET」ボタンをクリックすると、余計な設定をすべてクリアし、ファイルを読み込んだ直後のAIによる自動最適化バランスへ一瞬で復元されます。</li>
+        <li><strong>スマートフォンで音が出ない</strong>：iOSなどでマナーモード（サイレントスイッチ）がオンになっていると音が出ない場合があります。本体の音量を上げるか、消音スイッチを確認してください（AetherMasterはバックグラウンド再生およびマナーモード時の再生維持に対応しています）。</li>
+      </ul>
+    </section>
+
+    <footer class="app-footer" style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+      <div class="footer-links">
+        <a href="index.html"><i class="fa-solid fa-house"></i> AetherMaster ホーム</a>
+        <span class="separator">|</span>
+        <a href="tech.html"><i class="fa-solid fa-circle-info"></i> 技術仕様・DSP詳細</a>
+        <span class="separator">|</span>
+        <a href="updates.html"><i class="fa-solid fa-clock-rotate-left"></i> 更新記録</a>
+      </div>
+      <p>&copy; 2026 AETHERMASTER. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

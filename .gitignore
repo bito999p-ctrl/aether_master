@@ -1,0 +1,8 @@
+# Large audio files (prevents pushing massive WAVs to GitHub)
+*.wav
+*.mp3
+wavサンプル/
+
+# Scratch & Test Scripts
+check_*.js
+simulate_scroll.js
