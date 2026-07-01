@@ -440,7 +440,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   const envelopeSmoother = context.createBiquadFilter();
   envelopeSmoother.type = 'lowpass';
-  envelopeSmoother.frequency.setValueAtTime(10.0, context.currentTime);
+  envelopeSmoother.frequency.setValueAtTime(2.0, context.currentTime); // Slowed down from 10Hz to 2Hz to smooth out dynamic filter sweeps and eliminate swirling/phasing artifacts on reverb tails and cheers.
   envelopeSmoother.Q.setValueAtTime(0.707, context.currentTime);
 
   const hissEnvelopeGain = context.createGain();
@@ -1941,7 +1941,12 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       const ratio = val / (localFloor + 1e-9);
       
       const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
-      const thresholdMultiplier = isSunoRange ? 1.20 : 1.25;
+      // ライブ音源やリバーブのシュワシュワ音を防ぐため、ステレオ相関（avgCorrelation）が低い（広がった歓声やリバーブが多い）場合はしきい値を上げ、余計なノッチを抑制
+      let baseThreshold = isSunoRange ? 1.20 : 1.25;
+      if (avgCorrelation < 0.72) {
+        baseThreshold += 0.08;
+      }
+      const thresholdMultiplier = baseThreshold;
       
       let isBroad = false;
       let peakQ = 15.0;
@@ -1965,11 +1970,15 @@ function analyzeAudioResonances(buffer, userPresetKey) {
         const wideFloor = wideSum / (wideCount || 1);
         const ratioWide = val / (wideFloor + 1e-9);
         
-        if (ratioWide > 1.30) { // 周辺の広い平均より30%（約2.3dB）以上盛り上がっている場合
+        let humpThreshold = 1.30;
+        if (avgCorrelation < 0.72) {
+          humpThreshold = 1.45; // 歓声やリバーブがある場合は広帯域ハンプカットを大幅に抑制
+        }
+        if (ratioWide > humpThreshold) { // 周辺の広い平均より盛り上がっている場合
           isBroad = true;
           peakQ = 6.0; // 緩やかなノッチ（Q=6.0）で膨らみを滑らかに補正する
           ratioToUse = ratioWide;
-          thresholdToUse = 1.30;
+          thresholdToUse = humpThreshold;
         }
       }
       
@@ -2127,7 +2136,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     eqHighGain = Math.min(-1.5, eqHighGain);
   }
 
-  // 中域はジャンルの特性を維持
+  // 中域はジャンルの特性を維持 (Dynamic sibilance de-esser integrated)
   const eqMidGain = basePreset.eqMidGain;
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
