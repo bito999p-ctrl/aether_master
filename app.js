@@ -2307,6 +2307,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     correlationDesc: corrDesc,
     bassDiff: lowDiffDb,
     trebleDiff: highDiffDb,
+    rumbleNoiseFloorDb: rumbleNoiseFloorDb,
+    hissNoiseFloorDb: hissNoiseFloorDb,
     baseLoudnessDesc: baseLoudnessDesc,
     detectedGenre: detectedGenre,
     suggestedParams: {
@@ -3218,6 +3220,21 @@ function runAiAnalysis(showLog = true) {
         // 個別ジャンルプリセット選択時の動的AI補正
         if (showLog) {
           logToUI(`[AI Assistant] Dynamically optimized the selected ${genreSelect.value.toUpperCase()} preset parameters to match this track's sonic profile.`, "success");
+        }
+      }
+
+      // Noise Cleanerの検出ステータスをコンソールログに出力
+      if (showLog) {
+        if (sug.rumbleCutEnabled) {
+          logToUI(`[Noise Cleaner] Low-end rumble/sub-bass noise detected (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Rumble Cut (80Hz HPF) auto-activated.`, "warning");
+        } else {
+          logToUI(`[Noise Cleaner] Low-end noise floor is clean (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Subsonic protection active (18Hz HPF).`, "info");
+        }
+        
+        if (sug.hissReductionAmount > 0) {
+          logToUI(`[Noise Cleaner] High-frequency hiss/sibilance detected (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer auto-set to ${sug.hissReductionAmount}%.`, "warning");
+        } else {
+          logToUI(`[Noise Cleaner] High-frequency noise floor is clean (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer is OFF.`, "info");
         }
       }
       
