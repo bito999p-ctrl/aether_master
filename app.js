@@ -227,7 +227,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.8, eqLowFreq: 90,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
     eqHighGain: 2.0, eqHighFreq: 11000,
-    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20, // Tamed attack (50ms) and ratio (1.35) to prevent bass cycles clipping/buzzing (v4.0.1)
+    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20, // Tamed attack (50ms) and ratio (1.35) to prevent bass cycles clipping/buzzing (v4.0.2)
     stereoWidth: 1.30, limiterBoost: 5.0, sideHighPassFreq: 150 // Slightly reduced limiter boost (5.0dB) for safer headroom
   },
   hiphop: {
@@ -2005,21 +2005,21 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const basePreset = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
 
   const genreTargets = {
-    auto: { low: 2.8, high: 0.14, presence: 0.42 },
-    pops: { low: 2.6, high: 0.16, presence: 0.44 },
-    rnb: { low: 3.2, high: 0.15, presence: 0.41 },
-    rock: { low: 2.9, high: 0.13, presence: 0.43 },
-    metal: { low: 3.0, high: 0.15, presence: 0.42 },
-    edm: { low: 3.2, high: 0.16, presence: 0.40 },
-    hiphop: { low: 3.3, high: 0.13, presence: 0.38 },
-    lofi: { low: 3.1, high: 0.08, presence: 0.36 },
-    hardcore: { low: 3.2, high: 0.18, presence: 0.42 },
-    ambient: { low: 2.9, high: 0.20, presence: 0.44 },
-    podcast: { low: 1.6, high: 0.10, presence: 0.47 },
-    classic: { low: 2.2, high: 0.11, presence: 0.39 },
-    jazz: { low: 2.7, high: 0.12, presence: 0.41 },
-    acoustic: { low: 2.4, high: 0.13, presence: 0.43 },
-    custom: { low: 2.8, high: 0.14, presence: 0.42 }
+    auto: { low: 2.8, high: 0.12, presence: 0.42 },
+    pops: { low: 2.6, high: 0.14, presence: 0.44 },
+    rnb: { low: 3.2, high: 0.13, presence: 0.41 },
+    rock: { low: 2.9, high: 0.11, presence: 0.43 },
+    metal: { low: 3.0, high: 0.13, presence: 0.42 },
+    edm: { low: 3.2, high: 0.14, presence: 0.40 },
+    hiphop: { low: 3.3, high: 0.11, presence: 0.38 },
+    lofi: { low: 3.1, high: 0.07, presence: 0.36 },
+    hardcore: { low: 3.2, high: 0.15, presence: 0.42 },
+    ambient: { low: 2.9, high: 0.17, presence: 0.44 },
+    podcast: { low: 1.6, high: 0.09, presence: 0.47 },
+    classic: { low: 2.2, high: 0.10, presence: 0.39 },
+    jazz: { low: 2.7, high: 0.11, presence: 0.41 },
+    acoustic: { low: 2.4, high: 0.12, presence: 0.43 },
+    custom: { low: 2.8, high: 0.12, presence: 0.42 }
   };
   const target = genreTargets[genreKey] || genreTargets.auto;
 
@@ -2046,12 +2046,12 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   let eqHighAdjustment = 0;
   if (highDiffDb > 0.5) {
-    eqHighAdjustment = -Math.min(3.0, highDiffDb * 0.8);
+    eqHighAdjustment = -Math.min(2.0, highDiffDb * 0.5); // 派手すぎる場合はマイルドに減衰（最大-2.0dB）
   } else if (highDiffDb < -0.5) {
-    eqHighAdjustment = Math.min(3.0, -highDiffDb * 0.8);
+    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.45); // 不足している場合はマイルドに補強（最大+1.5dB）
   }
 
-  let eqHighGain = Math.max(-5.0, Math.min(4.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+  let eqHighGain = Math.max(-5.0, Math.min(2.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+2.0dBに制限
 
   // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを禁止し、安全のために少なくとも-1.5dB以下の減衰量にクランプ
   if (sibilanceDynamicFreq > 0) {

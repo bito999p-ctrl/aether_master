@@ -2002,21 +2002,21 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   // high: Treble/LowMid 比率 (目標 -17.1dB 付近)
   // presence: HighMid/LowMid 比率 (目標 -6.9dB 付近)
   const genreTargets = {
-    auto: { low: 2.8, high: 0.14, presence: 0.42 },     // AI AUTO: スタディオリファレンス・フラット
-    pops: { low: 2.6, high: 0.16, presence: 0.44 },     // POPS: ボーカル明瞭、高音は煌びやか
-    rnb: { low: 3.2, high: 0.15, presence: 0.41 },      // R&B: サブベース強調、中高域は控えめ
-    rock: { low: 2.9, high: 0.13, presence: 0.43 },     // ROCK: キック厚め、エッジの効いた中音
-    metal: { low: 3.0, high: 0.15, presence: 0.42 },    // METAL: 重厚な低域とエッジの効いた高域
-    edm: { low: 3.2, high: 0.16, presence: 0.40 },      // EDM: 太いサブベース、高域シンセのヌケ
-    hiphop: { low: 3.3, high: 0.13, presence: 0.38 },   // HIPHOP: 極太ローエンド、ボーカルフォーカス
-    lofi: { low: 3.1, high: 0.08, presence: 0.36 },     // LOFI: 温かみのある中低域、ナローな高域
-    hardcore: { low: 3.2, high: 0.18, presence: 0.42 }, // HARDCORE: 極限のクラブ音圧、サチュレーション
-    ambient: { low: 2.9, high: 0.20, presence: 0.44 },  // AMBIENT: ワイドで広がりのある空気感
-    podcast: { low: 1.6, high: 0.10, presence: 0.47 },  // PODCAST: 会話明瞭、低域カット
-    classic: { low: 2.2, high: 0.11, presence: 0.39 },  // CLASSIC: ナチュラルの強弱、広い奥行き
-    jazz: { low: 2.7, high: 0.12, presence: 0.41 },     // JAZZ: 有機的なウッドベースと生音感
-    acoustic: { low: 2.4, high: 0.13, presence: 0.43 }, // ACOUSTIC: 繊細な弦の響きと生楽器の共鳴
-    custom: { low: 2.8, high: 0.14, presence: 0.42 }
+    auto: { low: 2.8, high: 0.12, presence: 0.42 },     // AI AUTO: スタディオリファレンス・フラット (高域ターゲットを0.14➔0.12に微調整)
+    pops: { low: 2.6, high: 0.14, presence: 0.44 },     // POPS: ボーカル明瞭、高音は煌びやか (0.16➔0.14)
+    rnb: { low: 3.2, high: 0.13, presence: 0.41 },      // R&B: サブベース強調、中高域は控えめ (0.15➔0.13)
+    rock: { low: 2.9, high: 0.11, presence: 0.43 },     // ROCK: キック厚め、エッジの効いた中音 (0.13➔0.11)
+    metal: { low: 3.0, high: 0.13, presence: 0.42 },    // METAL: 重厚な低域とエッジの効いた高域 (0.15➔0.13)
+    edm: { low: 3.2, high: 0.14, presence: 0.40 },      // EDM: 太いサブベース、高域シンセのヌケ (0.16➔0.14)
+    hiphop: { low: 3.3, high: 0.11, presence: 0.38 },   // HIPHOP: 極太ローエンド、ボーカルフォーカス (0.13➔0.11)
+    lofi: { low: 3.1, high: 0.07, presence: 0.36 },     // LOFI: 温かみのある中低域、ナローな高域 (0.08➔0.07)
+    hardcore: { low: 3.2, high: 0.15, presence: 0.42 }, // HARDCORE: 極限のクラブ音圧、サチュレーション (0.18➔0.15)
+    ambient: { low: 2.9, high: 0.17, presence: 0.44 },  // AMBIENT: ワイドで広がりのある空気感 (0.20➔0.17)
+    podcast: { low: 1.6, high: 0.09, presence: 0.47 },  // PODCAST: 会話明瞭、低域カット (0.10➔0.09)
+    classic: { low: 2.2, high: 0.10, presence: 0.39 },  // CLASSIC: ナチュラルの強弱、広い奥行き (0.11➔0.10)
+    jazz: { low: 2.7, high: 0.11, presence: 0.41 },     // JAZZ: 有機的なウッドベースと生音感 (0.12➔0.11)
+    acoustic: { low: 2.4, high: 0.12, presence: 0.43 }, // ACOUSTIC: 繊細な弦の響きと生楽器の共鳴 (0.13➔0.12)
+    custom: { low: 2.8, high: 0.12, presence: 0.42 }
   };
   const target = genreTargets[genreKey] || genreTargets.auto;
 
@@ -2048,11 +2048,11 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   // 高域: Highが派手すぎる場合は下げ、こもっている場合は持ち上げる
   let eqHighAdjustment = 0;
   if (highDiffDb > 0.5) {
-    eqHighAdjustment = -Math.min(3.0, highDiffDb * 0.8);
+    eqHighAdjustment = -Math.min(2.0, highDiffDb * 0.5); // 派手すぎる場合はマイルドに減衰（最大-2.0dB）
   } else if (highDiffDb < -0.5) {
-    eqHighAdjustment = Math.min(3.0, -highDiffDb * 0.8);
+    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.45); // 不足している場合はマイルドに補強（最大+1.5dB）
   }
-  let eqHighGain = Math.max(-5.0, Math.min(4.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+  let eqHighGain = Math.max(-5.0, Math.min(2.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+2.0dBに制限
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
