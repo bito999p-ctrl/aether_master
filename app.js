@@ -1641,7 +1641,7 @@ function fft(re, im) {
 }
 
 // 分析関数：オーディオバッファをマルチスライス分析し、ダイナミクス、ステレオ音像、周波数バランス、耳障りな周波数（シャリシャリ音）を検出する
-function analyzeAudioResonances(buffer) {
+function analyzeAudioResonances(buffer, userPresetKey) {
   const fftSize = 2048;
   const numSlices = 32; // サンプリング精度を高めるため、32箇所を走査
   const sampleRate = buffer.sampleRate;
@@ -1921,7 +1921,7 @@ function analyzeAudioResonances(buffer) {
   // 設計変更: AI AUTO（auto）またはカスタム（custom）の場合は中立なフラット特性（auto）をベースにする。
   // それ以外の個別プリセット（edm, rock等）が選ばれている場合は、そのプリセットをベースにAIが動的に最適化する。
   const genreSelect = document.getElementById('preset-select');
-  const userGenreKey = genreSelect ? genreSelect.value : 'auto';
+  const userGenreKey = userPresetKey || (genreSelect ? genreSelect.value : 'auto');
   const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
   const basePreset = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
   const genreTargets = {
@@ -2110,8 +2110,8 @@ function analyzeAudioResonances(buffer) {
       stereoWidth: stereoWidth,
       sideHighPassFreq: basePreset.sideHighPassFreq || 110,
       limiterBoost: limiterBoost,
-      rumbleCutEnabled: sugRumbleCut,
-      hissReductionAmount: sugHissAmount
+      rumbleCutEnabled: genreKey === 'auto' ? sugRumbleCut : false,
+      hissReductionAmount: genreKey === 'auto' ? sugHissAmount : 0
     }
   };
 }
@@ -2162,8 +2162,14 @@ function loadGenrePreset(genreKey) {
       genreBadge.innerText = aiDetectedGenre.toUpperCase();
     }
   } else {
-    params.rumbleCutEnabled = false;
-    params.hissReductionAmount = 0;
+    // 楽曲自体のノイズ状態はプリセット変更で変わらないため、AI検出済みのノイズクリーナー設定があれば継承し、なければOFFにする
+    if (aiSuggestedParams !== null) {
+      params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
+      params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
+    } else {
+      params.rumbleCutEnabled = false;
+      params.hissReductionAmount = 0;
+    }
     
     // Reset UI badge back to AUTO if loading normal auto template or another preset
     const genreBadge = document.getElementById('ai-detected-genre-badge');
