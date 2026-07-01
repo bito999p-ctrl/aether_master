@@ -1840,7 +1840,7 @@ function analyzeAudioResonances(buffer) {
       
       // Suno AIの音源で特に耳に刺さりやすい 9kHz〜10kHz 帯域（マージンを取り8800Hz〜10200Hz）の判定
       const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
-      const thresholdMultiplier = isSunoRange ? 1.45 : 1.55; // 45% / 55% の突出度で検出（cymbals等の自然な高域保護）
+      const thresholdMultiplier = isSunoRange ? 1.28 : 1.34; // 28% / 34% の突出度（約2.1dB〜2.5dB）で検出し、中程度のキンキン音も的確に補足
       
       if (ratio > thresholdMultiplier) {
         // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（極端なこもりを防ぐため最大 -3.2dB までに制限）
