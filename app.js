@@ -2891,6 +2891,10 @@ function loadAudioFile(file) {
     stopPlayback();
   }
 
+  // 新しい楽曲ファイルが読み込まれた際、前回の楽曲のAI解析値が漏洩・干渉するのを防ぐため初期化する
+  aiSuggestedParams = null;
+  aiDetectedGenre = null;
+
   document.getElementById('status-text').innerText = 'LOADING AUDIO FILE...';
   document.getElementById('status-indicator').className = 'status-indicator processing';
 
