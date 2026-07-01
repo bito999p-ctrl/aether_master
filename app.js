@@ -455,6 +455,12 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   const waveShaper = context.createWaveShaper();
   const satSumNode = context.createGain();
 
+  // High-pass filter for Saturator Wet path to prevent low-end intermodulation mud (ボワボワ)
+  const satHpf = context.createBiquadFilter();
+  satHpf.type = 'highpass';
+  satHpf.frequency.setValueAtTime(150.0, context.currentTime); // Cut sub-bass/bass saturation
+  satHpf.Q.setValueAtTime(0.707, context.currentTime);
+
   waveShaper.curve = generateSaturatorCurve(parameters.satType, parameters.satDrive);
   waveShaper.oversample = 'none'; // フィルター遅延による位相干渉（コームフィルター）を防ぐため、オーバーサンプリングを無効化します。
 
@@ -472,7 +478,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   rumbleFilter.connect(hissFilter);
   
   hissFilter.connect(satDryGain);
-  hissFilter.connect(waveShaper); // Direct connection for phase-coherent parallel saturation
+  hissFilter.connect(satHpf);
+  satHpf.connect(waveShaper); // Feed highpassed signal to waveshaper to keep low end clean
   waveShaper.connect(satWetGain);
 
   // Hook up sidechain envelope follower path (splits from rumbleFilter output)
@@ -1896,7 +1903,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     rumbleSum += sliceSpectrums[minRmsIdx][j];
   }
   const rumbleNoiseFloor = rumbleSum / (binRumbleEnd - binRumbleStart + 1);
-  const rumbleNoiseFloorDb = 20 * Math.log10(rumbleNoiseFloor + 1e-6);
+  const rumbleNoiseFloorDb = 20 * Math.log10(rumbleNoiseFloor + 1e-6) + 26.0; // Added FFT bin bandwidth gain correction factor (+26dB) to align bin average with broadband level
 
   // Suggested values (ノイズ検出時にのみONにし、ノイズ未検出時は完全にOFFのままにする仕様へ復元)
   let sugRumbleCut = false;
