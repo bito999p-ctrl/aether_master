@@ -1816,9 +1816,9 @@ function analyzeAudioResonances(buffer) {
     sugHissAmount = Math.round(Math.max(0, Math.min(80, (hissNoiseFloorDb + 56.0) * 4.0)));
   }
 
-  // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：6.5kHz 〜 10.5kHz）のマルチピーク走査
+  // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：6.5kHz 〜 20kHz）のマルチピーク走査（上限撤廃）
   const sibilanceMinBin = Math.floor((6500 * fftSize) / sampleRate);
-  const sibilanceMaxBin = Math.floor((10500 * fftSize) / sampleRate);
+  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((20000 * fftSize) / sampleRate));
   
   // ローカルピーク（極大値かつ周辺のローカルノイズフロアより著しく高いピーク）をすべて検出
   const rawPeaks = [];
