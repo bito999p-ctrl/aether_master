@@ -431,6 +431,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   sidechainHpf.frequency.setValueAtTime(2000.0, context.currentTime); // Lowered to 2,000Hz to detect vocal/midrange energy and open the filter.
   sidechainHpf.Q.setValueAtTime(0.707, context.currentTime);
 
+  const sidechainGainNode = context.createGain();
+  sidechainGainNode.gain.setValueAtTime(10.0, context.currentTime); // Boost sidechain energy to generate robust envelope values during active music
+
   const rectifier = context.createWaveShaper();
   rectifier.curve = generateAbsoluteValCurve();
 
@@ -473,7 +476,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   // Hook up sidechain envelope follower path (splits from rumbleFilter output)
   rumbleFilter.connect(sidechainHpf);
-  sidechainHpf.connect(rectifier);
+  sidechainHpf.connect(sidechainGainNode);
+  sidechainGainNode.connect(rectifier);
   rectifier.connect(envelopeSmoother);
   envelopeSmoother.connect(hissEnvelopeGain);
   
@@ -1880,8 +1884,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     // 高域の過剰な低域カット（LPF）を防ぐため、Hiss Reducerの適用度を減衰・または完全にOFFにする安全スケーラー
     let quietnessScale = 1.0;
     if (minRmsVal > 0.03) {
-      // 最低RMSが 0.03（約-30dBFS）〜0.12（約-18dBFS）の間で、スケール値を 1.0 から 0.0 まで滑らかに減衰
-      quietnessScale = Math.max(0, 1.0 - (minRmsVal - 0.03) / 0.09);
+      // 最低RMSが 0.03（約-30dBFS）〜0.12（約-18dBFS）の間で、スケール値を 1.0 から 0.35 まで滑らかに減衰（完全に0%になるのを防ぎ、マイルドなノイズ除去を最低限残す）
+      quietnessScale = Math.max(0.35, 1.0 - (minRmsVal - 0.03) / 0.09);
     }
     sugHissAmount = Math.round(rawHiss * quietnessScale);
   }
