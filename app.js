@@ -512,49 +512,49 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   const eqCorrective1 = context.createBiquadFilter();
   eqCorrective1.type = 'peaking';
-  eqCorrective1.Q.setValueAtTime(12.0, context.currentTime); // 非常に鋭いQ値で高域の艶感を保護
+  eqCorrective1.Q.setValueAtTime(18.0, context.currentTime); // 非常に鋭いQ値で高域の艶感を保護
   eqCorrective1.frequency.setValueAtTime(parameters.correctiveNotches[0].freq, context.currentTime);
   eqCorrective1.gain.setValueAtTime(parameters.correctiveNotches[0].enabled ? (parameters.correctiveNotches[0].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective2 = context.createBiquadFilter();
   eqCorrective2.type = 'peaking';
-  eqCorrective2.Q.setValueAtTime(12.0, context.currentTime);
+  eqCorrective2.Q.setValueAtTime(18.0, context.currentTime);
   eqCorrective2.frequency.setValueAtTime(parameters.correctiveNotches[1].freq, context.currentTime);
   eqCorrective2.gain.setValueAtTime(parameters.correctiveNotches[1].enabled ? (parameters.correctiveNotches[1].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective3 = context.createBiquadFilter();
   eqCorrective3.type = 'peaking';
-  eqCorrective3.Q.setValueAtTime(12.0, context.currentTime);
+  eqCorrective3.Q.setValueAtTime(18.0, context.currentTime);
   eqCorrective3.frequency.setValueAtTime(parameters.correctiveNotches[2].freq, context.currentTime);
   eqCorrective3.gain.setValueAtTime(parameters.correctiveNotches[2].enabled ? (parameters.correctiveNotches[2].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective4 = context.createBiquadFilter();
   eqCorrective4.type = 'peaking';
-  eqCorrective4.Q.setValueAtTime(12.0, context.currentTime);
+  eqCorrective4.Q.setValueAtTime(18.0, context.currentTime);
   eqCorrective4.frequency.setValueAtTime(parameters.correctiveNotches[3].freq, context.currentTime);
   eqCorrective4.gain.setValueAtTime(parameters.correctiveNotches[3].enabled ? (parameters.correctiveNotches[3].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective5 = context.createBiquadFilter();
   eqCorrective5.type = 'peaking';
-  eqCorrective5.Q.setValueAtTime(12.0, context.currentTime);
+  eqCorrective5.Q.setValueAtTime(18.0, context.currentTime);
   eqCorrective5.frequency.setValueAtTime(parameters.correctiveNotches[4].freq, context.currentTime);
   eqCorrective5.gain.setValueAtTime(parameters.correctiveNotches[4].enabled ? (parameters.correctiveNotches[4].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective6 = context.createBiquadFilter();
   eqCorrective6.type = 'peaking';
-  eqCorrective6.Q.setValueAtTime(12.0, context.currentTime);
+  eqCorrective6.Q.setValueAtTime(18.0, context.currentTime);
   eqCorrective6.frequency.setValueAtTime(parameters.correctiveNotches[5].freq, context.currentTime);
   eqCorrective6.gain.setValueAtTime(parameters.correctiveNotches[5].enabled ? (parameters.correctiveNotches[5].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective7 = context.createBiquadFilter();
   eqCorrective7.type = 'peaking';
-  eqCorrective7.Q.setValueAtTime(12.0, context.currentTime);
+  eqCorrective7.Q.setValueAtTime(18.0, context.currentTime);
   eqCorrective7.frequency.setValueAtTime(parameters.correctiveNotches[6].freq, context.currentTime);
   eqCorrective7.gain.setValueAtTime(parameters.correctiveNotches[6].enabled ? (parameters.correctiveNotches[6].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective8 = context.createBiquadFilter();
   eqCorrective8.type = 'peaking';
-  eqCorrective8.Q.setValueAtTime(12.0, context.currentTime);
+  eqCorrective8.Q.setValueAtTime(18.0, context.currentTime);
   eqCorrective8.frequency.setValueAtTime(parameters.correctiveNotches[7].freq, context.currentTime);
   eqCorrective8.gain.setValueAtTime(parameters.correctiveNotches[7].enabled ? (parameters.correctiveNotches[7].gain * setupHissFactor) : 0.0, context.currentTime);
 
@@ -1816,9 +1816,9 @@ function analyzeAudioResonances(buffer) {
     sugHissAmount = Math.round(Math.max(0, Math.min(80, (hissNoiseFloorDb + 56.0) * 4.0)));
   }
 
-  // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：5kHz 〜 12kHz）のマルチピーク走査
-  const sibilanceMinBin = Math.floor((5000 * fftSize) / sampleRate);
-  const sibilanceMaxBin = Math.floor((12000 * fftSize) / sampleRate);
+  // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：6.5kHz 〜 10.5kHz）のマルチピーク走査
+  const sibilanceMinBin = Math.floor((6500 * fftSize) / sampleRate);
+  const sibilanceMaxBin = Math.floor((10500 * fftSize) / sampleRate);
   
   // ローカルピーク（極大値かつ周辺のローカルノイズフロアより著しく高いピーク）をすべて検出
   const rawPeaks = [];
@@ -1840,11 +1840,11 @@ function analyzeAudioResonances(buffer) {
       
       // Suno AIの音源で特に耳に刺さりやすい 9kHz〜10kHz 帯域（マージンを取り8800Hz〜10200Hz）の判定
       const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
-      const thresholdMultiplier = isSunoRange ? 1.15 : 1.22; // 15% / 22% の突出度で検出
+      const thresholdMultiplier = isSunoRange ? 1.45 : 1.55; // 45% / 55% の突出度で検出（cymbals等の自然な高域保護）
       
       if (ratio > thresholdMultiplier) {
-        // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（最大 -5.0dB まで）
-        let cutDb = -Math.min(5.0, Math.max(1.0, (ratio - thresholdMultiplier) * 7.0 + 1.0));
+        // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（極端なこもりを防ぐため最大 -3.2dB までに制限）
+        let cutDb = -Math.min(3.2, Math.max(0.8, (ratio - thresholdMultiplier) * 4.0 + 0.8));
         
         // 8500Hz未満のカットは、極度に痩せるのを防ぎつつもしっかり金属音を除去できる安全ライン（85%）に緩和
         if (peakFreq < 8500) {
@@ -1866,10 +1866,10 @@ function analyzeAudioResonances(buffer) {
   // 優先度スコアの高い順にソート
   rawPeaks.sort((a, b) => b.score - a.score);
 
-  // 互いに400Hz以上離れた上位最大8個のピークを抽出（8連 corrective notches をフル活用）
+  // 互いに400Hz以上離れた上位最大4個のピークを抽出（削りすぎを防止）
   const filteredPeaks = [];
   for (const peak of rawPeaks) {
-    if (filteredPeaks.length >= 8) break;
+    if (filteredPeaks.length >= 4) break;
     const tooClose = filteredPeaks.some(p => Math.abs(p.freq - peak.freq) < 400);
     if (!tooClose) {
       filteredPeaks.push({ freq: peak.freq, cut: peak.cut });
@@ -1965,6 +1965,7 @@ function analyzeAudioResonances(buffer) {
   } else if (highDiffDb < -0.5) {
     eqHighAdjustment = Math.min(3.0, -highDiffDb * 0.8);
   }
+
   const eqHighGain = Math.max(-5.0, Math.min(4.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
 
   // 中域はジャンルの特性を維持
