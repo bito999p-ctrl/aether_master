@@ -1873,7 +1873,16 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   let sugHissAmount = 0;
   if (hissNoiseFloorDb > -62.0) { // -56dB から -62dB へ引き下げ、微細なヒスノイズも検出
     // -62dB で 0%、-38dB で最大 90% になるよう感度比率を強化（3.75倍スケール）
-    sugHissAmount = Math.round(Math.max(0, Math.min(90, (hissNoiseFloorDb + 62.0) * 3.75)));
+    const rawHiss = Math.round(Math.max(0, Math.min(90, (hissNoiseFloorDb + 62.0) * 3.75)));
+    
+    // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音（シンセパッドやエフェクトの残響等）である可能性が高いため
+    // 高域の過剰な低域カット（LPF）を防ぐため、Hiss Reducerの適用度を減衰・または完全にOFFにする安全スケーラー
+    let quietnessScale = 1.0;
+    if (minRmsVal > 0.03) {
+      // 最低RMSが 0.03（約-30dBFS）〜0.12（約-18dBFS）の間で、スケール値を 1.0 から 0.0 まで滑らかに減衰
+      quietnessScale = Math.max(0, 1.0 - (minRmsVal - 0.03) / 0.09);
+    }
+    sugHissAmount = Math.round(rawHiss * quietnessScale);
   }
 
   // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：7.0kHz 〜 20kHz）のマルチピーク走査（上限撤廃）
