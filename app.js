@@ -1816,8 +1816,8 @@ function analyzeAudioResonances(buffer) {
     sugHissAmount = Math.round(Math.max(0, Math.min(80, (hissNoiseFloorDb + 56.0) * 4.0)));
   }
 
-  // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：6.5kHz 〜 20kHz）のマルチピーク走査（上限撤廃）
-  const sibilanceMinBin = Math.floor((6500 * fftSize) / sampleRate);
+  // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：7.0kHz 〜 20kHz）のマルチピーク走査（上限撤廃）
+  const sibilanceMinBin = Math.floor((7000 * fftSize) / sampleRate);
   const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((20000 * fftSize) / sampleRate));
   
   // ローカルピーク（極大値かつ周辺のローカルノイズフロアより著しく高いピーク）をすべて検出
@@ -1838,13 +1838,13 @@ function analyzeAudioResonances(buffer) {
       
       const ratio = val / (localFloor + 1e-9);
       
-      // Suno AIの音源で特に耳に刺さりやすい 9kHz〜10kHz 帯域（マージンを取り8800Hz〜10200Hz）の判定
+      // Suno AIの音源で特に耳に刺やすく 9kHz〜10kHz 帯域（マージンを取り8800Hz〜10200Hz）の判定
       const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
       const thresholdMultiplier = isSunoRange ? 1.28 : 1.34; // 28% / 34% の突出度（約2.1dB〜2.5dB）で検出し、中程度のキンキン音も的確に補足
       
       if (ratio > thresholdMultiplier) {
-        // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（極端なこもりを防ぐため最大 -3.2dB までに制限）
-        let cutDb = -Math.min(3.2, Math.max(0.8, (ratio - thresholdMultiplier) * 4.0 + 0.8));
+        // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（削りすぎを防止しつつ効果的に除去するため最大 -4.0dB までに制限）
+        let cutDb = -Math.min(4.0, Math.max(1.0, (ratio - thresholdMultiplier) * 5.0 + 1.0));
         
         // 8500Hz未満のカットは、極度に痩せるのを防ぎつつもしっかり金属音を除去できる安全ライン（85%）に緩和
         if (peakFreq < 8500) {
