@@ -197,6 +197,21 @@
     <div class="timeline">
       
       <!-- v3.25.0 -->
+      <!-- v4.0.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v4.0.0</span>
+          <span class="version-date">2026.07.01</span>
+          <span class="version-title">「Pro Clean ノッチフリー・マスタリング」の完全統合 ＆ 耳障りな高域シビランス自動制御の搭載</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">機能</span><strong>「8連 AI Corrective Notch Filters」の完全廃止（ノッチフリー化）</strong>：Web Audio APIのDSPシグナルパスから不要な固定8連ノッチフィルターを完全に排除。これにより、ボーカルの自然な空気感や楽器の抜け感、過渡特性（アタック）を100%保ったまま、位相干渉によるヨレのない極めてクリアなマスタリング音質を実現しました。</li>
+          <li><span class="badge-change">改善</span><strong>動的ディエッサー（Sibilance Notch）の信号パス復元 ＆ 最適接続</strong>：サ行のキンキンしたノイズだけを的確に制御するため、音圧感応型の動的ディエッサーのみを信号経路に復元。ボーカルなどのサ行成分が強く出た瞬間のみ、ピンポイントで最大 `-6.0 dB` 減衰します。</li>
+          <li><span class="badge-change">改善</span><strong>AIによる高域EQの「自動クランプ安全保護」</strong>：AI自動解析時に高域のキンキン共鳴ピーク（8kHz〜11kHz）を検出した場合、高域シェルフEQのブーストを自動で禁止し、減衰値（最大 `-1.5 dB`）に自動クランプする保護ロジックを搭載。不用意なキンキン音の増幅を根本からシャットアウトします。</li>
+          <li><span class="badge-add">機能</span><strong>AI思考プロセスの「完全見える化」ログ実装</strong>：読み込んだ音源の低域・高域のノイズ（Rumble/Hiss）測定値デシベルと、シビランス検知・高域クランプの作動ログをリアルタイムで出力し、AIの動作状況がUI上に明記されるように改善しました。</li>
+        </ul>
+      </div>
+
       <!-- v3.26.0 -->
       <div class="timeline-item major">
         <div class="version-header">
