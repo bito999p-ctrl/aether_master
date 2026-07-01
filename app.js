@@ -2224,14 +2224,18 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   let stereoWidth = basePreset.stereoWidth;
   let corrDesc = "Balanced";
   
-  if (avgCorrelation > 0.8) {
+  if (avgCorrelation > 0.82) {
     // 位相がほぼセンターに集まっている（モノラルに近い）-> ステレオ感を拡張
     stereoWidth = Math.min(2.0, basePreset.stereoWidth + 0.2);
     corrDesc = "Mono-leaning (Expanded)";
-  } else if (avgCorrelation < 0.45) {
-    // 左右に広がりすぎている、または逆位相成分が多い -> 位相干渉による打ち消しを防ぐため、Widthを狭める
-    stereoWidth = Math.max(1.0, basePreset.stereoWidth - 0.15);
-    corrDesc = "Wide/Phasey (Reduced)";
+  } else if (avgCorrelation < 0.72) {
+    // ライブ音源やリバーブで既に左右に広がりすぎている -> 歪みやコムフィルター現象を防ぐため、1.0（等倍）以下にクランプする
+    stereoWidth = Math.min(1.0, basePreset.stereoWidth - 0.2);
+    // さらに極端に逆位相・拡散している場合はモノラル側へ少し寄せる
+    if (avgCorrelation < 0.45) {
+      stereoWidth = Math.max(0.9, stereoWidth - 0.1);
+    }
+    corrDesc = "Wide/Phasey (Clamped)";
   } else {
     corrDesc = "Balanced Stereo";
   }
