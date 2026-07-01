@@ -1956,6 +1956,42 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     rawSibilancePeaks.sort((a, b) => b.score - a.score);
     sibilanceDynamicFreq = rawSibilancePeaks[0].freq;
   }
+  // 3.5. AIジャンル自動判定 (Heuristic Genre Classifier)
+  let detectedGenre = 'pops';
+  if (actualLowMidRatio > 3.2 && actualHighMidRatio > 0.16 && crestFactorDb < 12.8) {
+    detectedGenre = 'edm';
+  } else if (actualLowMidRatio > 3.1 && actualHighMidRatio <= 0.16 && crestFactorDb < 12.8) {
+    detectedGenre = 'hiphop';
+  } else if (actualLowMidRatio >= 1.6 && actualLowMidRatio <= 3.3 && crestFactorDb < 15.5) {
+    if (crestFactorDb >= 12.8) {
+      if (actualLowMidRatio >= 2.4 && actualLowMidRatio <= 3.1 && avgCorrelation > 0.75 && actualHighMidRatio < 0.12) {
+        detectedGenre = 'jazz';
+      } else if (actualLowMidRatio < 2.4 && avgCorrelation > 0.75 && actualHighMidRatio < 0.12) {
+        detectedGenre = 'acoustic';
+      } else {
+        detectedGenre = (actualHighMidRatio > 0.14) ? 'metal' : 'rock';
+      }
+    } else {
+      if (actualHighMidRatio >= 0.11) {
+        detectedGenre = (actualHighMidRatio > 0.14) ? 'metal' : 'rock';
+      } else {
+        detectedGenre = 'pops';
+      }
+    }
+  } else if (crestFactorDb >= 13.0) {
+    if (actualLowMidRatio < 2.2 && actualHighMidRatio < 0.12) {
+      detectedGenre = 'classic';
+    } else if (actualHighMidRatio > 0.18 && actualLowMidRatio < 2.8) {
+      detectedGenre = 'ambient';
+    } else {
+      detectedGenre = 'acoustic';
+    }
+  } else if (actualLowMidRatio < 2.0 && actualHighMidRatio < 0.10) {
+    detectedGenre = 'podcast';
+  } else {
+    detectedGenre = 'pops';
+  }
+
   const genreSelect = document.getElementById('preset-select');
   const userGenreKey = userPresetKey || (genreSelect ? genreSelect.value : 'auto');
   const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
