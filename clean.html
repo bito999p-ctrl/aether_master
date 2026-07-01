@@ -163,13 +163,13 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-sliders"></i> PRESETS & LOUDNESS <span class="help-icon" data-tooltip="マスタリングの方向性を決めるジャンルプリセットの選択と、目標とする出力音圧を設定するセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <span data-tooltip="パラメータと選択設定をファイル読み込み直後のAI自動マスタリング状態にリセットします。" style="display: inline-block;">
+          <h2 class="panel-title"><i class="fa-solid fa-sliders"></i> PRESETS & LOUDNESS <span class="help-icon" data-tooltip="曲のジャンルを選び、YouTubeやCDなどの配信先に合わせた音量に自動調整するセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <span data-tooltip="クリックすると、すべてのツマミを手動変更する前の、AIが自動調整してくれた最初の状態に戻します。" style="display: inline-block;">
             <button id="btn-reset-master" class="tab-btn" style="font-size: 0.65rem; font-weight: 700; color: var(--accent-cyan); border: 1px dashed rgba(0, 242, 254, 0.35); padding: 2px 8px; border-radius: 4px; background: transparent; cursor: pointer; transition: all 0.2s;" disabled>RESET</button>
           </span>
         </div>
         <div class="control-group">
-          <label for="preset-select">GENRE PRESET <span class="help-icon" data-tooltip="ジャンル別の推奨設定。マスタリングの音響バランスの基準になります。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <label for="preset-select">GENRE PRESET <span class="help-icon" data-tooltip="曲のジャンルを選びます。選ぶだけで、そのジャンルに最適な音響バランス（低音や高音の比率）が自動適用されます。"><i class="fa-regular fa-circle-question"></i></span></label>
           <div class="select-wrapper">
             <select id="preset-select">
               <option value="auto" selected>✨ AI AUTO (Smart Auto-Mastering)</option>
@@ -191,7 +191,7 @@
           </div>
         </div>
         <div class="control-group">
-          <label for="loudness-select">LOUDNESS TARGET <span class="help-icon" data-tooltip="配信先や用途に合わせた目標音圧。ジャンル変更時も維持されます。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <label for="loudness-select">LOUDNESS TARGET <span class="help-icon" data-tooltip="配信先に合わせた音量（音圧）の目標値です。「YouTube（Streaming）」や「CD用（Loud）」などを選ぶと、最適な音量感に補正されます。"><i class="fa-regular fa-circle-question"></i></span></label>
           <div class="select-wrapper">
             <select id="loudness-select">
               <option value="genre" selected>💿 GENRE DEFAULT (Recommended)</option>
@@ -205,12 +205,12 @@
         </div>
         <div class="input-output-gains">
           <div class="control-row">
-            <span class="control-label">INPUT GAIN <span class="help-icon" data-tooltip="入力音量。AIは音割れを防ぐため自動でピークを-6dBFSに調整します。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <span class="control-label">INPUT GAIN <span class="help-icon" data-tooltip="曲の元の音量を調整します。右に回すと大きくなります。AI解析ボタンを押すと、歪まない最適な音量に自動設定されます。"><i class="fa-regular fa-circle-question"></i></span></span>
             <input type="range" id="input-gain-slider" min="-12" max="12" step="0.1" value="0">
             <span class="value-readout" id="input-gain-val">0.0 dB</span>
           </div>
           <div class="control-row">
-            <span class="control-label">OUTPUT CEILING <span class="help-icon" data-tooltip="出力の上限値。デジタルクリッピング（音割れ）を防ぐ最終防壁。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <span class="control-label">OUTPUT CEILING <span class="help-icon" data-tooltip="出力される最大音量の上限値です。「-1.0dB」にしておくことで、音量をどれだけ上げても音が割れる（歪む）のを完全に防ぎます。"><i class="fa-regular fa-circle-question"></i></span></span>
             <input type="range" id="ceiling-slider" min="-2.0" max="-0.1" step="0.1" value="-1.0">
             <span class="value-readout" id="ceiling-val">-1.0 dB</span>
           </div>
@@ -219,7 +219,7 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wand-magic-sparkles"></i> AI SMART ASSISTANCE <span class="help-icon" data-tooltip="AIによる自動音響解析と最適化。AUTOオンでプリセット変更時も自動連動。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-wand-magic-sparkles"></i> AI SMART ASSISTANCE <span class="help-icon" data-tooltip="AIが曲全体をスキャンし、人間が判断しにくい低音・中音・高音の音量バランスを一瞬で整えて自動補正します。"><i class="fa-regular fa-circle-question"></i></span></h2>
           <div style="display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 0.65rem; color: var(--text-secondary); font-weight: 600;">AUTO</span>
             <label class="switch" style="transform: scale(0.8); transform-origin: right center; margin: 0; display: inline-flex;">
@@ -277,17 +277,17 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wind"></i> NOISE CLEANER <span class="help-icon" data-tooltip="音源内の定常的な雑音や低域ノイズを検知・除去するクリーナーセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-wind"></i> NOISE CLEANER <span class="help-icon" data-tooltip="曲の中に含まれる不要な雑音（空調音やシャーという砂嵐音）を検知して取り除くセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="control-row">
-          <span class="control-label">RUMBLE CUT <span class="help-icon" data-tooltip="低周波ノイズ（空調音、AC電源ハム音など）を物理的にカットします。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">RUMBLE CUT <span class="help-icon" data-tooltip="オンにすると、マイクの吹かれや空調の「ゴー」という不要な超低音ノイズだけをカットし、低音をすっきりさせます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <label class="switch">
             <input type="checkbox" id="rumble-cut-enable">
             <span class="slider-round"></span>
           </label>
         </div>
         <div class="control-row">
-          <span class="control-label">HISS REDUCER <span class="help-icon" data-tooltip="高音域のヒスノイズ（シャー音）を、演奏音に合わせて動的にフィルタリングして低減します（0%で無効）。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">HISS REDUCER <span class="help-icon" data-tooltip="スライダーを右に動かすと、曲の後ろで鳴っている「サー」という砂嵐ノイズを除去します。演奏中は自動でオフになり音質を守ります。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="hiss-reducer-slider" min="0" max="100" step="1" value="0">
           <span class="value-readout" id="hiss-reducer-val">OFF</span>
         </div>
@@ -295,7 +295,7 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-fire"></i> HARMONIC SATURATOR <span class="help-icon" data-tooltip="アナログ機器特有の温かみや倍音成分（歪み）を付加し、音の太さや存在感を強化します。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-fire"></i> HARMONIC SATURATOR <span class="help-icon" data-tooltip="音に「温かみ」や「太さ」を与えるセクションです。真空管やテープを通したような心地よい粘りと艶を曲に加えます。"><i class="fa-regular fa-circle-question"></i></span></h2>
           <label class="switch">
             <input type="checkbox" id="sat-enable" checked>
             <span class="slider-round"></span>
@@ -312,12 +312,12 @@
           </div>
         </div>
         <div class="control-row">
-          <span class="control-label">DRIVE <span class="help-icon" data-tooltip="倍音成分（歪み）の増幅量。高くすると音に太さとサチュレーションのキャラクターを加えます。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">DRIVE <span class="help-icon" data-tooltip="音の太さや温かみの「強さ」を調整します。右に動かすほど音がジリッと太くなり、ロックなどで迫力が出ます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="sat-drive-slider" min="1" max="100" step="1" value="15">
           <span class="value-readout" id="sat-drive-val">15%</span>
         </div>
         <div class="control-row">
-          <span class="control-label">MIX <span class="help-icon" data-tooltip="原音とサチュレーション（歪み）が加わった音のブレンド比率。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">MIX <span class="help-icon" data-tooltip="太くした音を、元のきれいな音にどれだけ混ぜるかの割合です。通常は10%〜20%前後で自然に馴染ませます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="sat-mix-slider" min="0" max="100" step="1" value="30">
           <span class="value-readout" id="sat-mix-val">30%</span>
         </div>
@@ -325,7 +325,7 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 3-BAND EQ <span class="help-icon" data-tooltip="低域・中域・高域の周波数バランスを調整するマスタリング用イコライザー。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 3-BAND EQ <span class="help-icon" data-tooltip="「低音」「中音」「高音」の3つの帯域の音量を調整し、音がこもっている、またはキンキンする場合に直感的に直せます。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="eq-band">
           <div class="eq-band-header">
@@ -355,7 +355,7 @@
           <div class="eq-row" style="margin-top: 4px;">
             <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
               <span class="band-name" style="font-size: 0.65rem;">MID Q</span>
-              <span class="help-icon" data-tooltip="中域フィルターの帯域幅（鋭さ）。値が小さいほど広範囲に効き、大きいほどピンポイントで鋭く効きます。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="調整する「音の幅（広さ）」です。小さくすると中音域全体が滑らかに変わり、大きくするとボーカルなどを狙い撃ちできます。"><i class="fa-regular fa-circle-question"></i></span>
             </div>
             <input type="range" id="eq-mid-q" min="0.3" max="5.0" step="0.1" value="1.0">
             <span class="value-readout" id="eq-mid-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">1.0</span>
@@ -378,30 +378,30 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-compress"></i> GLUE COMPRESSOR <span class="help-icon" data-tooltip="音量のばらつきを整え、各パートを接着（グルー）して楽曲全体に一体感を与えます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-compress"></i> GLUE COMPRESSOR <span class="help-icon" data-tooltip="バラバラに聴こえる各楽器の音量を均一に整え、「1つの曲としてのまとまり感（接着効果）」を生み出します。"><i class="fa-regular fa-circle-question"></i></span></h2>
           <label class="switch">
             <input type="checkbox" id="comp-enable" checked>
             <span class="slider-round"></span>
           </label>
         </div>
         <div class="control-row">
-          <span class="control-label">THRESHOLD <span class="help-icon" data-tooltip="圧縮（コンプレッション）を開始する音量のしきい値。これを超える音量を抑え込みます。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">THRESHOLD <span class="help-icon" data-tooltip="どの音量を超えたら音を抑え込むか（圧縮）の基準値です。左に動かす（下げる）ほど、全体の音量が平均化されまとまります。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="comp-thresh" min="-40" max="0" step="0.5" value="-16">
           <span class="value-readout" id="comp-thresh-val">-16.0 dB</span>
         </div>
         <div class="control-row">
-          <span class="control-label">RATIO <span class="help-icon" data-tooltip="しきい値を超えた音量をどれだけの割合で圧縮するかを指定する比率。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">RATIO <span class="help-icon" data-tooltip="音を抑え込む「強さ」の比率です。数値を大きくするほど、大きな音が強く抑え込まれ、全体の音量が均一になります。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="comp-ratio" min="1.1" max="10.0" step="0.1" value="1.8">
           <span class="value-readout" id="comp-ratio-val">1.8:1</span>
         </div>
         <div class="control-row flex-sliders">
           <div class="slider-col">
-            <span class="control-label">ATTACK <span class="help-icon" data-tooltip="しきい値を超えてから実際に圧縮が最大値に達するまでの時間。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <span class="control-label">ATTACK <span class="help-icon" data-tooltip="音が大きくなってからコンプレッサーが作動するまでの「反応時間」です。遅くするとキック等のアタック感が残ります。"><i class="fa-regular fa-circle-question"></i></span></span>
             <input type="range" id="comp-attack" min="0.005" max="0.3" step="0.005" value="0.03" class="vertical">
             <span class="value-readout" id="comp-attack-val">30 ms</span>
           </div>
           <div class="slider-col">
-            <span class="control-label">RELEASE <span class="help-icon" data-tooltip="しきい値を下回ってから圧縮が解除されるまでの時間。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <span class="control-label">RELEASE <span class="help-icon" data-tooltip="音量が小さくなってから元の音量に戻るまでの「戻り速度」です。曲のテンポに合わせて自然にリリースタイムを調整します。"><i class="fa-regular fa-circle-question"></i></span></span>
             <input type="range" id="comp-release" min="0.05" max="1.5" step="0.01" value="0.15" class="vertical">
             <span class="value-readout" id="comp-release-val">150 ms</span>
           </div>
@@ -410,10 +410,10 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-arrows-left-right"></i> STEREO IMAGER <span class="help-icon" data-tooltip="音の広がり（ステレオ感）を調整します。200Hz以下はモノラル化して低音の位相を守ります。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-arrows-left-right"></i> STEREO IMAGER <span class="help-icon" data-tooltip="曲全体の「左右の広がり感」を調整します。ベースなどの超低音は自動でセンターに集められ、音が軽くなるのを防ぎます。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="control-row">
-          <span class="control-label">WIDTH <span class="help-icon" data-tooltip="ステレオイメージの広がりを調整します。100%が原音通りで、増やすと広がり、減らすとモノラルに近づきます。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">WIDTH <span class="help-icon" data-tooltip="左右の広がり幅です。100%より大きくすると部屋全体に広がる立体的な音響になり、小さくすると中央に音が凝縮されます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="width-slider" min="0" max="2" step="0.02" value="1.2">
           <span class="value-readout" id="width-val">120%</span>
         </div>
@@ -428,10 +428,10 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-block-brick"></i> MAXIMIZER & LIMITER <span class="help-icon" data-tooltip="音質を破綻させず、音割れ（クリップ）を防ぐ最終段。全体の音圧を限界まで持ち上げます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-block-brick"></i> MAXIMIZER & LIMITER <span class="help-icon" data-tooltip="音を歪ませずに全体の音量（音圧）を商業用CDや配信サイトレベルまで引き上げる、最後の仕上げ調整ステージです。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="control-row">
-          <span class="control-label">GAIN BOOST <span class="help-icon" data-tooltip="全体の音量を持ち上げるゲインブースト量。リミッターが設定天井を超える音を完璧にカットします。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">GAIN BOOST <span class="help-icon" data-tooltip="音量の「引き上げ量」です。右に動かすほど全体の音がパワフルに大きくなります。音割れは自動で防がれます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="limiter-gain" min="0" max="15" step="0.1" value="4.0">
           <span class="value-readout" id="limiter-gain-val">+4.0 dB</span>
         </div>
@@ -444,14 +444,14 @@
       <!-- AUDIO SPICES CABINET PANEL -->
       <section class="panel control-panel full-width">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-pepper-hot"></i> AUDIO SPICES <span class="help-icon" data-tooltip="マスタリング適用後の最終出力に対して、お好みのスパイス（味付け）を手軽にON/OFFして聴き比べできます。プリセットの元の値を書き換えずに追加されます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-pepper-hot"></i> AUDIO SPICES <span class="help-icon" data-tooltip="ワンクリックで曲の「雰囲気」を微調整できるプロ秘伝のスパイス効果です。複数組み合わせて好みの音に仕上げられます。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="spice-cabinet-grid">
           
           <div class="spice-card">
             <label class="spice-label" for="spice-air-treble">
               <span class="spice-title">高音の抜け感 <span class="spice-sub">AIR TREBLE</span></span>
-              <span class="help-icon" data-tooltip="高音域（12kHz付近）にシルキーな空気感をプラスし、クリアで華やかなサウンドにします。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、高音域のさらに上の空気感を持ち上げ、透き通った高級感のある澄んだサウンドにします。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-air-treble">
@@ -462,7 +462,7 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-kick-punch">
               <span class="spice-title">キックの抜け感 <span class="spice-sub">KICK PUNCH</span></span>
-              <span class="help-icon" data-tooltip="キックドラムの輪郭（アタック感）を引き立たせ、ボトムエンドのパンチを強化します。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、ドラムのキックのアタック感を際立たせ、ノリの良い元気で力強いサウンドにします。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-kick-punch">
@@ -473,7 +473,7 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-stereo-wider">
               <span class="spice-title">空間の広がり <span class="spice-sub">STEREO WIDER</span></span>
-              <span class="help-icon" data-tooltip="ステレオイメージの横方向の広がりを拡張し、空間的な包入感を高めます。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、ボーカルや楽器のステレオ感を広げ、コンサートホールで聴いているような広大な音響にします。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-stereo-wider">
@@ -484,7 +484,7 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-vocal-presence">
               <span class="spice-title">ボーカルの存在感 <span class="spice-sub">VOCAL PRESENCE</span></span>
-              <span class="help-icon" data-tooltip="中音域（2.5kHz付近）にフォーカスし、ボーカルやリード楽器を一歩前に引き出します。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、歌声や主旋律の帯域（中音域）を前に引き出し、歌詞などをはっきりと聴き取りやすくします。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-vocal-presence">
@@ -495,7 +495,7 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-analog-warmth">
               <span class="spice-title">アナログの温かみ <span class="spice-sub">ANALOG WARMTH</span></span>
-              <span class="help-icon" data-tooltip="サチュレーターのブレンドとドライブを高め、温かみのあるアナログ機器の質感を加えます。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、真空管サチュレーションを強め、音の尖りを丸くして耳に優しい温かいアナログ質感にします。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-analog-warmth">
@@ -506,7 +506,7 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-loudness-push">
               <span class="spice-title">音圧プッシュ <span class="spice-sub">LOUDNESS PUSH</span></span>
-              <span class="help-icon" data-tooltip="リミッターのブーストを底上げし、元のバランスを崩さずにもう一歩大きな音圧を引き出します。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、全体のバランスを壊さずに、もう一歩しっかりとパワフルに音量感（音圧）をプッシュします。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-loudness-push">
@@ -519,7 +519,7 @@
 
       <section class="panel export-panel full-width" style="display: flex; flex-direction: row; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
         <div class="control-group" style="flex: 1; min-width: 200px;">
-          <label for="export-format">EXPORT FORMAT <span class="help-icon" data-tooltip="出力する音声ファイルのフォーマット。高品質アーカイブ用のWAVや、配布に便利なMP3が選べます。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <label for="export-format">EXPORT FORMAT <span class="help-icon" data-tooltip="保存するファイル形式です。最高音質なら「WAV」、スマホへの転送やシェアに便利な軽量サイズなら「MP3」を選んでください。"><i class="fa-regular fa-circle-question"></i></span></label>
           <div class="select-wrapper">
             <select id="export-format">
               <option value="wav" selected>WAV (16-bit PCM / Lossless)</option>
@@ -546,7 +546,7 @@
 
       <section class="panel console-panel full-width">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-terminal"></i> SYSTEM DIAGNOSTIC LOG <span class="help-icon" data-tooltip="AIによる音響解析結果やシステムの動作状況をリアルタイムに出力する診断ログコンソールです。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-terminal"></i> SYSTEM DIAGNOSTIC LOG <span class="help-icon" data-tooltip="AIが曲のどこを検知して、どう補正したかの「思考プロセス」をリアルタイムで表示する診断モニターです。"><i class="fa-regular fa-circle-question"></i></span></h2>
           <button id="btn-clear-log" class="tab-btn">CLEAR LOG</button>
         </div>
         <div class="console-log-content" id="debug-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8;">
