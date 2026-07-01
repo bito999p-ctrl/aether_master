@@ -1871,14 +1871,14 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   // Suggested values (ノイズクリーナーの感度を引き上げ、より的確にノイズを除去するよう最適化)
   let sugRumbleCut = false;
-  if (rumbleNoiseFloorDb > -55.0) { // -48dB から -55dB へ引き下げ、微小な超低域ハムノイズも確実にカット
+  if (rumbleNoiseFloorDb > -58.0) { // -55dB から -58dB へ微調整し、微小な超低域ハムも検出しやすく補正
     sugRumbleCut = true;
   }
 
   let sugHissAmount = 0;
-  if (hissNoiseFloorDb > -62.0) { // -56dB から -62dB へ引き下げ、微細なヒスノイズも検出
-    // -62dB で 0%、-38dB で最大 90% になるよう感度比率を強化（3.75倍スケール）
-    const rawHiss = Math.round(Math.max(0, Math.min(90, (hissNoiseFloorDb + 62.0) * 3.75)));
+  if (hissNoiseFloorDb > -68.0) { // -62dB から -68dB へ緩やかに感度を引き下げ、ヘッドホンで聴こえるノイズ成分を自動検出
+    // -68dB で 0%、-40dB で最大 90% になるよう比率を調整（3.2倍スケール）
+    const rawHiss = Math.round(Math.max(0, Math.min(90, (hissNoiseFloorDb + 68.0) * 3.2)));
     
     // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音（シンセパッドやエフェクトの残響等）である可能性が高いため
     // 高域の過剰な低域カット（LPF）を防ぐため、Hiss Reducerの適用度を減衰・または完全にOFFにする安全スケーラー
