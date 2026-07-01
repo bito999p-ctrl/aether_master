@@ -522,9 +522,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
   const sibilanceNotchDynamicGain = context.createGain();
-  // Only apply dynamic notch if sibilanceDynamicFreq is detected by AI analyzer (> 0)
+  // Decoupled from hissAmount: always fully active (-6.0dB max depth) if sibilance is detected
   const isSibilant = (parameters.sibilanceDynamicFreq && parameters.sibilanceDynamicFreq > 0);
-  const initDynamicCut = isSibilant ? (-6.0 * (setupHissAmount / 100.0)) : 0.0;
+  const initDynamicCut = isSibilant ? -6.0 : 0.0;
   sibilanceNotchDynamicGain.gain.setValueAtTime(initDynamicCut, context.currentTime);
   envelopeSmoother.connect(sibilanceNotchDynamicGain);
   sibilanceNotchDynamicGain.connect(sibilanceNotch.gain);
@@ -1562,10 +1562,10 @@ function updateNoiseCutNodes() {
     const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
 
-    // Dynamically scale dynamic sibilance notch (de-esser) gain: cuts up to -6.0dB when sibilance is detected by AI (> 0)
+    // Decoupled from hissAmount: always active at -6.0dB max if sibilance is detected
     if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
       const isSibilant = (params.sibilanceDynamicFreq && params.sibilanceDynamicFreq > 0);
-      const dynamicCut = isSibilant ? (-6.0 * (hissAmount / 100.0)) : 0.0;
+      const dynamicCut = isSibilant ? -6.0 : 0.0;
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.sibilanceDynamicFreq || 9000, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
@@ -1940,7 +1940,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
       const ratio = val / (localFloor + 1e-9);
       
-      const isSunoRange = (peakFreq >= 7000 && peakFreq <= 12000);
+      const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
       const thresholdMultiplier = isSunoRange ? 1.20 : 1.25;
       
       let isBroad = false;
@@ -2021,9 +2021,9 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     }
   }
 
-  // 7kHz〜12kHzのキンキン音（サ行やシンバルの鋭いピーク）をスキャン（ブースト判定クランプで先に使用するため上部で定義）
+  // 8kHz〜11kHzのキンキン音（サ行やシンバルの鋭いピーク）をスキャン（ブースト判定クランプで先に使用するため上部で定義）
   let sibilanceDynamicFreq = 0;
-  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 7000 && p.freq <= 12000);
+  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 8000 && p.freq <= 11000);
   if (sunoRangePeaks.length > 0) {
     // スコア（共鳴の鋭さ・目立ち具合）が最大のピークを特定
     sunoRangePeaks.sort((a, b) => b.score - a.score);
