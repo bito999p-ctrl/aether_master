@@ -2111,7 +2111,12 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     eqHighAdjustment = Math.min(3.0, -highDiffDb * 0.8);
   }
 
-  const eqHighGain = Math.max(-5.0, Math.min(4.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+  let eqHighGain = Math.max(-5.0, Math.min(4.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを禁止し、安全のために少なくとも-1.0dB以下の減衰量にクランプ
+  if (sibilanceDynamicFreq > 0) {
+    eqHighGain = Math.min(-1.0, eqHighGain);
+  }
 
   // 中域はジャンルの特性を維持
   const eqMidGain = basePreset.eqMidGain;
