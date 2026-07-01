@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AETHERMASTER // Web Audio Mastering Suite (Pro Clean)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+  <link rel="stylesheet" href="styles.css?v=3.27.4">
+  <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C8CLCFDVX2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-C8CLCFDVX2');
+    </script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon"><i class="fa-solid fa-wave-square"></i></div>
+        <div class="logo-text">
+          <div style="font-family: var(--font-tech); font-size: 0.65rem; font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.2em; line-height: 1; margin-bottom: 3px; text-transform: uppercase;">BitoMusic Presents</div>
+          <h1 style="line-height: 1.1;">AETHERMASTER</h1>
+          <span class="subtitle">PROFESSIONAL DIGITAL MASTERING SUITE</span>
+        </div>
+      </div>
+      
+      <div class="header-nav">
+        <a href="https://bito999p-ctrl.github.io/bitomusic" class="nav-link-btn portal-btn">
+          <i class="fa-solid fa-house"></i> <span>Bito Music ポータル</span>
+        </a>
+        <a href="https://aether-player-blush.vercel.app/" class="nav-link-btn player-btn" target="_blank">
+          <i class="fa-solid fa-compact-disc"></i> <span>AetherPlayer</span>
+        </a>
+      </div>
+
+      <div class="system-status">
+        <span class="status-indicator online" id="status-indicator"></span>
+        <span class="status-text" id="status-text">SYSTEM READY</span>
+      </div>
+    </header>
+
+    <section class="panel upload-panel" id="main-upload-panel">
+      <div id="drop-zone" class="drop-zone">
+        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+        <p class="upload-text">オーディオファイルをドラッグ＆ドロップ、または<span class="browse-btn">ファイルを選択</span></p>
+        <span class="upload-hint">対応形式: WAV, MP3, FLAC, M4A</span>
+        <input type="file" id="file-input" accept=".mp3,.wav,.flac,.m4a,audio/*" class="hidden-input">
+      </div>
+    </section>
+
+    <div class="app-sticky-header-wrapper">
+      <section class="panel player-panel hidden" id="player-panel">
+        <div id="track-info" class="track-info">
+          <div class="track-details">
+            <span class="track-name" id="track-name">Song_Title.wav</span>
+            <span class="track-meta" id="track-meta">44.1 kHz / 16-bit Stereo | 03:42</span>
+          </div>
+          <div id="desktop-controls-target">
+            <div class="player-controls">
+              <button id="btn-play-pause" class="ctrl-btn play-btn" title="再生/一時停止" disabled>
+                <i class="fa-solid fa-play"></i>
+              </button>
+              <button id="btn-stop" class="ctrl-btn" title="停止" disabled>
+                <i class="fa-solid fa-stop"></i>
+              </button>
+              <button id="btn-loop" class="ctrl-btn toggle-btn" title="ループ" disabled>
+                <i class="fa-solid fa-repeat"></i>
+              </button>
+              <button id="btn-bypass" class="ctrl-btn bypass-btn toggle-btn alert-toggle" title="バイパス (A/Bテスト)" disabled>
+                <span>BYPASS</span>
+              </button>
+              <button id="btn-quick-upload" class="ctrl-btn upload-btn" title="ファイルを選択">
+                <i class="fa-solid fa-folder-open"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel visualizer-panel">
+        <div class="panel-header" style="flex-direction: column; align-items: stretch; gap: 8px;">
+          <div class="visualizer-header-top" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <h2 class="panel-title" style="margin: 0;"><i class="fa-solid fa-chart-simple"></i> VISUALIZERS <span class="help-icon" data-tooltip="リアルタイムの周波数スペクトラムと、マスタリング前後の波形を視覚的に比較・モニタリングするエリアです。"><i class="fa-regular fa-circle-question"></i></span></h2>
+            <button id="btn-toggle-monitor" class="monitor-toggle-btn" style="display: none;" title="モニター表示切替">
+              <i class="fa-solid fa-chevron-up" style="transition: transform 0.3s;"></i>
+            </button>
+          </div>
+          <div class="visualizer-header-bottom" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; flex-wrap: wrap;">
+            <div class="visualizer-tabs">
+              <button class="tab-btn active" data-target="spectrum">FREQUENCY SPECTRUM</button>
+              <button class="tab-btn" data-target="waveform">WAVEFORM COMPARE</button>
+            </div>
+            <div id="mobile-controls-target" class="mobile-controls-container">
+              <div class="mobile-controls-placeholder"></div>
+              <div id="mobile-track-name" class="mobile-sticky-track-name"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="visualizer-content">
+          <div class="visualizer-container" id="spectrum-view">
+            <canvas id="spectrum-canvas"></canvas>
+          </div>
+          <div class="visualizer-container hidden" id="waveform-view">
+            <canvas id="waveform-canvas"></canvas>
+            <div class="waveform-legend">
+              <span class="legend-item dry"><span class="legend-color"></span>ORIGINAL</span>
+              <span class="legend-item wet"><span class="legend-color"></span>MASTERED</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+      <main class="dashboard-grid">
+        <section class="panel meter-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-gauge-high"></i> ANALYZERS <span class="help-icon" data-tooltip="L/Rの入力音量、コンプレッサーのゲイン削減量（GR）、出力音量、およびステレオの左右相関を監視するメーター群です。"><i class="fa-regular fa-circle-question"></i></span></h2>
+        </div>
+        <div class="meters-container">
+          <div class="meter-channel">
+            <div class="meter-track">
+              <div class="meter-fill" id="meter-in-l"></div>
+              <div class="meter-fill" id="meter-in-r"></div>
+            </div>
+            <span class="meter-label">INPUT</span>
+          </div>
+          <div class="meter-channel gr-meter">
+            <div class="meter-track gr-track">
+              <div class="meter-fill gr-fill" id="meter-gr"></div>
+            </div>
+            <span class="meter-label">GR (dB)</span>
+          </div>
+          <div class="meter-channel">
+            <div class="meter-track">
+              <div class="meter-fill" id="meter-out-l"></div>
+              <div class="meter-fill" id="meter-out-r"></div>
+            </div>
+            <span class="meter-label">OUTPUT</span>
+          </div>
+        </div>
+        <div class="correlation-panel">
+          <span class="corr-label">STEREO CORRELATION</span>
+          <div class="corr-track">
+            <div class="corr-pointer" id="corr-pointer"></div>
+            <div class="corr-ticks">
+              <span>-1</span>
+              <span>0</span>
+              <span>+1</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-sliders"></i> PRESETS & LOUDNESS <span class="help-icon" data-tooltip="マスタリングの方向性を決めるジャンルプリセットの選択と、目標とする出力音圧を設定するセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <span data-tooltip="パラメータと選択設定をファイル読み込み直後のAI自動マスタリング状態にリセットします。" style="display: inline-block;">
+            <button id="btn-reset-master" class="tab-btn" style="font-size: 0.65rem; font-weight: 700; color: var(--accent-cyan); border: 1px dashed rgba(0, 242, 254, 0.35); padding: 2px 8px; border-radius: 4px; background: transparent; cursor: pointer; transition: all 0.2s;" disabled>RESET</button>
+          </span>
+        </div>
+        <div class="control-group">
+          <label for="preset-select">GENRE PRESET <span class="help-icon" data-tooltip="ジャンル別の推奨設定。マスタリングの音響バランスの基準になります。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <div class="select-wrapper">
+            <select id="preset-select">
+              <option value="auto" selected>✨ AI AUTO (Smart Auto-Mastering)</option>
+              <option value="custom">CUSTOM (Manual Settings)</option>
+              <option value="pops">POPS (Balanced Warmth)</option>
+              <option value="rnb">R&B / SOUL (Silky Vocals & Warm Groove)</option>
+              <option value="rock">ROCK (Punchy Mid/Tape Drive)</option>
+              <option value="metal">METAL / PUNK (Fast Compressor & Mid-Scoop)</option>
+              <option value="edm">EDM / DANCE (Punchy Lows & Bright Highs)</option>
+              <option value="hiphop">HIP HOP / TRAP (Heavy Sub-Bass & Crisp Transients)</option>
+              <option value="lofi">LO-FI / CHILL (Warm Tape Saturation & Mellow Highs)</option>
+              <option value="hardcore">HARDCORE (Aggressive/Loud)</option>
+              <option value="ambient">AMBIENT (Ultra Wide/Clean)</option>
+              <option value="podcast">PODCAST / VOICE (Centered Speech Intelligibility)</option>
+              <option value="classic">CLASSIC (Pure Dynamics)</option>
+              <option value="jazz">JAZZ (Vintage Smooth)</option>
+              <option value="acoustic">ACOUSTIC / FOLK (Natural Dynamics & Woody Mids)</option>
+            </select>
+          </div>
+        </div>
+        <div class="control-group">
+          <label for="loudness-select">LOUDNESS TARGET <span class="help-icon" data-tooltip="配信先や用途に合わせた目標音圧。ジャンル変更時も維持されます。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <div class="select-wrapper">
+            <select id="loudness-select">
+              <option value="genre" selected>💿 GENRE DEFAULT (Recommended)</option>
+              <option value="streaming">STREAMING (-14 LUFS / Safe)</option>
+              <option value="club">CLUB/MODERN (-9 LUFS / Punchy)</option>
+              <option value="loud">LOUD (-7 LUFS / Intense)</option>
+              <option value="pure">PURE (-18 LUFS / High Dynamic)</option>
+              <option value="custom">CUSTOM (Manual / AI Adjusted)</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-output-gains">
+          <div class="control-row">
+            <span class="control-label">INPUT GAIN <span class="help-icon" data-tooltip="入力音量。AIは音割れを防ぐため自動でピークを-6dBFSに調整します。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <input type="range" id="input-gain-slider" min="-12" max="12" step="0.1" value="0">
+            <span class="value-readout" id="input-gain-val">0.0 dB</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">OUTPUT CEILING <span class="help-icon" data-tooltip="出力の上限値。デジタルクリッピング（音割れ）を防ぐ最終防壁。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <input type="range" id="ceiling-slider" min="-2.0" max="-0.1" step="0.1" value="-1.0">
+            <span class="value-readout" id="ceiling-val">-1.0 dB</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-wand-magic-sparkles"></i> AI SMART ASSISTANCE <span class="help-icon" data-tooltip="AIによる自動音響解析と最適化。AUTOオンでプリセット変更時も自動連動。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 0.65rem; color: var(--text-secondary); font-weight: 600;">AUTO</span>
+            <label class="switch" style="transform: scale(0.8); transform-origin: right center; margin: 0; display: inline-flex;">
+              <input type="checkbox" id="ai-auto-run" checked>
+              <span class="slider-round"></span>
+            </label>
+          </div>
+        </div>
+        <div class="control-group" style="margin-bottom: 0;">
+          <button id="btn-ai-analyze" class="action-btn" style="padding: 10px 15px; font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-purple) 0%, #ff007f 100%); border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(157, 78, 221, 0.2); cursor: pointer; color: #fff; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" disabled>
+            <i class="fa-solid fa-wand-magic-sparkles"></i> ANALYZE & AUTO-CORRECT EQ
+          </button>
+          
+          <div id="ai-report" class="ai-report" style="margin-top: 12px; font-family: var(--font-tech); font-size: 0.7rem; color: var(--text-muted); display: none; background: rgba(0, 0, 0, 0.35); border-radius: 8px; padding: 12px; border: 1px solid rgba(157, 78, 221, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); animation: fadeIn 0.4s ease;">
+            
+            <div style="text-align: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; color: var(--accent-cyan); font-weight: 700; font-size: 0.72rem; letter-spacing: 1px;">
+              <i class="fa-solid fa-square-poll-vertical"></i> ANALYZED SONIC PROFILE <span id="ai-detected-genre-badge" style="background: var(--accent-purple); color: #fff; padding: 1px 6px; border-radius: 4px; font-size: 0.58rem; margin-left: 6px; font-weight: 800; display: inline-block; box-shadow: 0 0 6px rgba(157,78,221,0.5);">AUTO</span>
+            </div>
+
+            <div class="ai-stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
+                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">DYNAMICS (CREST FACTOR)</div>
+                <div id="ai-crest-factor" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">-- dB</div>
+                <div id="ai-crest-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
+                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">STEREO PHASE CORR</div>
+                <div id="ai-stereo-corr" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">--</div>
+                <div id="ai-stereo-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
+                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">BASS DEVIATION</div>
+                <div id="ai-bass-energy" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">--</div>
+                <div id="ai-bass-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
+                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">TREBLE DEVIATION</div>
+                <div id="ai-treble-energy" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">--</div>
+                <div id="ai-treble-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
+              </div>
+            </div>
+
+            <div style="color: var(--accent-purple); font-weight: 700; margin-bottom: 4px; font-size: 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2px; letter-spacing: 0.5px;">
+              <i class="fa-solid fa-scissors"></i> HIGH-FREQ HARSH PEAKS DETECTED
+            </div>
+            <div id="ai-notches-list" style="display: flex; flex-direction: column; gap: 3px; font-size: 0.65rem; margin-bottom: 8px;">
+              <div style="color: var(--text-muted); font-style: italic; padding: 2px;">No resonances analyzed yet.</div>
+            </div>
+
+            <div style="color: #00f2fe; font-weight: 700; margin-bottom: 4px; font-size: 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2px; letter-spacing: 0.5px;">
+              <i class="fa-solid fa-sliders"></i> DYNAMIC AUTO-ADJUSTMENTS APPLIED
+            </div>
+            <div id="ai-adjustments-list" style="display: flex; flex-direction: column; gap: 1px; font-size: 0.65rem;">
+              <div style="color: var(--text-muted); font-style: italic; padding: 2px;">No adjustments applied yet.</div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-wind"></i> NOISE CLEANER <span class="help-icon" data-tooltip="音源内の定常的な雑音や低域ノイズを検知・除去するクリーナーセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
+        </div>
+        <div class="control-row">
+          <span class="control-label">RUMBLE CUT <span class="help-icon" data-tooltip="低周波ノイズ（空調音、AC電源ハム音など）を物理的にカットします。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <label class="switch">
+            <input type="checkbox" id="rumble-cut-enable">
+            <span class="slider-round"></span>
+          </label>
+        </div>
+        <div class="control-row">
+          <span class="control-label">HISS REDUCER <span class="help-icon" data-tooltip="高音域のヒスノイズ（シャー音）を、演奏音に合わせて動的にフィルタリングして低減します（0%で無効）。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="hiss-reducer-slider" min="0" max="100" step="1" value="0">
+          <span class="value-readout" id="hiss-reducer-val">OFF</span>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-fire"></i> HARMONIC SATURATOR <span class="help-icon" data-tooltip="アナログ機器特有の温かみや倍音成分（歪み）を付加し、音の太さや存在感を強化します。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <label class="switch">
+            <input type="checkbox" id="sat-enable" checked>
+            <span class="slider-round"></span>
+          </label>
+        </div>
+        <div class="control-group">
+          <label for="sat-type">SATURATION CHARACTER</label>
+          <div class="select-wrapper">
+            <select id="sat-type">
+              <option value="tube">TUBE (Warm asymmetric harmonics)</option>
+              <option value="tape">TAPE (Analog tape soft clipping)</option>
+              <option value="hardcore">DRIVE (Aggressive solid-state drive)</option>
+            </select>
+          </div>
+        </div>
+        <div class="control-row">
+          <span class="control-label">DRIVE <span class="help-icon" data-tooltip="倍音成分（歪み）の増幅量。高くすると音に太さとサチュレーションのキャラクターを加えます。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="sat-drive-slider" min="1" max="100" step="1" value="15">
+          <span class="value-readout" id="sat-drive-val">15%</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">MIX <span class="help-icon" data-tooltip="原音とサチュレーション（歪み）が加わった音のブレンド比率。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="sat-mix-slider" min="0" max="100" step="1" value="30">
+          <span class="value-readout" id="sat-mix-val">30%</span>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 3-BAND EQ <span class="help-icon" data-tooltip="低域・中域・高域の周波数バランスを調整するマスタリング用イコライザー。"><i class="fa-regular fa-circle-question"></i></span></h2>
+        </div>
+        <div class="eq-band">
+          <div class="eq-band-header">
+            <span class="band-name">LOW SHELF</span>
+            <span class="value-readout" id="eq-low-val">+1.0 dB</span>
+          </div>
+          <div class="eq-row">
+            <input type="range" id="eq-low-gain" min="-12" max="12" step="0.5" value="1.0">
+            <div class="freq-input-group">
+              <input type="number" id="eq-low-freq" min="40" max="250" value="120">
+              <span class="unit">Hz</span>
+            </div>
+          </div>
+        </div>
+        <div class="eq-band">
+          <div class="eq-band-header">
+            <span class="band-name">MID PEAK</span>
+            <span class="value-readout" id="eq-mid-val">-0.5 dB</span>
+          </div>
+          <div class="eq-row">
+            <input type="range" id="eq-mid-gain" min="-12" max="12" step="0.5" value="-0.5">
+            <div class="freq-input-group">
+              <input type="number" id="eq-mid-freq" min="300" max="5000" value="1000">
+              <span class="unit">Hz</span>
+            </div>
+          </div>
+          <div class="eq-row" style="margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
+              <span class="band-name" style="font-size: 0.65rem;">MID Q</span>
+              <span class="help-icon" data-tooltip="中域フィルターの帯域幅（鋭さ）。値が小さいほど広範囲に効き、大きいほどピンポイントで鋭く効きます。"><i class="fa-regular fa-circle-question"></i></span>
+            </div>
+            <input type="range" id="eq-mid-q" min="0.3" max="5.0" step="0.1" value="1.0">
+            <span class="value-readout" id="eq-mid-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">1.0</span>
+          </div>
+        </div>
+        <div class="eq-band">
+          <div class="eq-band-header">
+            <span class="band-name">HIGH SHELF</span>
+            <span class="value-readout" id="eq-high-val">+1.5 dB</span>
+          </div>
+          <div class="eq-row">
+            <input type="range" id="eq-high-gain" min="-12" max="12" step="0.5" value="1.5">
+            <div class="freq-input-group">
+              <input type="number" id="eq-high-freq" min="6000" max="16000" value="10000">
+              <span class="unit">Hz</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-compress"></i> GLUE COMPRESSOR <span class="help-icon" data-tooltip="音量のばらつきを整え、各パートを接着（グルー）して楽曲全体に一体感を与えます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <label class="switch">
+            <input type="checkbox" id="comp-enable" checked>
+            <span class="slider-round"></span>
+          </label>
+        </div>
+        <div class="control-row">
+          <span class="control-label">THRESHOLD <span class="help-icon" data-tooltip="圧縮（コンプレッション）を開始する音量のしきい値。これを超える音量を抑え込みます。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="comp-thresh" min="-40" max="0" step="0.5" value="-16">
+          <span class="value-readout" id="comp-thresh-val">-16.0 dB</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">RATIO <span class="help-icon" data-tooltip="しきい値を超えた音量をどれだけの割合で圧縮するかを指定する比率。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="comp-ratio" min="1.1" max="10.0" step="0.1" value="1.8">
+          <span class="value-readout" id="comp-ratio-val">1.8:1</span>
+        </div>
+        <div class="control-row flex-sliders">
+          <div class="slider-col">
+            <span class="control-label">ATTACK <span class="help-icon" data-tooltip="しきい値を超えてから実際に圧縮が最大値に達するまでの時間。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <input type="range" id="comp-attack" min="0.005" max="0.3" step="0.005" value="0.03" class="vertical">
+            <span class="value-readout" id="comp-attack-val">30 ms</span>
+          </div>
+          <div class="slider-col">
+            <span class="control-label">RELEASE <span class="help-icon" data-tooltip="しきい値を下回ってから圧縮が解除されるまでの時間。"><i class="fa-regular fa-circle-question"></i></span></span>
+            <input type="range" id="comp-release" min="0.05" max="1.5" step="0.01" value="0.15" class="vertical">
+            <span class="value-readout" id="comp-release-val">150 ms</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-arrows-left-right"></i> STEREO IMAGER <span class="help-icon" data-tooltip="音の広がり（ステレオ感）を調整します。200Hz以下はモノラル化して低音の位相を守ります。"><i class="fa-regular fa-circle-question"></i></span></h2>
+        </div>
+        <div class="control-row">
+          <span class="control-label">WIDTH <span class="help-icon" data-tooltip="ステレオイメージの広がりを調整します。100%が原音通りで、増やすと広がり、減らすとモノラルに近づきます。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="width-slider" min="0" max="2" step="0.02" value="1.2">
+          <span class="value-readout" id="width-val">120%</span>
+        </div>
+        <div class="width-visualizer">
+          <div class="width-arc">
+            <div class="width-beam left" id="width-beam-l"></div>
+            <div class="width-beam right" id="width-beam-r"></div>
+            <div class="width-center-node"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-block-brick"></i> MAXIMIZER & LIMITER <span class="help-icon" data-tooltip="音質を破綻させず、音割れ（クリップ）を防ぐ最終段。全体の音圧を限界まで持ち上げます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+        </div>
+        <div class="control-row">
+          <span class="control-label">GAIN BOOST <span class="help-icon" data-tooltip="全体の音量を持ち上げるゲインブースト量。リミッターが設定天井を超える音を完璧にカットします。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="limiter-gain" min="0" max="15" step="0.1" value="4.0">
+          <span class="value-readout" id="limiter-gain-val">+4.0 dB</span>
+        </div>
+        <div class="limiter-meter">
+          <div class="limiter-light" id="limiter-light">LIMITING</div>
+          <span class="limiter-warning hidden" id="limiter-warning">CLIPPING DETECTED</span>
+        </div>
+      </section>
+
+      <!-- AUDIO SPICES CABINET PANEL -->
+      <section class="panel control-panel full-width">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-pepper-hot"></i> AUDIO SPICES <span class="help-icon" data-tooltip="マスタリング適用後の最終出力に対して、お好みのスパイス（味付け）を手軽にON/OFFして聴き比べできます。プリセットの元の値を書き換えずに追加されます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+        </div>
+        <div class="spice-cabinet-grid">
+          
+          <div class="spice-card">
+            <label class="spice-label" for="spice-air-treble">
+              <span class="spice-title">高音の抜け感 <span class="spice-sub">AIR TREBLE</span></span>
+              <span class="help-icon" data-tooltip="高音域（12kHz付近）にシルキーな空気感をプラスし、クリアで華やかなサウンドにします。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-air-treble">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="spice-card">
+            <label class="spice-label" for="spice-kick-punch">
+              <span class="spice-title">キックの抜け感 <span class="spice-sub">KICK PUNCH</span></span>
+              <span class="help-icon" data-tooltip="キックドラムの輪郭（アタック感）を引き立たせ、ボトムエンドのパンチを強化します。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-kick-punch">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="spice-card">
+            <label class="spice-label" for="spice-stereo-wider">
+              <span class="spice-title">空間の広がり <span class="spice-sub">STEREO WIDER</span></span>
+              <span class="help-icon" data-tooltip="ステレオイメージの横方向の広がりを拡張し、空間的な包入感を高めます。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-stereo-wider">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="spice-card">
+            <label class="spice-label" for="spice-vocal-presence">
+              <span class="spice-title">ボーカルの存在感 <span class="spice-sub">VOCAL PRESENCE</span></span>
+              <span class="help-icon" data-tooltip="中音域（2.5kHz付近）にフォーカスし、ボーカルやリード楽器を一歩前に引き出します。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-vocal-presence">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="spice-card">
+            <label class="spice-label" for="spice-analog-warmth">
+              <span class="spice-title">アナログの温かみ <span class="spice-sub">ANALOG WARMTH</span></span>
+              <span class="help-icon" data-tooltip="サチュレーターのブレンドとドライブを高め、温かみのあるアナログ機器の質感を加えます。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-analog-warmth">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="spice-card">
+            <label class="spice-label" for="spice-loudness-push">
+              <span class="spice-title">音圧プッシュ <span class="spice-sub">LOUDNESS PUSH</span></span>
+              <span class="help-icon" data-tooltip="リミッターのブーストを底上げし、元のバランスを崩さずにもう一歩大きな音圧を引き出します。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-loudness-push">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="panel export-panel full-width" style="display: flex; flex-direction: row; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
+        <div class="control-group" style="flex: 1; min-width: 200px;">
+          <label for="export-format">EXPORT FORMAT <span class="help-icon" data-tooltip="出力する音声ファイルのフォーマット。高品質アーカイブ用のWAVや、配布に便利なMP3が選べます。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <div class="select-wrapper">
+            <select id="export-format">
+              <option value="wav" selected>WAV (16-bit PCM / Lossless)</option>
+              <option value="mp3-320">MP3 (320 kbps / High Quality)</option>
+              <option value="mp3-192">MP3 (192 kbps / Standard)</option>
+            </select>
+          </div>
+        </div>
+        <div class="export-actions" style="flex: 2; min-width: 250px;">
+          <button id="btn-export" class="action-btn export-btn" disabled>
+            <i class="fa-solid fa-circle-down"></i> RENDER & DOWNLOAD MASTERED AUDIO
+          </button>
+        </div>
+        <div id="export-progress-bar" class="progress-bar-container hidden">
+          <div class="progress-label">
+            <span>RENDERING MASTERED TRACK...</span>
+            <span id="export-percentage">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel console-panel full-width">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-terminal"></i> SYSTEM DIAGNOSTIC LOG <span class="help-icon" data-tooltip="AIによる音響解析結果やシステムの動作状況をリアルタイムに出力する診断ログコンソールです。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <button id="btn-clear-log" class="tab-btn">CLEAR LOG</button>
+        </div>
+        <div class="console-log-content" id="debug-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8;">
+          <div class="log-line info" style="color: #00f2fe;">[SYSTEM] AetherMaster Diagnostic Console Initialized. Ready.</div>
+        </div>
+      </section>
+    </main>
+
+    <section class="panel credits-panel full-width" style="margin-top: 20px; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 8px; padding: 16px; font-family: 'Outfit', sans-serif;">
+      <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary, #94a3b8); letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 6px;">
+        <i class="fa-solid fa-scale-balanced"></i> THIRD-PARTY SOFTWARE NOTICES & LICENSES
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; font-size: 0.68rem; color: var(--text-muted, #64748b); line-height: 1.5;">
+        
+        <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.02);">
+          <span style="color: #fff; font-weight: 600;">lamejs (v1.2.1)</span><br>
+          Copyright (c) zhuker (<a href="https://github.com/zhuker/lamejs" target="_blank" style="color: #00f2fe; text-decoration: none;">GitHub</a>)<br>
+          Licensed under LGPL-3.0.<br>
+          <span style="font-style: italic; font-size: 0.62rem;">This application links dynamically to the unmodified lamejs library. LAME is an MP3 encoding research project hosted at <a href="http://lame.sourceforge.net" target="_blank" style="color: #00f2fe; text-decoration: none;">lame.sourceforge.net</a>.</span>
+        </div>
+
+        <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.02);">
+          <span style="color: #fff; font-weight: 600;">wav-exporter.js</span><br>
+          Client-side 16-bit PCM WAV audio encoder utility module.<br>
+          <span style="font-style: italic; font-size: 0.62rem;">Utilized for baking processed OfflineAudioContext render buffers into downloadable Lossless PCM format.</span>
+        </div>
+
+        <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.02);">
+          <span style="color: #fff; font-weight: 600;">Assets & Iconography</span><br>
+          Font Awesome Free (Icons: CC BY 4.0, Code: MIT)<br>
+          Google Fonts: Outfit / JetBrains Mono (SIL OFL 1.1)<br>
+          <span style="font-style: italic; font-size: 0.62rem;">UI typography and iconography are powered by open-source digital asset distributions.</span>
+        </div>
+
+        <div style="background: rgba(239, 68, 68, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.15);">
+          <span style="color: #f87171; font-weight: 600;"><i class="fa-solid fa-ban"></i> Proprietary Source Code Notice</span><br>
+          <span style="color: #fff; font-weight: 500;">Unauthorized copying, redistribution, modification, or reuse of any part of this software's source code is strictly prohibited.</span> All rights reserved.
+        </div>
+
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      <div class="footer-links">
+        <a href="guide.html" target="_blank"><i class="fa-solid fa-book-open"></i> 初心者向けガイド</a>
+        <span class="separator">|</span>
+        <a href="tech.html" target="_blank"><i class="fa-solid fa-circle-info"></i> 技術仕様・DSP詳細</a>
+        <span class="separator">|</span>
+        <a href="updates.html" target="_blank"><i class="fa-solid fa-clock-rotate-left"></i> 更新記録</a>
+      </div>
+      <p>&copy; 2026 BitoMusic // AETHERMASTER. All Rights Reserved. Powered by Web Audio API & Antigravity AI.<br><span style="opacity: 0.45; font-size: 0.75rem; margin-top: 4px; display: inline-block; font-family: 'JetBrains Mono', monospace;">Pro Clean v1.0.0</span></p>
+    </footer>
+  </div>
+
+  <div id="mobile-help-sheet" class="mobile-help-sheet hidden">
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
+    <div class="sheet-content">
+      <div class="sheet-header">
+        <h3 id="sheet-title">HELP</h3>
+        <button class="sheet-close" id="btn-close-sheet"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="sheet-body" id="sheet-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="clean.js?v=1.0.0"></script>
+</body>
+</html>
