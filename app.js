@@ -1786,10 +1786,11 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     // FFT実行
     fft(re, im);
     
-    // スペクトラム強度の算出と累積
+    // スペクトラム強度の算出と累積（FFTサイズで正規化して正確なdBFSレベルにする）
     const spec = new Float32Array(fftSize / 2);
+    const normFactor = fftSize / 2; // Cooley-Tukey FFTの振幅正規化係数 (N/2)
     for (let j = 0; j < fftSize / 2; j++) {
-      const mag = Math.sqrt(re[j] * re[j] + im[j] * im[j]);
+      const mag = Math.sqrt(re[j] * re[j] + im[j] * im[j]) / normFactor;
       avgSpectrum[j] += mag / numSlices;
       spec[j] = mag;
     }
