@@ -1843,8 +1843,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       const thresholdMultiplier = isSunoRange ? 1.20 : 1.25; // 20% / 25% の突出度（約1.6dB〜1.9dB）で検出し、残存する微細なキンキン音も漏らさず補足
       
       if (ratio > thresholdMultiplier) {
-        // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（削りすぎを防止しつつ効果的に除去するため最大 -4.0dB までに制限）
-        let cutDb = -Math.min(4.0, Math.max(1.0, (ratio - thresholdMultiplier) * 5.0 + 1.0));
+        // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（Q=15.0の鋭さにより原音を活かしつつ確実にトゲを抜くため、最大 -6.0dB まで深くカット）
+        let cutDb = -Math.min(6.0, Math.max(1.5, (ratio - thresholdMultiplier) * 8.0 + 1.5));
         
         // 8500Hz未満のカットは、極度に痩せるのを防ぎつつもしっかり金属音を除去できる安全ライン（85%）に緩和
         if (peakFreq < 8500) {
