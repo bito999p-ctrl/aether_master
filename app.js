@@ -100,14 +100,14 @@ const params = {
   
   // AI Corrective Notches (up to 8)
   correctiveNotches: [
-    { freq: 9000, gain: 0.0, enabled: false },
-    { freq: 7500, gain: 0.0, enabled: false },
-    { freq: 11000, gain: 0.0, enabled: false },
-    { freq: 6500, gain: 0.0, enabled: false },
-    { freq: 9500, gain: 0.0, enabled: false },
-    { freq: 8000, gain: 0.0, enabled: false },
-    { freq: 10500, gain: 0.0, enabled: false },
-    { freq: 7000, gain: 0.0, enabled: false }
+    { freq: 9000, gain: 0.0, q: 15.0, isBroad: false, enabled: false },
+    { freq: 7500, gain: 0.0, q: 15.0, isBroad: false, enabled: false },
+    { freq: 11000, gain: 0.0, q: 15.0, isBroad: false, enabled: false },
+    { freq: 6500, gain: 0.0, q: 15.0, isBroad: false, enabled: false },
+    { freq: 9500, gain: 0.0, q: 15.0, isBroad: false, enabled: false },
+    { freq: 8000, gain: 0.0, q: 15.0, isBroad: false, enabled: false },
+    { freq: 10500, gain: 0.0, q: 15.0, isBroad: false, enabled: false },
+    { freq: 7000, gain: 0.0, q: 15.0, isBroad: false, enabled: false }
   ],
   
   // Saturator
@@ -514,49 +514,49 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   const eqCorrective1 = context.createBiquadFilter();
   eqCorrective1.type = 'peaking';
-  eqCorrective1.Q.setValueAtTime(15.0, context.currentTime); // 非常に鋭いQ値で高域の艶感を保護
+  eqCorrective1.Q.setValueAtTime(parameters.correctiveNotches[0].q || 15.0, context.currentTime); // 動的なQ値（ピーキーな共鳴音は15.0、広範囲の盛り上がりは6.0）
   eqCorrective1.frequency.setValueAtTime(parameters.correctiveNotches[0].freq, context.currentTime);
   eqCorrective1.gain.setValueAtTime(parameters.correctiveNotches[0].enabled ? (parameters.correctiveNotches[0].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective2 = context.createBiquadFilter();
   eqCorrective2.type = 'peaking';
-  eqCorrective2.Q.setValueAtTime(15.0, context.currentTime);
+  eqCorrective2.Q.setValueAtTime(parameters.correctiveNotches[1].q || 15.0, context.currentTime);
   eqCorrective2.frequency.setValueAtTime(parameters.correctiveNotches[1].freq, context.currentTime);
   eqCorrective2.gain.setValueAtTime(parameters.correctiveNotches[1].enabled ? (parameters.correctiveNotches[1].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective3 = context.createBiquadFilter();
   eqCorrective3.type = 'peaking';
-  eqCorrective3.Q.setValueAtTime(15.0, context.currentTime);
+  eqCorrective3.Q.setValueAtTime(parameters.correctiveNotches[2].q || 15.0, context.currentTime);
   eqCorrective3.frequency.setValueAtTime(parameters.correctiveNotches[2].freq, context.currentTime);
   eqCorrective3.gain.setValueAtTime(parameters.correctiveNotches[2].enabled ? (parameters.correctiveNotches[2].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective4 = context.createBiquadFilter();
   eqCorrective4.type = 'peaking';
-  eqCorrective4.Q.setValueAtTime(15.0, context.currentTime);
+  eqCorrective4.Q.setValueAtTime(parameters.correctiveNotches[3].q || 15.0, context.currentTime);
   eqCorrective4.frequency.setValueAtTime(parameters.correctiveNotches[3].freq, context.currentTime);
   eqCorrective4.gain.setValueAtTime(parameters.correctiveNotches[3].enabled ? (parameters.correctiveNotches[3].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective5 = context.createBiquadFilter();
   eqCorrective5.type = 'peaking';
-  eqCorrective5.Q.setValueAtTime(15.0, context.currentTime);
+  eqCorrective5.Q.setValueAtTime(parameters.correctiveNotches[4].q || 15.0, context.currentTime);
   eqCorrective5.frequency.setValueAtTime(parameters.correctiveNotches[4].freq, context.currentTime);
   eqCorrective5.gain.setValueAtTime(parameters.correctiveNotches[4].enabled ? (parameters.correctiveNotches[4].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective6 = context.createBiquadFilter();
   eqCorrective6.type = 'peaking';
-  eqCorrective6.Q.setValueAtTime(15.0, context.currentTime);
+  eqCorrective6.Q.setValueAtTime(parameters.correctiveNotches[5].q || 15.0, context.currentTime);
   eqCorrective6.frequency.setValueAtTime(parameters.correctiveNotches[5].freq, context.currentTime);
   eqCorrective6.gain.setValueAtTime(parameters.correctiveNotches[5].enabled ? (parameters.correctiveNotches[5].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective7 = context.createBiquadFilter();
   eqCorrective7.type = 'peaking';
-  eqCorrective7.Q.setValueAtTime(15.0, context.currentTime);
+  eqCorrective7.Q.setValueAtTime(parameters.correctiveNotches[6].q || 15.0, context.currentTime);
   eqCorrective7.frequency.setValueAtTime(parameters.correctiveNotches[6].freq, context.currentTime);
   eqCorrective7.gain.setValueAtTime(parameters.correctiveNotches[6].enabled ? (parameters.correctiveNotches[6].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective8 = context.createBiquadFilter();
   eqCorrective8.type = 'peaking';
-  eqCorrective8.Q.setValueAtTime(15.0, context.currentTime);
+  eqCorrective8.Q.setValueAtTime(parameters.correctiveNotches[7].q || 15.0, context.currentTime);
   eqCorrective8.frequency.setValueAtTime(parameters.correctiveNotches[7].freq, context.currentTime);
   eqCorrective8.gain.setValueAtTime(parameters.correctiveNotches[7].enabled ? (parameters.correctiveNotches[7].gain * setupHissFactor) : 0.0, context.currentTime);
 
@@ -1589,6 +1589,9 @@ function updateCorrectiveEqNodes() {
       
       const targetGain = n.enabled ? n.gain : 0.0;
       activeNodes[nodeName].gain.setTargetAtTime(targetGain, audioContext.currentTime, 0.01);
+      
+      const targetQ = n.q || 15.0;
+      activeNodes[nodeName].Q.setTargetAtTime(targetQ, audioContext.currentTime, 0.01);
     }
   }
 }
@@ -1886,24 +1889,57 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     
     // 極大値（ピーク）判定
     if (val > avgSpectrum[j - 1] && val > avgSpectrum[j + 1]) {
-      // 周辺のローカルノイズフロア（ピークの直近2ビンを除いた左右5ビンの平均）を計算
+      // 1. 鋭いホイッスル共鳴の検出（直近2ビンを除いた左右5ビンの平均）
       const localBins = [
         avgSpectrum[j - 5], avgSpectrum[j - 4], avgSpectrum[j - 3], avgSpectrum[j - 2],
         avgSpectrum[j + 2], avgSpectrum[j + 3], avgSpectrum[j + 4], avgSpectrum[j + 5]
       ];
       const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
-      
       const ratio = val / (localFloor + 1e-9);
       
-      // Suno AIの音源で特に耳に刺やすく 9kHz〜10kHz 帯域（マージンを取り8800Hz〜10200Hz）の判定
       const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
-      const thresholdMultiplier = isSunoRange ? 1.20 : 1.25; // 20% / 25% の突出度（約1.6dB〜1.9dB）で検出し、残存する微細なキンキン音も漏らさず補足
+      const thresholdMultiplier = isSunoRange ? 1.20 : 1.25;
+      
+      let isBroad = false;
+      let peakQ = 15.0;
+      let ratioToUse = ratio;
+      let thresholdToUse = thresholdMultiplier;
       
       if (ratio > thresholdMultiplier) {
-        // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（Q=15.0の鋭さにより原音を活かしつつ確実にトゲを抜くため、最大 -6.0dB まで深くカット）
-        let cutDb = -Math.min(6.0, Math.max(1.5, (ratio - thresholdMultiplier) * 8.0 + 1.5));
+        // 鋭い金属音（WHISTLE）として検知
+        isBroad = false;
+        peakQ = 15.0;
+      } else {
+        // 2. 広範囲な高音の盛り上がり（HUMP：例: 10kHz〜12kHz帯域の膨らみ）を検知するために広い近傍フロアと比較
+        let wideSum = 0;
+        let wideCount = 0;
+        for (let k = j - 30; k <= j + 30; k++) {
+          if (k >= sibilanceMinBin && k <= sibilanceMaxBin && (k < j - 8 || k > j + 8)) {
+            wideSum += avgSpectrum[k];
+            wideCount++;
+          }
+        }
+        const wideFloor = wideSum / (wideCount || 1);
+        const ratioWide = val / (wideFloor + 1e-9);
         
-        // 8500Hz未満のカットは、極度に痩せるのを防ぎつつもしっかり金属音を除去できる安全ライン（85%）に緩和
+        if (ratioWide > 1.30) { // 周辺の広い平均より30%（約2.3dB）以上盛り上がっている場合
+          isBroad = true;
+          peakQ = 6.0; // 緩やかなノッチ（Q=6.0）で膨らみを滑らかに補正する
+          ratioToUse = ratioWide;
+          thresholdToUse = 1.30;
+        }
+      }
+      
+      if (ratio > thresholdMultiplier || isBroad) {
+        // 減衰幅の算出
+        let cutDb = 0;
+        if (isBroad) {
+          cutDb = -Math.min(4.5, Math.max(1.5, (ratioToUse - thresholdToUse) * 6.0 + 1.5));
+        } else {
+          cutDb = -Math.min(6.0, Math.max(1.5, (ratioToUse - thresholdToUse) * 8.0 + 1.5));
+        }
+        
+        // 8500Hz未満のカットは緩和
         if (peakFreq < 8500) {
           cutDb *= 0.85;
         }
@@ -1911,10 +1947,12 @@ function analyzeAudioResonances(buffer, userPresetKey) {
         rawPeaks.push({
           freq: peakFreq,
           cut: cutDb,
+          q: peakQ,
           val: val,
           isSunoRange: isSunoRange,
-          // 突出度（ratio）を優先度スコアにする（Suno帯域は1.5倍の優先度）
-          score: ratio * (isSunoRange ? 1.5 : 1.0)
+          isBroad: isBroad,
+          // スコア計算：鋭い共鳴（ホイッスル）を最優先にしつつ、広範囲の盛り上がり（ハンプ）もカバー
+          score: ratioToUse * (isSunoRange ? 1.5 : 1.0) * (isBroad ? 0.9 : 1.0)
         });
       }
     }
@@ -1929,7 +1967,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     if (filteredPeaks.length >= 6) break;
     const tooClose = filteredPeaks.some(p => Math.abs(p.freq - peak.freq) < 400);
     if (!tooClose) {
-      filteredPeaks.push({ freq: peak.freq, cut: peak.cut });
+      filteredPeaks.push({ freq: peak.freq, cut: peak.cut, q: peak.q, isBroad: peak.isBroad });
     }
   }
 
@@ -3005,18 +3043,23 @@ function runAiAnalysis(showLog = true) {
     try {
       const result = analyzeAudioResonances(audioBuffer);
       
-      // 5連ノッチフィルターの設定適用
+      // AIノッチフィルターの設定適用
       params.correctiveNotches.forEach((n, idx) => {
         if (result.notches[idx]) {
           n.freq = result.notches[idx].freq;
           n.gain = result.notches[idx].cut;
+          n.q = result.notches[idx].q || 15.0;
+          n.isBroad = result.notches[idx].isBroad || false;
           n.enabled = true;
           if (showLog) {
-            logToUI(`[AI Assistant] Detected harsh peak #${idx+1} at ${n.freq} Hz. Applied corrective cut of ${n.gain.toFixed(1)} dB.`, "warning");
+            const peakType = n.isBroad ? "Broad Hump" : "Sharp Whistle";
+            logToUI(`[AI Assistant] Detected harsh peak #${idx+1} (${peakType}) at ${n.freq} Hz. Applied corrective cut of ${n.gain.toFixed(1)} dB (Q=${n.q.toFixed(1)}).`, "warning");
           }
         } else {
           n.enabled = false;
           n.gain = 0.0;
+          n.q = 15.0;
+          n.isBroad = false;
         }
       });
       
@@ -3095,11 +3138,20 @@ function runAiAnalysis(showLog = true) {
       notchListContainer.innerHTML = '';
       if (result.notches.length > 0) {
         result.notches.forEach((n, idx) => {
+          const typeLabel = n.isBroad ? "HUMP" : "WHISTLE";
+          const bgColor = n.isBroad ? "rgba(0, 242, 254, 0.08)" : "rgba(255, 0, 85, 0.08)";
+          const borderColor = n.isBroad ? "rgba(0, 242, 254, 0.15)" : "rgba(255, 0, 85, 0.15)";
+          const badgeColor = n.isBroad ? "rgba(0, 242, 254, 0.2)" : "rgba(255, 0, 85, 0.2)";
+          const badgeTextColor = n.isBroad ? "#00f2fe" : "var(--accent-red)";
+          
           notchListContainer.innerHTML += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 0, 85, 0.08); border-radius: 4px; padding: 4px 8px; border: 1px solid rgba(255, 0, 85, 0.15);">
-              <span style="color: var(--text-secondary);"><i class="fa-solid fa-circle-notch"></i> PEAK ${idx+1}:</span>
-              <span style="color: #fff; font-weight: 700;">${n.freq} Hz</span>
-              <span style="color: var(--accent-red); font-weight: 700;">${n.cut.toFixed(1)} dB</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; background: ${bgColor}; border-radius: 4px; padding: 4px 8px; border: 1px solid ${borderColor}; gap: 8px;">
+              <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-circle-notch"></i> PEAK ${idx+1}:
+              </span>
+              <span style="background: ${badgeColor}; color: ${badgeTextColor}; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px;">${typeLabel}</span>
+              <span style="color: #fff; font-weight: 700; flex-grow: 1; text-align: center;">${n.freq} Hz</span>
+              <span style="color: ${badgeTextColor}; font-weight: 700;">${n.cut.toFixed(1)} dB</span>
             </div>
           `;
         });
