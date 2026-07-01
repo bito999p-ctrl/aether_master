@@ -1940,7 +1940,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
       const ratio = val / (localFloor + 1e-9);
       
-      const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
+      const isSunoRange = (peakFreq >= 7000 && peakFreq <= 12000);
       const thresholdMultiplier = isSunoRange ? 1.20 : 1.25;
       
       let isBroad = false;
@@ -2021,9 +2021,9 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     }
   }
 
-  // 8kHz〜11kHzのキンキン音（サ行やシンバルの鋭いピーク）をスキャン（ブースト判定クランプで先に使用するため上部で定義）
+  // 7kHz〜12kHzのキンキン音（サ行やシンバルの鋭いピーク）をスキャン（ブースト判定クランプで先に使用するため上部で定義）
   let sibilanceDynamicFreq = 0;
-  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 8000 && p.freq <= 11000);
+  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 7000 && p.freq <= 12000);
   if (sunoRangePeaks.length > 0) {
     // スコア（共鳴の鋭さ・目立ち具合）が最大のピークを特定
     sunoRangePeaks.sort((a, b) => b.score - a.score);
