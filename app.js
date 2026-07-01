@@ -1076,7 +1076,7 @@ function startRenderLoop() {
 
   let lastFrameTime = 0;
   const isMobile = window.innerWidth <= 768;
-  const targetFps = isMobile ? 30 : 60;
+  const targetFps = isMobile ? 15 : 60; // スマホ時は15fpsに制限し描画負荷を低減
   const fpsInterval = 1000 / targetFps;
 
   function draw(currentTime) {
@@ -1130,72 +1130,78 @@ function startRenderLoop() {
           specCtx.lineTo(currentW, line.y);
           specCtx.stroke();
           
-          specCtx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-          specCtx.font = '8px "JetBrains Mono", monospace';
-          specCtx.textAlign = 'right';
-          specCtx.fillText(line.label, currentW - 8, line.y - 4);
-        });
-
-        // 2. 縦軸（周波数）のグリッド線とラベル描画
-        const freqLines = [
-          { f: 100, label: '100Hz' },
-          { f: 500, label: '500Hz' },
-          { f: 1000, label: '1kHz' },
-          { f: 2000, label: '2kHz' },
-          { f: 5000, label: '5kHz' },
-          { f: 10000, label: '10kHz' },
-          { f: 15000, label: '15kHz' }
-        ];
-
-        freqLines.forEach(line => {
-          const x = getX(line.f);
-          if (x > 0 && x < currentW) {
-            specCtx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-            specCtx.beginPath();
-            specCtx.moveTo(x, 0);
-            specCtx.lineTo(x, currentH - 18);
-            specCtx.stroke();
-            
-            specCtx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-            specCtx.font = '9px "JetBrains Mono", monospace';
-            specCtx.textAlign = 'center';
-            specCtx.fillText(line.label, x, currentH - 5);
+          if (!isMobile) {
+            specCtx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+            specCtx.font = '8px "JetBrains Mono", monospace';
+            specCtx.textAlign = 'right';
+            specCtx.fillText(line.label, currentW - 8, line.y - 4);
           }
         });
 
-        // Spectrum curve gradient
-        const gradient = specCtx.createLinearGradient(0, currentH, 0, 0);
-        gradient.addColorStop(0, 'rgba(157, 78, 221, 0.0)');
-        gradient.addColorStop(0.5, 'rgba(157, 78, 221, 0.3)');
-        gradient.addColorStop(1, 'rgba(0, 242, 254, 0.8)');
+        // 2. 縦軸（周波数）のグリッド線とラベル描画（スマホ時はテキスト描画・縦グリッド線を省略して省電力化）
+        if (!isMobile) {
+          const freqLines = [
+            { f: 100, label: '100Hz' },
+            { f: 500, label: '500Hz' },
+            { f: 1000, label: '1kHz' },
+            { f: 2000, label: '2kHz' },
+            { f: 5000, label: '5kHz' },
+            { f: 10000, label: '10kHz' },
+            { f: 15000, label: '15kHz' }
+          ];
 
-        specCtx.beginPath();
-        specCtx.moveTo(0, currentH);
+          freqLines.forEach(line => {
+            const x = getX(line.f);
+            if (x > 0 && x < currentW) {
+              specCtx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+              specCtx.beginPath();
+              specCtx.moveTo(x, 0);
+              specCtx.lineTo(x, currentH - 18);
+              specCtx.stroke();
+              
+              specCtx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+              specCtx.font = '9px "JetBrains Mono", monospace';
+              specCtx.textAlign = 'center';
+              specCtx.fillText(line.label, x, currentH - 5);
+            }
+          });
+        }
 
         const sliceWidth = currentW / (bufferLength * 0.7); // Clip top frequencies (>15kHz) for nicer scale
         let x = 0;
+        const step = isMobile ? 6 : 1; // スマホ時は描画頂点数を6分の1に間引いてCPU負荷を激減
 
-        for (let i = 0; i < bufferLength * 0.7; i++) {
-          // Logarithmic scaling for human ear frequency resolution
-          const percentIdx = i / (bufferLength * 0.7);
-          const logIdx = Math.floor(Math.pow(percentIdx, 1.8) * (bufferLength * 0.7));
-          const v = dataArray[logIdx] / 255.0;
-          const y = currentH - v * (currentH * 0.82);
+        // 3. グラデーション塗りつぶし（スマホ時はGPUのフィルレート負荷削減のため完全にスキップ）
+        if (!isMobile) {
+          const gradient = specCtx.createLinearGradient(0, currentH, 0, 0);
+          gradient.addColorStop(0, 'rgba(157, 78, 221, 0.0)');
+          gradient.addColorStop(0.5, 'rgba(157, 78, 221, 0.3)');
+          gradient.addColorStop(1, 'rgba(0, 242, 254, 0.8)');
 
-          if (i === 0) {
-            specCtx.moveTo(x, y);
-          } else {
-            specCtx.lineTo(x, y);
+          specCtx.beginPath();
+          specCtx.moveTo(0, currentH);
+
+          for (let i = 0; i < bufferLength * 0.7; i++) {
+            const percentIdx = i / (bufferLength * 0.7);
+            const logIdx = Math.floor(Math.pow(percentIdx, 1.8) * (bufferLength * 0.7));
+            const v = dataArray[logIdx] / 255.0;
+            const y = currentH - v * (currentH * 0.82);
+
+            if (i === 0) {
+              specCtx.moveTo(x, y);
+            } else {
+              specCtx.lineTo(x, y);
+            }
+
+            x += sliceWidth;
           }
-
-          x += sliceWidth;
+          specCtx.lineTo(currentW, currentH);
+          specCtx.fillStyle = gradient;
+          specCtx.fill();
         }
-        specCtx.lineTo(currentW, currentH);
-        specCtx.fillStyle = gradient;
-        specCtx.fill();
 
-        // Outer glowing line
-        specCtx.lineWidth = 2.5;
+        // 4. 外枠のアウトライン描画（スマホ時は間引きループを適用し、線幅を1.5pxへ細めてミニマル表示化）
+        specCtx.lineWidth = isMobile ? 1.5 : 2.5;
         specCtx.strokeStyle = '#00f2fe';
         const useShadows = window.innerWidth > 768;
         if (useShadows) {
@@ -1205,18 +1211,19 @@ function startRenderLoop() {
         
         specCtx.beginPath();
         x = 0;
-        for (let i = 0; i < bufferLength * 0.7; i++) {
+        for (let i = 0; i < bufferLength * 0.7; i += step) {
           const percentIdx = i / (bufferLength * 0.7);
           const logIdx = Math.floor(Math.pow(percentIdx, 1.8) * (bufferLength * 0.7));
           const v = dataArray[logIdx] / 255.0;
           const y = currentH - v * (currentH * 0.82);
 
+          const currentX = i * sliceWidth;
+
           if (i === 0) {
-            specCtx.moveTo(x, y);
+            specCtx.moveTo(currentX, y);
           } else {
-            specCtx.lineTo(x, y);
+            specCtx.lineTo(currentX, y);
           }
-          x += sliceWidth;
         }
         specCtx.stroke();
         if (useShadows) {
