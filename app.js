@@ -1931,6 +1931,13 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       }
       
       if (ratio > thresholdMultiplier || isBroad) {
+        // Hiss Reducer (LPF) の遮断天井より高い周波数は、既にLPFで十分減衰されるため
+        // イコライザーでの過剰な削り（ダブルカット）を防ぐためにノッチ対象から除外する
+        const ceilFreq = 20000.0 - (7000.0 * (sugHissAmount / 100.0));
+        if (peakFreq > ceilFreq - 500) {
+          continue;
+        }
+
         // 減衰幅の算出
         let cutDb = 0;
         if (isBroad) {
