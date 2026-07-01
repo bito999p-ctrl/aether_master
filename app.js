@@ -1133,8 +1133,8 @@ function startRenderLoop() {
           specCtx.stroke();
           
           if (!isMobile) {
-            specCtx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-            specCtx.font = '8px "JetBrains Mono", monospace';
+            specCtx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+            specCtx.font = '10px "JetBrains Mono", monospace';
             specCtx.textAlign = 'right';
             specCtx.fillText(line.label, currentW - 8, line.y - 4);
           }
@@ -1161,8 +1161,8 @@ function startRenderLoop() {
               specCtx.lineTo(x, currentH - 18);
               specCtx.stroke();
               
-              specCtx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-              specCtx.font = '9px "JetBrains Mono", monospace';
+              specCtx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+              specCtx.font = '10px "JetBrains Mono", monospace';
               specCtx.textAlign = 'center';
               specCtx.fillText(line.label, x, currentH - 5);
             }
