@@ -3236,6 +3236,11 @@ function runAiAnalysis(showLog = true) {
         } else {
           logToUI(`[Noise Cleaner] High-frequency noise floor is clean (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer is OFF.`, "info");
         }
+
+        // サ行のキンキン共鳴音（シビランス）の検知・クランプ保護のログ
+        if (sug.sibilanceDynamicFreq > 0) {
+          logToUI(`[AI Assistant] Detected harsh vocal sibilance at ${sug.sibilanceDynamicFreq} Hz. Clamped High Shelf EQ to ${sug.eqHighGain.toFixed(1)} dB to prevent ear fatigue and activated dynamic De-esser notch.`, "warning");
+        }
       }
       
       params.inputGainDb = sug.inputGainDb;

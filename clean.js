@@ -606,8 +606,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     compressor.ratio.setValueAtTime(1.0, context.currentTime); // 1:1 ratio = Bypassed dynamics
   }
 
-  // Directly connect eqHigh to compressor, completely bypassing sibilanceNotch and correctiveNotches for a clean signal path
-  eqHigh.connect(compressor);
+  // Connect eqHigh to sibilanceNotch, then to compressor, keeping the dynamic de-esser active while bypassing the 8x surgical notches
+  eqHigh.connect(sibilanceNotch);
+  sibilanceNotch.connect(compressor);
 
   // 5. Stereo Imager Matrix (Mid/Side Processing)
   const splitter = context.createChannelSplitter(2);
@@ -1928,9 +1929,33 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     sugHissAmount = Math.round(rawHiss * quietnessScale);
   }
 
-  // Pro Clean: 鋭い共鳴ノッチ補正やDe-esser補正を行わず、フェーズシフトを抑えたクリーンな音質を最優先とするため、スキャンをバイパスします
+  // Pro Clean: 8連サージカルノッチフィルターはバイパスしますが、サ行のキンキン音（sibilance）を検知して高域EQのブーストを安全クランプするためにスキャンを実行します
   const filteredPeaks = [];
   let sibilanceDynamicFreq = 0;
+  
+  const sibilanceMinBin = Math.floor((8000 * fftSize) / sampleRate);
+  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((11000 * fftSize) / sampleRate));
+  const rawSibilancePeaks = [];
+  
+  for (let j = sibilanceMinBin; j <= sibilanceMaxBin; j++) {
+    const val = avgSpectrum[j];
+    const peakFreq = Math.round((j * sampleRate) / fftSize);
+    if (val > avgSpectrum[j - 1] && val > avgSpectrum[j + 1]) {
+      const localBins = [
+        avgSpectrum[j - 3], avgSpectrum[j - 2],
+        avgSpectrum[j + 2], avgSpectrum[j + 3]
+      ];
+      const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
+      const ratio = val / (localFloor + 1e-9);
+      if (ratio > 1.15) {
+        rawSibilancePeaks.push({ freq: peakFreq, score: ratio });
+      }
+    }
+  }
+  if (rawSibilancePeaks.length > 0) {
+    rawSibilancePeaks.sort((a, b) => b.score - a.score);
+    sibilanceDynamicFreq = rawSibilancePeaks[0].freq;
+  }
    // 3. 音楽理論・等ラウドネス曲線に基づいたリファレンス目標値 (Refactored Golden Targets)
   // low: Bass/LowMid 比率 (目標 +8.9dB 付近)
   // high: Treble/LowMid 比率 (目標 -17.1dB 付近)
@@ -3076,6 +3101,11 @@ function runAiAnalysis(showLog = true) {
           logToUI(`[Noise Cleaner] High-frequency hiss/sibilance detected (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer auto-set to ${sug.hissReductionAmount}%.`, "warning");
         } else {
           logToUI(`[Noise Cleaner] High-frequency noise floor is clean (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer is OFF.`, "info");
+        }
+
+        // サ行のキンキン共鳴音（シビランス）の検知・クランプ保護のログ
+        if (sug.sibilanceDynamicFreq > 0) {
+          logToUI(`[AI Assistant] Detected harsh vocal sibilance at ${sug.sibilanceDynamicFreq} Hz. Clamped High Shelf EQ to ${sug.eqHighGain.toFixed(1)} dB to prevent ear fatigue and activated dynamic De-esser notch.`, "warning");
         }
       }
       
