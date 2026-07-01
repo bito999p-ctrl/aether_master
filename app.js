@@ -1857,16 +1857,16 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const rumbleNoiseFloor = rumbleSum / (binRumbleEnd - binRumbleStart + 1);
   const rumbleNoiseFloorDb = 20 * Math.log10(rumbleNoiseFloor + 1e-6);
 
-  // Suggested values
+  // Suggested values (ノイズクリーナーの感度を引き上げ、より的確にノイズを除去するよう最適化)
   let sugRumbleCut = false;
-  if (rumbleNoiseFloorDb > -48.0) {
+  if (rumbleNoiseFloorDb > -55.0) { // -48dB から -55dB へ引き下げ、微小な超低域ハムノイズも確実にカット
     sugRumbleCut = true;
   }
 
   let sugHissAmount = 0;
-  if (hissNoiseFloorDb > -56.0) {
-    // scale from 0% at -56dB to 80% at -36dB
-    sugHissAmount = Math.round(Math.max(0, Math.min(80, (hissNoiseFloorDb + 56.0) * 4.0)));
+  if (hissNoiseFloorDb > -62.0) { // -56dB から -62dB へ引き下げ、微細なヒスノイズも検出
+    // -62dB で 0%、-38dB で最大 90% になるよう感度比率を強化（3.75倍スケール）
+    sugHissAmount = Math.round(Math.max(0, Math.min(90, (hissNoiseFloorDb + 62.0) * 3.75)));
   }
 
   // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：7.0kHz 〜 20kHz）のマルチピーク走査（上限撤廃）
