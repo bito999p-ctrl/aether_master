@@ -227,7 +227,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.8, eqLowFreq: 90,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
     eqHighGain: 2.0, eqHighFreq: 11000,
-    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20, // Tamed attack (50ms) and ratio (1.35) to prevent bass cycles clipping/buzzing (v4.0.0)
+    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20, // Tamed attack (50ms) and ratio (1.35) to prevent bass cycles clipping/buzzing (v4.0.1)
     stereoWidth: 1.30, limiterBoost: 5.0, sideHighPassFreq: 150 // Slightly reduced limiter boost (5.0dB) for safer headroom
   },
   hiphop: {
@@ -2025,7 +2025,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   const lowDiffDb = 20 * Math.log10(actualLowMidRatio / target.low);
   const highDiffDb = 20 * Math.log10(actualHighMidRatio / target.high);
-  const targetPresence = target.presence || 0.45;
+  const targetPresence = target.presence || 0.42;
   const presenceDiffDb = 20 * Math.log10(actualPresenceRatio / targetPresence);
 
   let eqLowAdjustment = 0;
@@ -2211,6 +2211,29 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   // Clamp within safe high shelf ranges (7,500Hz to 13,000Hz)
   suggestedEqHighFreq = Math.max(7500, Math.min(13000, suggestedEqHighFreq));
 
+  // 4. Stereo Bass phase cancellation safeguard (ビビリ音・歪み防止)
+  let finalEqLowGain = eqLowGain;
+  let finalLimiterBoost = limiterBoost;
+  let finalSideHPF = basePreset.sideHighPassFreq || 110;
+  
+  if (avgCorrelation < 0.72) {
+    // 左右の位相ズレが大きい（広いL/R Bass / 深いリバーブ等）場合、
+    // モノラル加算時の相関キャンセリングによるAI過剰EQブーストと、L/R個別ピークのソフトクリッパー限界突破（ビビリ音）を防ぐための補正
+    
+    // 1. 低域EQブーストを厳格に制限（位相ズレがある場合は低域ブースト上限を最大+1.0dB、深刻な場合は+0.0dBに固定）
+    const maxLowBoost = avgCorrelation < 0.60 ? 0.0 : 1.0;
+    finalEqLowGain = Math.min(maxLowBoost, finalEqLowGain);
+    
+    // 2. マキシマイザーの押し込み量（Limiter Boost）に位相相関ペナルティを適用
+    const phasePenalty = (0.75 - avgCorrelation) * 4.0; // ズレが大きいほどマキシマイザーを緩和（最大2.0dB以上引き下げ）
+    finalLimiterBoost = Math.max(1.5, finalLimiterBoost - phasePenalty);
+    
+    // 3. Sideチャンネルのハイパス周波数を引き上げ（低域をセンターモノラルに集約し、L/R独立クリップを根本防止）
+    finalSideHPF = Math.max(160, finalSideHPF);
+  }
+  
+  finalLimiterBoost = Math.round(finalLimiterBoost * 10) / 10;
+
   return {
     detected: filteredPeaks.length > 0,
     notches: filteredPeaks,
@@ -2230,7 +2253,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       satType: basePreset.satType,
       satDrive: satDrive,
       satMix: satMix,
-      eqLowGain: eqLowGain,
+      eqLowGain: finalEqLowGain,
       eqLowFreq: basePreset.eqLowFreq,
       eqMidGain: eqMidGain,
       eqMidFreq: basePreset.eqMidFreq,
@@ -2243,8 +2266,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       compAttack: basePreset.compAttack,
       compRelease: basePreset.compRelease,
       stereoWidth: stereoWidth,
-      sideHighPassFreq: basePreset.sideHighPassFreq || 110,
-      limiterBoost: limiterBoost,
+      sideHighPassFreq: finalSideHPF,
+      limiterBoost: finalLimiterBoost,
       rumbleCutEnabled: sugRumbleCut,
       hissReductionAmount: sugHissAmount,
       sibilanceDynamicFreq: sibilanceDynamicFreq
@@ -3153,6 +3176,11 @@ function runAiAnalysis(showLog = true) {
         // サ行のキンキン共鳴音（シビランス）の検知・クランプ保護のログ
         if (sug.sibilanceDynamicFreq > 0) {
           logToUI(`[AI Assistant] Detected harsh vocal sibilance at ${sug.sibilanceDynamicFreq} Hz. Clamped High Shelf EQ to ${sug.eqHighGain.toFixed(1)} dB to prevent ear fatigue and activated dynamic De-esser notch.`, "warning");
+        }
+
+        // 広帯域ステレオ低域／リバーブの検知ログ
+        if (result.correlation < 0.72) {
+          logToUI(`[AI Assistant] Detected wide stereo low-end / deep phase reverb (Correlation: ${result.correlation.toFixed(2)}). Centered sub-bass below ${sug.sideHighPassFreq}Hz and adjusted limiting to prevent low-end distortion.`, "warning");
         }
       }
       
