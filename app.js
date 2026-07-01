@@ -440,7 +440,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   envelopeSmoother.Q.setValueAtTime(0.707, context.currentTime);
 
   const hissEnvelopeGain = context.createGain();
-  const maxEnvGain = 35000.0 * (hissAmount / 100.0);
+  // 高域ヒスノイズ（13kHz〜20kHz）が楽曲再生中も完全に消え去るよう、上限遮断周波数（天井）を制限
+  const ceilFreq = 20000.0 - (7000.0 * (hissAmount / 100.0)); // hissAmount=100%で最大天井を13,000Hzに固定
+  const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
   hissEnvelopeGain.gain.setValueAtTime(maxEnvGain, context.currentTime);
 
   // 2. Parallel Saturator Stage
@@ -1530,7 +1532,9 @@ function updateNoiseCutNodes() {
     const baseFreq = 20000.0 - (16250.0 * (hissAmount / 100.0)); // Maps 80% to 7,000Hz and 100% to 3,750Hz (dynamic VCF cleans 8kHz/7.4kHz metallic noise at default 80% setting)
     activeNodes.hissFilter.frequency.setTargetAtTime(baseFreq, audioContext.currentTime, 0.02);
     
-    const maxEnvGain = 35000.0 * (hissAmount / 100.0);
+    // 高域ヒスノイズ（13kHz〜20kHz）が楽曲再生中も完全に消え去るよう、上限遮断周波数（天井）を制限
+    const ceilFreq = 20000.0 - (7000.0 * (hissAmount / 100.0)); // hissAmount=100%で最大天井を13,000Hzに固定
+    const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
   }
 }
