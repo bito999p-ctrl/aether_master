@@ -512,49 +512,49 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   const eqCorrective1 = context.createBiquadFilter();
   eqCorrective1.type = 'peaking';
-  eqCorrective1.Q.setValueAtTime(18.0, context.currentTime); // 非常に鋭いQ値で高域の艶感を保護
+  eqCorrective1.Q.setValueAtTime(15.0, context.currentTime); // 非常に鋭いQ値で高域の艶感を保護
   eqCorrective1.frequency.setValueAtTime(parameters.correctiveNotches[0].freq, context.currentTime);
   eqCorrective1.gain.setValueAtTime(parameters.correctiveNotches[0].enabled ? (parameters.correctiveNotches[0].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective2 = context.createBiquadFilter();
   eqCorrective2.type = 'peaking';
-  eqCorrective2.Q.setValueAtTime(18.0, context.currentTime);
+  eqCorrective2.Q.setValueAtTime(15.0, context.currentTime);
   eqCorrective2.frequency.setValueAtTime(parameters.correctiveNotches[1].freq, context.currentTime);
   eqCorrective2.gain.setValueAtTime(parameters.correctiveNotches[1].enabled ? (parameters.correctiveNotches[1].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective3 = context.createBiquadFilter();
   eqCorrective3.type = 'peaking';
-  eqCorrective3.Q.setValueAtTime(18.0, context.currentTime);
+  eqCorrective3.Q.setValueAtTime(15.0, context.currentTime);
   eqCorrective3.frequency.setValueAtTime(parameters.correctiveNotches[2].freq, context.currentTime);
   eqCorrective3.gain.setValueAtTime(parameters.correctiveNotches[2].enabled ? (parameters.correctiveNotches[2].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective4 = context.createBiquadFilter();
   eqCorrective4.type = 'peaking';
-  eqCorrective4.Q.setValueAtTime(18.0, context.currentTime);
+  eqCorrective4.Q.setValueAtTime(15.0, context.currentTime);
   eqCorrective4.frequency.setValueAtTime(parameters.correctiveNotches[3].freq, context.currentTime);
   eqCorrective4.gain.setValueAtTime(parameters.correctiveNotches[3].enabled ? (parameters.correctiveNotches[3].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective5 = context.createBiquadFilter();
   eqCorrective5.type = 'peaking';
-  eqCorrective5.Q.setValueAtTime(18.0, context.currentTime);
+  eqCorrective5.Q.setValueAtTime(15.0, context.currentTime);
   eqCorrective5.frequency.setValueAtTime(parameters.correctiveNotches[4].freq, context.currentTime);
   eqCorrective5.gain.setValueAtTime(parameters.correctiveNotches[4].enabled ? (parameters.correctiveNotches[4].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective6 = context.createBiquadFilter();
   eqCorrective6.type = 'peaking';
-  eqCorrective6.Q.setValueAtTime(18.0, context.currentTime);
+  eqCorrective6.Q.setValueAtTime(15.0, context.currentTime);
   eqCorrective6.frequency.setValueAtTime(parameters.correctiveNotches[5].freq, context.currentTime);
   eqCorrective6.gain.setValueAtTime(parameters.correctiveNotches[5].enabled ? (parameters.correctiveNotches[5].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective7 = context.createBiquadFilter();
   eqCorrective7.type = 'peaking';
-  eqCorrective7.Q.setValueAtTime(18.0, context.currentTime);
+  eqCorrective7.Q.setValueAtTime(15.0, context.currentTime);
   eqCorrective7.frequency.setValueAtTime(parameters.correctiveNotches[6].freq, context.currentTime);
   eqCorrective7.gain.setValueAtTime(parameters.correctiveNotches[6].enabled ? (parameters.correctiveNotches[6].gain * setupHissFactor) : 0.0, context.currentTime);
 
   const eqCorrective8 = context.createBiquadFilter();
   eqCorrective8.type = 'peaking';
-  eqCorrective8.Q.setValueAtTime(18.0, context.currentTime);
+  eqCorrective8.Q.setValueAtTime(15.0, context.currentTime);
   eqCorrective8.frequency.setValueAtTime(parameters.correctiveNotches[7].freq, context.currentTime);
   eqCorrective8.gain.setValueAtTime(parameters.correctiveNotches[7].enabled ? (parameters.correctiveNotches[7].gain * setupHissFactor) : 0.0, context.currentTime);
 
@@ -1840,7 +1840,7 @@ function analyzeAudioResonances(buffer) {
       
       // Suno AIの音源で特に耳に刺やすく 9kHz〜10kHz 帯域（マージンを取り8800Hz〜10200Hz）の判定
       const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
-      const thresholdMultiplier = isSunoRange ? 1.28 : 1.34; // 28% / 34% の突出度（約2.1dB〜2.5dB）で検出し、中程度のキンキン音も的確に補足
+      const thresholdMultiplier = isSunoRange ? 1.20 : 1.25; // 20% / 25% の突出度（約1.6dB〜1.9dB）で検出し、残存する微細なキンキン音も漏らさず補足
       
       if (ratio > thresholdMultiplier) {
         // 超過度合い（比率）に基づき減衰幅をダイナミックに算出（削りすぎを防止しつつ効果的に除去するため最大 -4.0dB までに制限）
@@ -1869,7 +1869,7 @@ function analyzeAudioResonances(buffer) {
   // 互いに400Hz以上離れた上位最大4個のピークを抽出（削りすぎを防止）
   const filteredPeaks = [];
   for (const peak of rawPeaks) {
-    if (filteredPeaks.length >= 4) break;
+    if (filteredPeaks.length >= 6) break;
     const tooClose = filteredPeaks.some(p => Math.abs(p.freq - peak.freq) < 400);
     if (!tooClose) {
       filteredPeaks.push({ freq: peak.freq, cut: peak.cut });
