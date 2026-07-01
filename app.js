@@ -227,8 +227,8 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.8, eqLowFreq: 90,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
     eqHighGain: 2.0, eqHighFreq: 11000,
-    compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.02, compRelease: 0.12,
-    stereoWidth: 1.30, limiterBoost: 5.5, sideHighPassFreq: 150
+    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20, // Tamed attack (50ms) and ratio (1.35) to prevent bass cycles clipping/buzzing
+    stereoWidth: 1.30, limiterBoost: 5.0, sideHighPassFreq: 150 // Slightly reduced limiter boost (5.0dB) for safer headroom
   },
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14,
@@ -2143,7 +2143,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     eqHighGain = Math.min(-1.5, eqHighGain);
   }
 
-  // 中域はジャンルの特性を維持 (Dynamic sibilance de-esser integrated)
+  // 中域はジャンルの特性を維持 (Dynamic sibilance de-esser and satHpf integrated)
   const eqMidGain = basePreset.eqMidGain;
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
@@ -2215,6 +2215,12 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     // 標準的なダイナミクス -> 基準ブースト値に追従
     crestDesc = "Normal (Balanced)";
     limiterBoost = baseBoost;
+  }
+
+  // 低域飽和による音割れ・ビビリ防止（低域が基準ターゲットより著しく大きい場合、リミッターブーストを自動で控えめにする）
+  if (lowDiffDb > 1.0) {
+    const bassOverloadPenalty = Math.min(1.5, (lowDiffDb - 1.0) * 0.75);
+    limiterBoost = Math.max(2.0, limiterBoost - bassOverloadPenalty);
   }
 
   // 0.0〜10.0dB の範囲に制限し（歪み防止のため最大値を10dBに抑制）、小数点第一位に丸める
