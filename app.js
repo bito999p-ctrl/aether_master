@@ -2110,8 +2110,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       stereoWidth: stereoWidth,
       sideHighPassFreq: basePreset.sideHighPassFreq || 110,
       limiterBoost: limiterBoost,
-      rumbleCutEnabled: genreKey === 'auto' ? sugRumbleCut : false,
-      hissReductionAmount: genreKey === 'auto' ? sugHissAmount : 0
+      rumbleCutEnabled: sugRumbleCut,
+      hissReductionAmount: sugHissAmount
     }
   };
 }
