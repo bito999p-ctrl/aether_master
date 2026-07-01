@@ -513,6 +513,19 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqHigh.frequency.setValueAtTime(parameters.eqHighFreq, context.currentTime);
   eqHigh.gain.setValueAtTime(parameters.eqHighGain, context.currentTime);
 
+  // Dedicated Dynamic Sibilance Notch (9000Hz De-esser)
+  const sibilanceNotch = context.createBiquadFilter();
+  sibilanceNotch.type = 'peaking';
+  sibilanceNotch.frequency.setValueAtTime(9000, context.currentTime);
+  sibilanceNotch.Q.setValueAtTime(5.0, context.currentTime); // surgical Q targeting sibilance peak
+  sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
+
+  const sibilanceNotchDynamicGain = context.createGain();
+  const initDynamicCut = -6.0 * (setupHissAmount / 100.0);
+  sibilanceNotchDynamicGain.gain.setValueAtTime(initDynamicCut, context.currentTime);
+  envelopeSmoother.connect(sibilanceNotchDynamicGain);
+  sibilanceNotchDynamicGain.connect(sibilanceNotch.gain);
+
   // 8連 AI Corrective Notch Filters
   const setupHissFactor = 1.0; // Keep surgical notches at full depth for uncompromised resonance removal
 
@@ -568,7 +581,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqLow.connect(kickPeaking);
   kickPeaking.connect(eqMid);
   eqMid.connect(eqHigh);
-  eqHigh.connect(eqCorrective1);
+  eqHigh.connect(sibilanceNotch);
+  sibilanceNotch.connect(eqCorrective1);
   eqCorrective1.connect(eqCorrective2);
   eqCorrective2.connect(eqCorrective3);
   eqCorrective3.connect(eqCorrective4);
@@ -699,6 +713,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     kickPeaking,
     eqMid,
     eqHigh,
+    sibilanceNotch,
+    sibilanceNotchDynamicGain,
     eqCorrective1,
     eqCorrective2,
     eqCorrective3,
@@ -847,6 +863,8 @@ function startPlayback() {
   activeNodes.kickPeaking = chain.kickPeaking;
   activeNodes.eqMid = chain.eqMid;
   activeNodes.eqHigh = chain.eqHigh;
+  activeNodes.sibilanceNotch = chain.sibilanceNotch;
+  activeNodes.sibilanceNotchDynamicGain = chain.sibilanceNotchDynamicGain;
   activeNodes.eqCorrective1 = chain.eqCorrective1;
   activeNodes.eqCorrective2 = chain.eqCorrective2;
   activeNodes.eqCorrective3 = chain.eqCorrective3;
@@ -1540,6 +1558,12 @@ function updateNoiseCutNodes() {
     const ceilFreq = 20000.0 - (7000.0 * (hissAmount / 100.0)); // hissAmount=100%で最大天井を13,000Hzに固定
     const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
+
+    // Dynamically scale dynamic sibilance notch (9000Hz de-esser) gain: cuts up to -6.0dB when hissReductionAmount is 100%
+    if (activeNodes.sibilanceNotchDynamicGain) {
+      const dynamicCut = -6.0 * (hissAmount / 100.0);
+      activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
+    }
   }
 }
 
