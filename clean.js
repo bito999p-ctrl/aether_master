@@ -591,7 +591,6 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqLow.connect(kickPeaking);
   kickPeaking.connect(eqMid);
   eqMid.connect(eqHigh);
-  eqHigh.connect(compressor); // Directly connect eqHigh to compressor, completely bypassing sibilanceNotch and correctiveNotches for a clean signal path
 
   // 4. Glue Compressor
   const compressor = context.createDynamicsCompressor();
@@ -607,7 +606,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     compressor.ratio.setValueAtTime(1.0, context.currentTime); // 1:1 ratio = Bypassed dynamics
   }
 
-  // eqCorrective8 connection removed for bypassed clean routing
+  // Directly connect eqHigh to compressor, completely bypassing sibilanceNotch and correctiveNotches for a clean signal path
+  eqHigh.connect(compressor);
 
   // 5. Stereo Imager Matrix (Mid/Side Processing)
   const splitter = context.createChannelSplitter(2);

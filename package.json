@@ -4,7 +4,7 @@
   "description": "Professional Web Audio Mastering Suite",
   "main": "app.js",
   "scripts": {
-    "dev": "npx http-server -p 8080"
+    "dev": "npx http-server -p 8082"
   },
   "keywords": [],
   "author": "",
