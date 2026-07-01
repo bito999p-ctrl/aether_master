@@ -180,7 +180,7 @@ function getCombinedParams() {
 }
 
 // Genre Presets Configuration
-const GENRE_PRESETS = {
+export const GENRE_PRESETS = {
   auto: {
     satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10,
     eqLowGain: 0.0, eqLowFreq: 90,
@@ -1105,17 +1105,63 @@ function startRenderLoop() {
 
         specCtx.clearRect(0, 0, currentW, currentH);
 
-        // Grid background
-        specCtx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
-        specCtx.lineWidth = 1;
-        const verticalLines = 8;
-        for (let i = 1; i < verticalLines; i++) {
-          const x = (currentW / verticalLines) * i;
-          specCtx.beginPath();
-          specCtx.moveTo(x, 0);
-          specCtx.lineTo(x, currentH);
-          specCtx.stroke();
+        const sampleRate = activeNodes.visualAnalyser.context.sampleRate;
+        
+        // 周波数から描画X座標への対数マッピング計算
+        function getX(f) {
+          const fftSize = activeNodes.visualAnalyser.fftSize;
+          const targetBin = (f * fftSize) / sampleRate;
+          const percent = Math.pow(targetBin / (bufferLength * 0.7), 1 / 1.8);
+          return percent * currentW;
         }
+
+        // 1. 横軸（デシベル音量）のグリッド線とラベル描画
+        const dbLines = [
+          { label: '0 dB', y: currentH - 1.0 * (currentH * 0.82) },
+          { label: '-18 dB', y: currentH - 0.5 * (currentH * 0.82) },
+          { label: '-36 dB', y: currentH - 0.25 * (currentH * 0.82) }
+        ];
+        
+        specCtx.lineWidth = 1;
+        dbLines.forEach(line => {
+          specCtx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+          specCtx.beginPath();
+          specCtx.moveTo(0, line.y);
+          specCtx.lineTo(currentW, line.y);
+          specCtx.stroke();
+          
+          specCtx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+          specCtx.font = '8px "JetBrains Mono", monospace';
+          specCtx.textAlign = 'right';
+          specCtx.fillText(line.label, currentW - 8, line.y - 4);
+        });
+
+        // 2. 縦軸（周波数）のグリッド線とラベル描画
+        const freqLines = [
+          { f: 100, label: '100Hz' },
+          { f: 500, label: '500Hz' },
+          { f: 1000, label: '1kHz' },
+          { f: 2000, label: '2kHz' },
+          { f: 5000, label: '5kHz' },
+          { f: 10000, label: '10kHz' },
+          { f: 15000, label: '15kHz' }
+        ];
+
+        freqLines.forEach(line => {
+          const x = getX(line.f);
+          if (x > 0 && x < currentW) {
+            specCtx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            specCtx.beginPath();
+            specCtx.moveTo(x, 0);
+            specCtx.lineTo(x, currentH - 18);
+            specCtx.stroke();
+            
+            specCtx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            specCtx.font = '9px "JetBrains Mono", monospace';
+            specCtx.textAlign = 'center';
+            specCtx.fillText(line.label, x, currentH - 5);
+          }
+        });
 
         // Spectrum curve gradient
         const gradient = specCtx.createLinearGradient(0, currentH, 0, 0);
