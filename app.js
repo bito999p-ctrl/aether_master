@@ -2263,7 +2263,39 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const originalPeakDb = 20 * Math.log10(maxAbsSample + 1e-6);
   const suggestedInputGainDb = Math.max(-12.0, Math.min(12.0, -6.0 - originalPeakDb));
 
-  // 8kHz〜11kHzのキンキン音（サ行やシンバルの鋭いピーク）は上部で検出し変数に格納済み
+  // High Shelf Frequency Dynamic Calculation
+  const bin4k = Math.floor((4000 * fftSize) / sampleRate);
+  const bin9k = Math.floor((9000 * fftSize) / sampleRate);
+  const bin18k = Math.floor((18000 * fftSize) / sampleRate);
+
+  let brillianceSum = 0;
+  for (let j = bin4k; j <= bin9k; j++) brillianceSum += avgSpectrum[j];
+  const brillianceEnergy = brillianceSum / (bin9k - bin4k + 1);
+
+  let airSum = 0;
+  for (let j = bin9k + 1; j <= bin18k; j++) airSum += avgSpectrum[j];
+  const airEnergy = airSum / (bin18k - bin9k);
+
+  const airToBrillianceRatio = airEnergy / (brillianceEnergy + 1e-6);
+
+  let suggestedEqHighFreq = basePreset.eqHighFreq;
+
+  if (actualHighMidRatio < 0.10) {
+    // High-mids are extremely dull overall -> Pull down the shelf to boost from 8.0kHz
+    suggestedEqHighFreq = 8000;
+  } else if (airToBrillianceRatio < 0.16) {
+    // Air drops off sharply compared to mid-highs -> Target the transition around 9.5kHz
+    suggestedEqHighFreq = 9500;
+  } else if (airToBrillianceRatio > 0.32) {
+    // Air is already present, but could use air-band finish -> Target 12kHz
+    suggestedEqHighFreq = 12000;
+  } else {
+    // Normal balanced spectrum -> Target standard 10kHz or preset default
+    suggestedEqHighFreq = Math.round((basePreset.eqHighFreq || 10000) / 500) * 500;
+  }
+
+  // Clamp within safe high shelf ranges (7,500Hz to 13,000Hz)
+  suggestedEqHighFreq = Math.max(7500, Math.min(13000, suggestedEqHighFreq));
 
   return {
     detected: filteredPeaks.length > 0,
@@ -2288,7 +2320,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       eqMidFreq: basePreset.eqMidFreq,
       eqMidQ: basePreset.eqMidQ || 1.0,
       eqHighGain: eqHighGain,
-      eqHighFreq: basePreset.eqHighFreq,
+      eqHighFreq: suggestedEqHighFreq,
       compEnabled: basePreset.compEnabled,
       compThreshold: compThreshold,
       compRatio: compRatio,
