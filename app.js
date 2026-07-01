@@ -1936,119 +1936,32 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     sugHissAmount = Math.round(rawHiss * quietnessScale);
   }
 
-  // 3. 耳障りな高音域（シャリシャリした sibilance 帯域：7.0kHz 〜 20kHz）のマルチピーク走査（上限撤廃）
-  const sibilanceMinBin = Math.floor((7000 * fftSize) / sampleRate);
-  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((20000 * fftSize) / sampleRate));
+  // 8連サージカルノッチフィルターはバイパスしますが、サ行のキンキン音（sibilance）を検知して高域EQのブーストを安全クランプするためにスキャンを実行します
+  const filteredPeaks = [];
+  let sibilanceDynamicFreq = 0;
   
-  // ローカルピーク（極大値かつ周辺のローカルノイズフロアより著しく高いピーク）をすべて検出
-  const rawPeaks = [];
-  // 周辺5ビン（左右に約120Hz幅）の平均と比較するために安全なマージンを確保
-  for (let j = sibilanceMinBin + 5; j < sibilanceMaxBin - 5; j++) {
+  const sibilanceMinBin = Math.floor((8000 * fftSize) / sampleRate);
+  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((11000 * fftSize) / sampleRate));
+  const rawSibilancePeaks = [];
+  
+  for (let j = sibilanceMinBin; j <= sibilanceMaxBin; j++) {
     const val = avgSpectrum[j];
     const peakFreq = Math.round((j * sampleRate) / fftSize);
-    
-    // 極大値（ピーク）判定
     if (val > avgSpectrum[j - 1] && val > avgSpectrum[j + 1]) {
-      // 1. 鋭いホイッスル共鳴の検出（直近2ビンを除いた左右5ビンの平均）
       const localBins = [
-        avgSpectrum[j - 5], avgSpectrum[j - 4], avgSpectrum[j - 3], avgSpectrum[j - 2],
-        avgSpectrum[j + 2], avgSpectrum[j + 3], avgSpectrum[j + 4], avgSpectrum[j + 5]
+        avgSpectrum[j - 3], avgSpectrum[j - 2],
+        avgSpectrum[j + 2], avgSpectrum[j + 3]
       ];
       const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
       const ratio = val / (localFloor + 1e-9);
-      
-      const isSunoRange = (peakFreq >= 8800 && peakFreq <= 10200);
-      // ライブ音源やリバーブのシュワシュワ音を防ぐため、ステレオ相関（avgCorrelation）が低い（広がった歓声やリバーブが多い）場合はしきい値を上げ、余計なノッチを抑制
-      let baseThreshold = isSunoRange ? 1.20 : 1.25;
-      if (avgCorrelation < 0.72) {
-        baseThreshold += 0.08;
-      }
-      const thresholdMultiplier = baseThreshold;
-      
-      let isBroad = false;
-      let peakQ = 15.0;
-      let ratioToUse = ratio;
-      let thresholdToUse = thresholdMultiplier;
-      
-      if (ratio > thresholdMultiplier) {
-        // 鋭い金属音（WHISTLE）として検知
-        isBroad = false;
-        peakQ = 15.0;
-      } else {
-        // 2. 広範囲な高音の盛り上がり（HUMP：例: 10kHz〜12kHz帯域の膨らみ）を検知するために広い近傍フロアと比較
-        let wideSum = 0;
-        let wideCount = 0;
-        for (let k = j - 30; k <= j + 30; k++) {
-          if (k >= sibilanceMinBin && k <= sibilanceMaxBin && (k < j - 8 || k > j + 8)) {
-            wideSum += avgSpectrum[k];
-            wideCount++;
-          }
-        }
-        const wideFloor = wideSum / (wideCount || 1);
-        const ratioWide = val / (wideFloor + 1e-9);
-        
-        let humpThreshold = 1.30;
-        if (avgCorrelation < 0.72) {
-          humpThreshold = 1.45; // 歓声やリバーブがある場合は広帯域ハンプカットを大幅に抑制
-        }
-        if (ratioWide > humpThreshold) { // 周辺の広い平均より盛り上がっている場合
-          isBroad = true;
-          peakQ = 6.0; // 緩やかなノッチ（Q=6.0）で膨らみを滑らかに補正する
-          ratioToUse = ratioWide;
-          thresholdToUse = humpThreshold;
-        }
-      }
-      
-      if (ratio > thresholdMultiplier || isBroad) {
-        // Hiss Reducer (LPF) の遮断天井より高い周波数は、既にLPFで十分減衰されるため
-        // イコライザーでの過剰な削り（ダブルカット）を防ぐためにノッチ対象から除外する
-        const ceilFreq = 20000.0 - (7000.0 * (sugHissAmount / 100.0));
-        if (peakFreq > ceilFreq - 500) {
-          continue;
-        }
-
-        // 減衰幅の算出
-        let cutDb = 0;
-        if (isBroad) {
-          cutDb = -Math.min(4.5, Math.max(1.5, (ratioToUse - thresholdToUse) * 6.0 + 1.5));
-        } else {
-          cutDb = -Math.min(6.0, Math.max(1.5, (ratioToUse - thresholdToUse) * 8.0 + 1.5));
-        }
-        
-        // 8500Hz未満のカットは緩和
-        if (peakFreq < 8500) {
-          cutDb *= 0.85;
-        }
-        
-        rawPeaks.push({
-          freq: peakFreq,
-          cut: cutDb,
-          q: peakQ,
-          val: val,
-          isSunoRange: isSunoRange,
-          isBroad: isBroad,
-          score: ratioToUse * (isSunoRange ? 1.5 : 1.0) * (isBroad ? 0.9 : 1.0)
-        });
+      if (ratio > 1.15) {
+        rawSibilancePeaks.push({ freq: peakFreq, score: ratio });
       }
     }
   }
-
-  rawPeaks.sort((a, b) => b.score - a.score);
-
-  const filteredPeaks = [];
-  for (const peak of rawPeaks) {
-    if (filteredPeaks.length >= 6) break;
-    const tooClose = filteredPeaks.some(p => Math.abs(p.freq - peak.freq) < 400);
-    if (!tooClose) {
-      filteredPeaks.push({ freq: peak.freq, cut: peak.cut, q: peak.q, isBroad: peak.isBroad });
-    }
-  }
-
-  let sibilanceDynamicFreq = 0;
-  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 8000 && p.freq <= 11000);
-  if (sunoRangePeaks.length > 0) {
-    sunoRangePeaks.sort((a, b) => b.score - a.score);
-    sibilanceDynamicFreq = sunoRangePeaks[0].freq;
+  if (rawSibilancePeaks.length > 0) {
+    rawSibilancePeaks.sort((a, b) => b.score - a.score);
+    sibilanceDynamicFreq = rawSibilancePeaks[0].freq;
   }
 
   let detectedGenre = 'pops';
