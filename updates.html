@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=3.24.0">
+  <link rel="stylesheet" href="styles.css?v=3.25.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -191,11 +191,27 @@
     
     <header class="doc-header">
       <h1 class="doc-title">AetherMaster アップデート履歴</h1>
-      <div class="doc-subtitle">AetherMaster の機能更新、追加、調整の記録をタイムラインでご紹介します</div>
+      <div class="doc-subtitle">AetherMaster の機能更新、追加、調整 of 記録をタイムラインでご紹介します</div>
     </header>
 
     <div class="timeline">
       
+      <!-- v3.25.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.25.0</span>
+          <span class="version-date">2026.07.01</span>
+          <span class="version-title">「スマート共振ノッチ」エンジンの搭載 ＆ 音源のヌケ感・空気感の完全両立</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">機能</span><strong>「スマート共振ノッチ」エンジンの開発と搭載</strong>：従来の過剰な高域カットによる「音が引っ込む/遠くなる」現象を根本的に解消。AIの共振ノッチ走査ロジックを大幅にスマート化しました。</li>
+          <li><span class="badge-change">改善</span><strong>ノッチ走査周波数範囲の最適化（6.5kHz 〜 10.5kHz）</strong>：ボーカルの明瞭度・近さを決定づけるプレゼンス域（5kHz〜6.5kHz）および、シンバルや息遣いなどの空気感が広がる超高域エアー域（10.5kHz〜12kHz）をノッチ対象から完全に保護。これにより原音の持つ「開けた明るさ」がそのまま100%維持されます。</li>
+          <li><span class="badge-change">改善</span><strong>突出度トリガーしきい値の引き上げ（1.45倍 / 1.55倍）</strong>：しきい値比率を引き上げ、周辺フロアから `3.5dB 〜 4.0dB` 以上突出した異常な高域ホイッスル音（金属共振）のみを検出するように変更。cymbalsやアコースティックギターの自然な高域ハーモニクスを誤判定で削るのを完全に防止。</li>
+          <li><span class="badge-change">改善</span><strong>Q値を極細化（Q=18.0）＆ 最大ノッチ数を4基に制限</strong>：ノッチフィルターのQ値を `12.0` ➔ `18.0` に引き上げて極細のピンポイントカットとし、さらに同時発動数を最大4基に制限。原音の周波数特性への不要な干渉（位相ズレ）を極小化しました。</li>
+          <li><span class="badge-add">追加</span><strong>オフィシャルクレジット ＆ 相互ナビゲーションリンク設置</strong>：ヘッダーロゴエリアに「BitoMusic Presents」、フッターに「BitoMusic // AETHERMASTER」のブランドクレジットを追加。また、Bito MusicポータルおよびAetherPlayerへの相互ナビゲーションリンクボタンをヘッダー右側へ設置（ホバー時の発光エフェクト＆スマホ対応付き）。</li>
+        </ul>
+      </div>
+
       <!-- v3.24.0 -->
       <div class="timeline-item major">
         <div class="version-header">

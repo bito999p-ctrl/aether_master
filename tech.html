@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=3.24.0">
+  <link rel="stylesheet" href="styles.css?v=3.25.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -257,10 +257,10 @@
           </tr>
           <tr>
             <td><strong>5. AI Corrective Notches</strong></td>
-            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 8 (直列)</td>
+            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 8 (直列, 最大4基有効)</td>
             <td>
-              AI が検出した高音域の鋭い不快ピーク（耳障りなレゾナンス音）をピンポイントで除去する、鋭いQ値（Q=12.0）の直列ノッチフィルター。Suno AI 特有の `9kHz〜10kHz` 付近のハーシュネスを優先的に検出してカットします。
-              <strong>(v3.21.4以降)</strong>：HISS REDUCERの動作量とリアルタイムに自動連動し、ノイズ低減が多い曲ではノッチフィルターのカット深さを最大65%自動緩和（ダッキング）し、高音の過剰カットや曇りを完全に防止します。
+              AI が検出した高音域の鋭い不快ピーク（耳障りな金属共振音）のみをピンポイントで除去する、極めて鋭いQ値（<strong>Q=18.0</strong>）の直列ノッチフィルター。
+              高域のエネルギー痩せ（こもり感）を防ぐため、<strong>走査範囲を 6.5kHz 〜 10.5kHz の耳障りな帯域に限定</strong>し、突出度しきい値を引き上げる（周辺フロアから 3.5dB〜4dB 以上突出したピークのみ検出）ことでシンバルやボーカルの空気感などの自然な成分を保護。さらに、<strong>最大作動数を4基に制限</strong>し、各最大カット幅を `-3.2dB` に抑えたスマート設計です。
             </td>
           </tr>
           <tr>
