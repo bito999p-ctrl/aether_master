@@ -1853,7 +1853,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     hissSum += sliceSpectrums[minRmsIdx][j];
   }
   const hissNoiseFloor = hissSum / (binHissEnd - binHissStart + 1);
-  const hissNoiseFloorDb = 20 * Math.log10(hissNoiseFloor + 1e-6);
+  const hissNoiseFloorDb = 20 * Math.log10(hissNoiseFloor + 1e-6) + 26.0; // Added FFT bin bandwidth gain correction factor (+26dB) to align bin average with broadband level
 
   // Rumble estimation (amplitude average between 20Hz and 60Hz in the quietest block)
   const binRumbleStart = Math.floor((20 * fftSize) / sampleRate);

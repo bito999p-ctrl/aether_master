@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=3.25.0">
+  <link rel="stylesheet" href="styles.css?v=3.26.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -196,6 +196,24 @@
 
     <div class="timeline">
       
+      <!-- v3.25.0 -->
+      <!-- v3.26.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v3.26.0</span>
+          <span class="version-date">2026.07.01</span>
+          <span class="version-title">FFT正規化バグ修正による高域抜け復活 ＆ スマホ省電力簡易表示の搭載</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>FFT振幅の完全正規化による「こもりバグ」の解消</strong>：高速フーリエ変換（FFT）の正規化漏れ（1024倍の出力誤差による+60dBのノイズ測定バグ）を修正。これにより無音のないクリーンな音源やEDM音源でノイズクリーナーが誤動作して高域を過剰にカットする不具合が完全に解消されました。</li>
+          <li><span class="badge-add">機能</span><strong>「HUMP/WHISTLE」二重共振検知アルゴリズムの追加</strong>：従来の極細幅（Q=15.0）での鋭い金属共振音（WHISTLE）検知に加え、広範囲な高域の盛り上がり（HUMP：例: 11k〜12kHz帯域の膨らみ）を検知する広域スキャンを実装。Q=6.0のなだらかなノッチで高域の耳障りな膨らみを滑らかにならします。</li>
+          <li><span class="badge-add">機能</span><strong>スマホ用省電力・簡易表示モードの自動適用</strong>：モバイル端末でのアクセス時に、描画を15fpsに半減し、重いグラデーション塗りつぶし（fill）をスキップして単一アウトライン化。さらに頂点計算数を6分の1に間引くことで、バッテリー消費と発熱を極小化しました。</li>
+          <li><span class="badge-change">改善</span><strong>Hiss Reducer 遮断上限天井の導入 ＆ セーフガード搭載</strong>：楽曲再生中もヒスノイズが漏れるのを防ぐため、Hiss Reducerの遮断上限周波数を最大13.7kHzに制限。また、LPFで減衰される高音域へのノッチ適用をスキップする「過剰カット防止セーフガード」により高域痩せを防ぎます。</li>
+          <li><span class="badge-change">改善</span><strong>プリセット切替時のノイズ設定継承 ＆ 新ファイル読込時のメモリ解放</strong>：プリセット変更時にノイズ除去パラメーターがクリアされるバグを修正し、さらにファイル読込時に前回のAI自動解析データが漏洩・干渉するセッションリークバグを完全に修正しました。</li>
+          <li><span class="badge-change">改善</span><strong>スペクトラムモニターの対数グリッド・dB目盛の追加</strong>：周波数（100Hz〜15kHz）と音量レベル（0dB〜-36dB）のガイドグリッドと明るく見やすいテキストを追加し、視認性をプロ用DAW水準に引き上げました。</li>
+        </ul>
+      </div>
+
       <!-- v3.25.0 -->
       <div class="timeline-item major">
         <div class="version-header">
