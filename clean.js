@@ -1956,6 +1956,11 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     rawSibilancePeaks.sort((a, b) => b.score - a.score);
     sibilanceDynamicFreq = rawSibilancePeaks[0].freq;
   }
+  const genreSelect = document.getElementById('preset-select');
+  const userGenreKey = userPresetKey || (genreSelect ? genreSelect.value : 'auto');
+  const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
+  const basePreset = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
+
    // 3. 音楽理論・等ラウドネス曲線に基づいたリファレンス目標値 (Refactored Golden Targets)
   // low: Bass/LowMid 比率 (目標 +8.9dB 付近)
   // high: Treble/LowMid 比率 (目標 -17.1dB 付近)
