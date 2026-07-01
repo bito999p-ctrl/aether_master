@@ -3198,28 +3198,30 @@ function runAiAnalysis(showLog = true) {
       
       // ノッチフィルター検出リストのHTML生成
       const notchListContainer = document.getElementById('ai-notches-list');
-      notchListContainer.innerHTML = '';
-      if (result.notches.length > 0) {
-        result.notches.forEach((n, idx) => {
-          const typeLabel = n.isBroad ? "HUMP" : "WHISTLE";
-          const bgColor = n.isBroad ? "rgba(0, 242, 254, 0.08)" : "rgba(255, 0, 85, 0.08)";
-          const borderColor = n.isBroad ? "rgba(0, 242, 254, 0.15)" : "rgba(255, 0, 85, 0.15)";
-          const badgeColor = n.isBroad ? "rgba(0, 242, 254, 0.2)" : "rgba(255, 0, 85, 0.2)";
-          const badgeTextColor = n.isBroad ? "#00f2fe" : "var(--accent-red)";
-          
-          notchListContainer.innerHTML += `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: ${bgColor}; border-radius: 4px; padding: 4px 8px; border: 1px solid ${borderColor}; gap: 8px;">
-              <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
-                <i class="fa-solid fa-circle-notch"></i> PEAK ${idx+1}:
-              </span>
-              <span style="background: ${badgeColor}; color: ${badgeTextColor}; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px;">${typeLabel}</span>
-              <span style="color: #fff; font-weight: 700; flex-grow: 1; text-align: center;">${n.freq} Hz</span>
-              <span style="color: ${badgeTextColor}; font-weight: 700;">${n.cut.toFixed(1)} dB</span>
-            </div>
-          `;
-        });
-      } else {
-        notchListContainer.innerHTML = '<div style="color: var(--text-muted); font-style: italic; padding: 4px;">No harsh resonances detected.</div>';
+      if (notchListContainer) {
+        notchListContainer.innerHTML = '';
+        if (result.notches.length > 0) {
+          result.notches.forEach((n, idx) => {
+            const typeLabel = n.isBroad ? "HUMP" : "WHISTLE";
+            const bgColor = n.isBroad ? "rgba(0, 242, 254, 0.08)" : "rgba(255, 0, 85, 0.08)";
+            const borderColor = n.isBroad ? "rgba(0, 242, 254, 0.15)" : "rgba(255, 0, 85, 0.15)";
+            const badgeColor = n.isBroad ? "rgba(0, 242, 254, 0.2)" : "rgba(255, 0, 85, 0.2)";
+            const badgeTextColor = n.isBroad ? "#00f2fe" : "var(--accent-red)";
+            
+            notchListContainer.innerHTML += `
+              <div style="display: flex; justify-content: space-between; align-items: center; background: ${bgColor}; border-radius: 4px; padding: 4px 8px; border: 1px solid ${borderColor}; gap: 8px;">
+                <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+                  <i class="fa-solid fa-circle-notch"></i> PEAK ${idx+1}:
+                </span>
+                <span style="background: ${badgeColor}; color: ${badgeTextColor}; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px;">${typeLabel}</span>
+                <span style="color: #fff; font-weight: 700; flex-grow: 1; text-align: center;">${n.freq} Hz</span>
+                <span style="color: ${badgeTextColor}; font-weight: 700;">${n.cut.toFixed(1)} dB</span>
+              </div>
+            `;
+          });
+        } else {
+          notchListContainer.innerHTML = '<div style="color: var(--text-muted); font-style: italic; padding: 4px;">No harsh resonances detected.</div>';
+        }
       }
       
       // 自動調整内容サマリーのHTML生成
