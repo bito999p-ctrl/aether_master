@@ -2021,6 +2021,15 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     }
   }
 
+  // 8kHz〜11kHzのキンキン音（サ行やシンバルの鋭いピーク）をスキャン（ブースト判定クランプで先に使用するため上部で定義）
+  let sibilanceDynamicFreq = 0;
+  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 8000 && p.freq <= 11000);
+  if (sunoRangePeaks.length > 0) {
+    // スコア（共鳴の鋭さ・目立ち具合）が最大のピークを特定
+    sunoRangePeaks.sort((a, b) => b.score - a.score);
+    sibilanceDynamicFreq = sunoRangePeaks[0].freq;
+  }
+
   // 3.5. AIジャンル自動判定 (Heuristic Genre Classifier - お勧め提案用)
 
   // 3.5. AIジャンル自動判定 (Heuristic Genre Classifier)
@@ -2228,14 +2237,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const originalPeakDb = 20 * Math.log10(maxAbsSample + 1e-6);
   const suggestedInputGainDb = Math.max(-12.0, Math.min(12.0, -6.0 - originalPeakDb));
 
-  // 8kHz〜11kHzのキンキン音（サ行やシンバルの鋭いピーク）をスキャン
-  let sibilanceDynamicFreq = 0;
-  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 8000 && p.freq <= 11000);
-  if (sunoRangePeaks.length > 0) {
-    // スコア（共鳴の鋭さ・目立ち具合）が最大のピークを特定
-    sunoRangePeaks.sort((a, b) => b.score - a.score);
-    sibilanceDynamicFreq = sunoRangePeaks[0].freq;
-  }
+  // 8kHz〜11kHzのキンキン音（サ行やシンバルの鋭いピーク）は上部で検出し変数に格納済み
 
   return {
     detected: filteredPeaks.length > 0,
