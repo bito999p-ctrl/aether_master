@@ -141,7 +141,8 @@ const params = {
   
   // Noise Cleaner
   rumbleCutEnabled: false,
-  hissReductionAmount: 0 // 0 to 100%
+  hissReductionAmount: 0, // 0 to 100%
+  sibilanceDynamicFreq: 0 // Detected sibilance frequency (0 if none)
 };
 
 // AI Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
@@ -516,12 +517,14 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dedicated Dynamic Sibilance Notch (9000Hz De-esser)
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
-  sibilanceNotch.frequency.setValueAtTime(9000, context.currentTime);
+  sibilanceNotch.frequency.setValueAtTime(parameters.sibilanceDynamicFreq || 9000, context.currentTime);
   sibilanceNotch.Q.setValueAtTime(5.0, context.currentTime); // surgical Q targeting sibilance peak
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
   const sibilanceNotchDynamicGain = context.createGain();
-  const initDynamicCut = -6.0 * (setupHissAmount / 100.0);
+  // Only apply dynamic notch if sibilanceDynamicFreq is detected by AI analyzer (> 0)
+  const isSibilant = (parameters.sibilanceDynamicFreq && parameters.sibilanceDynamicFreq > 0);
+  const initDynamicCut = isSibilant ? (-6.0 * (setupHissAmount / 100.0)) : 0.0;
   sibilanceNotchDynamicGain.gain.setValueAtTime(initDynamicCut, context.currentTime);
   envelopeSmoother.connect(sibilanceNotchDynamicGain);
   sibilanceNotchDynamicGain.connect(sibilanceNotch.gain);
@@ -1559,9 +1562,11 @@ function updateNoiseCutNodes() {
     const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
 
-    // Dynamically scale dynamic sibilance notch (9000Hz de-esser) gain: cuts up to -6.0dB when hissReductionAmount is 100%
-    if (activeNodes.sibilanceNotchDynamicGain) {
-      const dynamicCut = -6.0 * (hissAmount / 100.0);
+    // Dynamically scale dynamic sibilance notch (de-esser) gain: cuts up to -6.0dB when sibilance is detected by AI (> 0)
+    if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
+      const isSibilant = (params.sibilanceDynamicFreq && params.sibilanceDynamicFreq > 0);
+      const dynamicCut = isSibilant ? (-6.0 * (hissAmount / 100.0)) : 0.0;
+      activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.sibilanceDynamicFreq || 9000, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
   }
@@ -2218,6 +2223,15 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const originalPeakDb = 20 * Math.log10(maxAbsSample + 1e-6);
   const suggestedInputGainDb = Math.max(-12.0, Math.min(12.0, -6.0 - originalPeakDb));
 
+  // 8kHz〜11kHzのキンキン音（サ行やシンバルの鋭いピーク）をスキャン
+  let sibilanceDynamicFreq = 0;
+  const sunoRangePeaks = rawPeaks.filter(p => p.freq >= 8000 && p.freq <= 11000);
+  if (sunoRangePeaks.length > 0) {
+    // スコア（共鳴の鋭さ・目立ち具合）が最大のピークを特定
+    sunoRangePeaks.sort((a, b) => b.score - a.score);
+    sibilanceDynamicFreq = sunoRangePeaks[0].freq;
+  }
+
   return {
     detected: filteredPeaks.length > 0,
     notches: filteredPeaks,
@@ -2251,7 +2265,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       sideHighPassFreq: basePreset.sideHighPassFreq || 110,
       limiterBoost: limiterBoost,
       rumbleCutEnabled: sugRumbleCut,
-      hissReductionAmount: sugHissAmount
+      hissReductionAmount: sugHissAmount,
+      sibilanceDynamicFreq: sibilanceDynamicFreq
     }
   };
 }
@@ -2296,6 +2311,7 @@ function loadGenrePreset(genreKey) {
     params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
     params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
     params.limiterBoost = aiSuggestedParams.limiterBoost;
+    params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
     // Set UI badge to show detected genre
     const genreBadge = document.getElementById('ai-detected-genre-badge');
     if (genreBadge && aiDetectedGenre) {
@@ -2306,9 +2322,11 @@ function loadGenrePreset(genreKey) {
     if (aiSuggestedParams !== null) {
       params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
       params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
+      params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
+      params.sibilanceDynamicFreq = 0;
     }
     
     // Reset UI badge back to AUTO if loading normal auto template or another preset
@@ -3153,6 +3171,7 @@ function runAiAnalysis(showLog = true) {
       params.limiterBoost = sug.limiterBoost;
       params.rumbleCutEnabled = sug.rumbleCutEnabled;
       params.hissReductionAmount = sug.hissReductionAmount;
+      params.sibilanceDynamicFreq = sug.sibilanceDynamicFreq || 0;
       
       // UIスライダーコントロールの同期
       updateGuiControls();
