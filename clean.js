@@ -142,14 +142,12 @@ const params = {
   // Noise Cleaner
   rumbleCutEnabled: false,
   hissReductionAmount: 0, // 0 to 100%
-  deesserAmount: 0,
   sibilanceDynamicFreq: 0 // Detected sibilance frequency (0 if none)
 };
 
 // AI Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
 let aiSuggestedParams = null;
 let aiDetectedGenre = null;
-let isAiAnalyzing = false; // Prevents premature QA evaluation while the primary AI analysis/calibration is running
 
 // Audio Spices State Configuration
 const spices = {
@@ -296,25 +294,6 @@ export const GENRE_PRESETS = {
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
     stereoWidth: 1.25, limiterBoost: 2.5, sideHighPassFreq: 90
   }
-};
-
-// Genre Targets Configuration
-export const GENRE_TARGETS = {
-  auto: { low: 2.8, high: 0.10, presence: 0.42 },
-  pops: { low: 2.6, high: 0.11, presence: 0.44 },
-  rnb: { low: 3.2, high: 0.10, presence: 0.41 },
-  rock: { low: 2.9, high: 0.09, presence: 0.43 },
-  metal: { low: 3.0, high: 0.11, presence: 0.42 },
-  edm: { low: 3.2, high: 0.11, presence: 0.40 },
-  hiphop: { low: 3.3, high: 0.09, presence: 0.38 },
-  lofi: { low: 3.1, high: 0.06, presence: 0.36 },
-  hardcore: { low: 3.2, high: 0.12, presence: 0.42 },
-  ambient: { low: 2.9, high: 0.14, presence: 0.44 },
-  podcast: { low: 1.6, broadband_high: 0.08, presence: 0.47 },
-  classic: { low: 2.2, high: 0.08, presence: 0.39 },
-  jazz: { low: 2.7, high: 0.09, presence: 0.41 },
-  acoustic: { low: 2.4, high: 0.10, presence: 0.43 },
-  custom: { low: 2.8, high: 0.10, presence: 0.42 }
 };
 
 // Loudness Targets
@@ -550,9 +529,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
   const sibilanceNotchDynamicGain = context.createGain();
-  // Decoupled from hissAmount: active if deesserAmount > 0
-  const deesserAmt = parameters.deesserAmount || 0;
-  const initDynamicCut = -12.0 * (deesserAmt / 100.0);
+  // Decoupled from hissAmount: always fully active (-6.0dB max depth) if sibilance is detected
+  const isSibilant = (parameters.sibilanceDynamicFreq && parameters.sibilanceDynamicFreq > 0);
+  const initDynamicCut = isSibilant ? -6.0 : 0.0;
   sibilanceNotchDynamicGain.gain.setValueAtTime(initDynamicCut, context.currentTime);
   envelopeSmoother.connect(sibilanceNotchDynamicGain);
   sibilanceNotchDynamicGain.connect(sibilanceNotch.gain);
@@ -981,7 +960,6 @@ function pausePlayback() {
       logToUI("AudioContext suspended to save battery.", "info");
     });
   }
-  triggerOutputEvaluation();
 }
 
 function stopPlayback() {
@@ -1004,7 +982,6 @@ function stopPlayback() {
       logToUI("AudioContext suspended to save battery.", "info");
     });
   }
-  triggerOutputEvaluation();
 }
 
 // ==========================================================================
@@ -1592,10 +1569,10 @@ function updateNoiseCutNodes() {
     const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
 
-    // Decoupled from hissAmount: active if deesserAmount > 0
+    // Decoupled from hissAmount: always active at -6.0dB max if sibilance is detected
     if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
-      const amount = params.deesserAmount || 0;
-      const dynamicCut = -12.0 * (amount / 100.0);
+      const isSibilant = (params.sibilanceDynamicFreq && params.sibilanceDynamicFreq > 0);
+      const dynamicCut = isSibilant ? -6.0 : 0.0;
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.sibilanceDynamicFreq || 9000, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
@@ -1676,7 +1653,6 @@ function updateCompressorNode() {
 }
 
 function updateStereoWidthNode() {
-  invalidatePeakCache();
   if (activeNodes.midGain && activeNodes.sideGain) {
     const p = getCombinedParams();
     activeNodes.midGain.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.01);
@@ -2028,7 +2004,24 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
   const basePreset = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
 
-  const target = GENRE_TARGETS[genreKey] || GENRE_TARGETS.auto;
+  const genreTargets = {
+    auto: { low: 2.8, high: 0.10, presence: 0.42 },
+    pops: { low: 2.6, high: 0.11, presence: 0.44 },
+    rnb: { low: 3.2, high: 0.10, presence: 0.41 },
+    rock: { low: 2.9, high: 0.09, presence: 0.43 },
+    metal: { low: 3.0, high: 0.11, presence: 0.42 },
+    edm: { low: 3.2, high: 0.11, presence: 0.40 },
+    hiphop: { low: 3.3, high: 0.09, presence: 0.38 },
+    lofi: { low: 3.1, high: 0.06, presence: 0.36 },
+    hardcore: { low: 3.2, high: 0.12, presence: 0.42 },
+    ambient: { low: 2.9, high: 0.14, presence: 0.44 },
+    podcast: { low: 1.6, high: 0.08, presence: 0.47 },
+    classic: { low: 2.2, high: 0.08, presence: 0.39 },
+    jazz: { low: 2.7, high: 0.09, presence: 0.41 },
+    acoustic: { low: 2.4, high: 0.10, presence: 0.43 },
+    custom: { low: 2.8, high: 0.10, presence: 0.42 }
+  };
+  const target = genreTargets[genreKey] || genreTargets.auto;
 
   const lowDiffDb = 20 * Math.log10(actualLowMidRatio / target.low);
   const highDiffDb = 20 * Math.log10(actualHighMidRatio / target.high);
@@ -2037,26 +2030,33 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   let eqLowAdjustment = 0;
   if (lowDiffDb > 0.5) {
-    eqLowAdjustment = -Math.min(3.5, lowDiffDb * 0.75); // 絞りすぎ防止
+    eqLowAdjustment = -Math.min(3.5, lowDiffDb * 0.75);
   } else if (lowDiffDb < -0.5) {
-    eqLowAdjustment = Math.min(2.2, -lowDiffDb * 0.75); // 不足分引き上げ
+    eqLowAdjustment = Math.min(2.2, -lowDiffDb * 0.75);
   }
-  const eqLowGain = Math.max(-5.0, Math.min(3.0, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 2) / 2)); // クランプ範囲を元に戻す
+  const eqLowGain = Math.max(-5.0, Math.min(3.0, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 2) / 2));
+
   let eqMidAdjustment = 0;
   if (presenceDiffDb > 0.5) {
-    eqMidAdjustment = -Math.min(1.5, presenceDiffDb * 0.75);
+    eqMidAdjustment = -Math.min(1.8, presenceDiffDb * 0.5); // 派手すぎる場合は中域を抑えてマイルドに（最大-1.8dB）
   } else if (presenceDiffDb < -0.5) {
-    eqMidAdjustment = Math.min(1.5, -presenceDiffDb * 0.75);
+    eqMidAdjustment = Math.min(1.2, -presenceDiffDb * 0.45); // こもっている場合はマイルドに補強（最大+1.2dB）
   }
-  const eqMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2));
+  const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
 
   let eqHighAdjustment = 0;
   if (highDiffDb > 0.5) {
-    eqHighAdjustment = -Math.min(2.0, highDiffDb * 0.75);
+    eqHighAdjustment = -Math.min(2.0, highDiffDb * 0.5); // 派手すぎる場合はマイルドに減衰（最大-2.0dB）
   } else if (highDiffDb < -0.5) {
-    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.75);
+    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.45); // 不足している場合はマイルドに補強（最大+1.5dB）
   }
-  let eqHighGain = Math.max(-3.0, Math.min(1.5, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+
+  let eqHighGain = Math.max(-5.0, Math.min(1.2, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+1.2dBに制限
+
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを禁止し、安全のために少なくとも-1.5dB以下の減衰量にクランプ
+  if (sibilanceDynamicFreq > 0) {
+    eqHighGain = Math.min(-1.5, eqHighGain);
+  }
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
@@ -2232,13 +2232,6 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   
   finalLimiterBoost = Math.round(finalLimiterBoost * 10) / 10;
 
-  // 動的なディエッサー強度の算出
-  let suggestedDeesserAmount = 40; // デフォルトで基本有効（40%）
-  if (sibilanceDynamicFreq > 0 && rawSibilancePeaks.length > 0) {
-    const maxScore = rawSibilancePeaks[0].score;
-    suggestedDeesserAmount = Math.round(Math.min(85, Math.max(40, 40 + (maxScore - 1.15) * 60)));
-  }
-
   return {
     detected: filteredPeaks.length > 0,
     notches: filteredPeaks,
@@ -2275,8 +2268,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       limiterBoost: finalLimiterBoost,
       rumbleCutEnabled: sugRumbleCut,
       hissReductionAmount: sugHissAmount,
-      sibilanceDynamicFreq: sibilanceDynamicFreq,
-      deesserAmount: suggestedDeesserAmount
+      sibilanceDynamicFreq: sibilanceDynamicFreq
     }
   };
 }
@@ -2322,7 +2314,6 @@ function loadGenrePreset(genreKey) {
     params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
     params.limiterBoost = aiSuggestedParams.limiterBoost;
     params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
-    params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
     // Set UI badge to show detected genre
     const genreBadge = document.getElementById('ai-detected-genre-badge');
     if (genreBadge && aiDetectedGenre) {
@@ -2334,12 +2325,10 @@ function loadGenrePreset(genreKey) {
       params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
       params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
       params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
-      params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
       params.sibilanceDynamicFreq = 0;
-      params.deesserAmount = 0;
     }
     
     // Reset UI badge back to AUTO if loading normal auto template or another preset
@@ -2651,14 +2640,6 @@ function updateGuiControls() {
   if (hissValEl) {
     hissValEl.innerText = params.hissReductionAmount > 0 ? `${params.hissReductionAmount}%` : 'OFF';
   }
-  const deesserSliderEl = document.getElementById('deesser-slider');
-  if (deesserSliderEl) {
-    deesserSliderEl.value = params.deesserAmount;
-  }
-  const deesserValEl = document.getElementById('deesser-val');
-  if (deesserValEl) {
-    deesserValEl.innerText = params.deesserAmount > 0 ? `${params.deesserAmount}%` : 'OFF';
-  }
 }
 
 function updatePlayButtonUI(playing) {
@@ -2693,13 +2674,6 @@ function registerGuiEvents() {
   // Noise Cleaner
   document.getElementById('rumble-cut-enable').addEventListener('change', (e) => {
     params.rumbleCutEnabled = e.target.checked;
-    selectCustomPreset();
-    updateNoiseCutNodes();
-  });
-
-  document.getElementById('deesser-slider').addEventListener('input', (e) => {
-    params.deesserAmount = parseInt(e.target.value);
-    document.getElementById('deesser-val').innerText = params.deesserAmount > 0 ? `${params.deesserAmount}%` : 'OFF';
     selectCustomPreset();
     updateNoiseCutNodes();
   });
@@ -3098,7 +3072,6 @@ function resetMasterSettings() {
   // Reset Noise Cleaner
   params.rumbleCutEnabled = false;
   params.hissReductionAmount = 0;
-  params.deesserAmount = 0;
   
   // 2. Reset sibilance corrective notches
   params.correctiveNotches.forEach(n => {
@@ -3135,16 +3108,7 @@ function runAiAnalysis(showLog = true) {
     logToUI("AI Assistant: Analyzing frequency spectrum & dynamics...", "info");
   }
   
-  isAiAnalyzing = true;
-  // Trigger ANALYZING badge state immediately to prevent visual flicker
-  const badge = document.getElementById('evaluation-status-badge');
-  if (badge) {
-    badge.innerText = "ANALYZING...";
-    badge.style.background = "#9d4ede";
-    badge.style.boxShadow = "0 0 8px rgba(157,78,221,0.5)";
-  }
-  
-  setTimeout(async () => {
+  setTimeout(() => {
     try {
       const result = analyzeAudioResonances(audioBuffer);
       
@@ -3193,6 +3157,31 @@ function runAiAnalysis(showLog = true) {
         }
       }
 
+      // Noise Cleanerの検出ステータスをコンソールログに出力
+      if (showLog) {
+        if (sug.rumbleCutEnabled) {
+          logToUI(`[Noise Cleaner] Low-end rumble/sub-bass noise detected (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Rumble Cut (80Hz HPF) auto-activated.`, "warning");
+        } else {
+          logToUI(`[Noise Cleaner] Low-end noise floor is clean (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Subsonic protection active (18Hz HPF).`, "info");
+        }
+        
+        if (sug.hissReductionAmount > 0) {
+          logToUI(`[Noise Cleaner] High-frequency hiss/sibilance detected (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer auto-set to ${sug.hissReductionAmount}%.`, "warning");
+        } else {
+          logToUI(`[Noise Cleaner] High-frequency noise floor is clean (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer is OFF.`, "info");
+        }
+
+        // サ行のキンキン共鳴音（シビランス）の検知・クランプ保護のログ
+        if (sug.sibilanceDynamicFreq > 0) {
+          logToUI(`[AI Assistant] Detected harsh vocal sibilance at ${sug.sibilanceDynamicFreq} Hz. Clamped High Shelf EQ to ${sug.eqHighGain.toFixed(1)} dB to prevent ear fatigue and activated dynamic De-esser notch.`, "warning");
+        }
+
+        // 広帯域ステレオ低域／リバーブの検知ログ
+        if (result.correlation < 0.72) {
+          logToUI(`[AI Assistant] Detected wide stereo low-end / deep phase reverb (Correlation: ${result.correlation.toFixed(2)}). Centered sub-bass below ${sug.sideHighPassFreq}Hz and adjusted limiting to prevent low-end distortion.`, "warning");
+        }
+      }
+      
       params.inputGainDb = sug.inputGainDb;
       params.satEnabled = sug.satEnabled;
       params.satType = sug.satType;
@@ -3210,8 +3199,6 @@ function runAiAnalysis(showLog = true) {
       params.rumbleCutEnabled = sug.rumbleCutEnabled;
       params.hissReductionAmount = sug.hissReductionAmount;
       params.sibilanceDynamicFreq = sug.sibilanceDynamicFreq || 0;
-      params.deesserAmount = sug.deesserAmount || 0;
-      params.ceiling = sug.ceiling !== undefined ? sug.ceiling : -0.2;
       
       // UIスライダーコントロールの同期
       updateGuiControls();
@@ -3319,8 +3306,6 @@ function runAiAnalysis(showLog = true) {
         aiAnalyzeBtn.disabled = false;
         aiAnalyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> ANALYZE & AUTO-CORRECT EQ';
       }
-      isAiAnalyzing = false;
-      triggerOutputEvaluation();
     }
   }, 100);
 }
@@ -3615,7 +3600,6 @@ function invalidatePeakCache() {
   if (!isPlaying && audioBuffer && activeTab === 'waveform') {
     drawWaveformView();
   }
-  triggerOutputEvaluation();
 }
 
 function getProcessedPeaks() {
@@ -3623,401 +3607,4 @@ function getProcessedPeaks() {
     cachedProcessedPeaks = calculateProcessedPeaks();
   }
   return cachedProcessedPeaks;
-}
-
-let evaluationDebounceTimer = null;
-
-function triggerOutputEvaluation() {
-  if (!audioBuffer) return;
-  if (isPlaying) return; // Do not run evaluation while the song is playing!
-  if (isAiAnalyzing) return; // Defer evaluation while the AI analysis/calibration loops are active!
-  
-  // Set UI to analyzing state immediately
-  const badge = document.getElementById('evaluation-status-badge');
-  if (badge) {
-    badge.innerText = "ANALYZING...";
-    badge.style.background = "#9d4ede"; // Purple analyzing state
-    badge.style.boxShadow = "0 0 8px rgba(157,78,221,0.5)";
-  }
-  
-  if (evaluationDebounceTimer) clearTimeout(evaluationDebounceTimer);
-  evaluationDebounceTimer = setTimeout(async () => {
-    await runOutputEvaluation();
-  }, 250);
-}
-
-async function analyzeMasteredOutput(parameters) {
-  if (!audioBuffer) return null;
-  
-  const sampleRate = audioBuffer.sampleRate;
-  const numChannels = audioBuffer.numberOfChannels;
-  
-  // Render a representative 30-second segment (middle or start) to perform ultra-fast analysis
-  const renderDuration = Math.min(30.0, audioBuffer.duration);
-  const startOffset = audioBuffer.duration > 40.0 ? 30.0 : 0.0;
-  const startSample = Math.floor(startOffset * sampleRate);
-  const numSamples = Math.floor(renderDuration * sampleRate);
-  
-  const subBuffer = audioContext.createBuffer(numChannels, numSamples, sampleRate);
-  for (let c = 0; c < numChannels; c++) {
-    const srcData = audioBuffer.getChannelData(c);
-    const dstData = subBuffer.getChannelData(c);
-    for (let i = 0; i < numSamples; i++) {
-      dstData[i] = srcData[startSample + i] || 0;
-    }
-  }
-  
-  const offlineCtx = new OfflineAudioContext(numChannels, numSamples, sampleRate);
-  const offlineSource = offlineCtx.createBufferSource();
-  offlineSource.buffer = subBuffer;
-  
-  const offlineChain = setupMasteringChain(offlineCtx, offlineSource, parameters);
-  offlineChain.outputNode.connect(offlineCtx.destination);
-  
-  offlineSource.start(0);
-  
-  const rendered = await offlineCtx.startRendering();
-  
-  let maxPeak = 0.0;
-  const sampleCount = rendered.length * numChannels;
-  
-  // FFT analysis on the rendered buffer to match analyzeAudioResonances exactly
-  const fftSize = 2048;
-  const numSlices = 32;
-  
-  const chL = rendered.getChannelData(0);
-  const chR = rendered.numberOfChannels > 1 ? rendered.getChannelData(1) : chL;
-  
-  const avgSpectrum = new Float32Array(fftSize / 2);
-  const re = new Float32Array(fftSize);
-  const im = new Float32Array(fftSize);
-  
-  const slicePoints = [];
-  const sliceStartOffset = Math.floor(rendered.length * 0.1);
-  const sliceEndOffset = Math.floor(rendered.length * 0.9);
-  const range = sliceEndOffset - sliceStartOffset;
-  for (let i = 0; i < numSlices; i++) {
-    slicePoints.push(sliceStartOffset + Math.floor(range * (i / (numSlices - 1))));
-  }
-  
-  let totalDotProduct = 0;
-  let totalEnergyL2 = 0;
-  let totalEnergyR2 = 0;
-  let maxAbsSample = 0.0;
-  let sumRMS2 = 0.0;
-  let clippingSamples = 0;
-  
-  for (const startIdx of slicePoints) {
-    let sliceMax = 0.0;
-    let sliceSumSq = 0.0;
-    let sliceDotProduct = 0;
-    let sliceSumL2 = 0;
-    let sliceSumR2 = 0;
-    
-    for (let j = 0; j < fftSize; j++) {
-      const idx = startIdx + j;
-      if (idx >= rendered.length) break;
-      
-      const l = chL[idx];
-      const r = chR[idx];
-      const mid = (l + r) * 0.5;
-      
-      re[j] = mid;
-      im[j] = 0;
-      
-      const absL = Math.abs(l);
-      const absR = Math.abs(r);
-      if (absL > sliceMax) sliceMax = absL;
-      if (absR > sliceMax) sliceMax = absR;
-      
-      if (absL > 0.999) clippingSamples++;
-      if (absR > 0.999) clippingSamples++;
-      
-      sliceSumSq += mid * mid;
-      sliceDotProduct += l * r;
-      sliceSumL2 += l * l;
-      sliceSumR2 += r * r;
-    }
-    
-    if (sliceMax > maxAbsSample) maxAbsSample = sliceMax;
-    
-    const sliceRMS = Math.sqrt(sliceSumSq / fftSize);
-    sumRMS2 += sliceRMS * sliceRMS;
-    
-    totalDotProduct += sliceDotProduct;
-    totalEnergyL2 += sliceSumL2;
-    totalEnergyR2 += sliceSumR2;
-    
-    // Hanning Window
-    for (let j = 0; j < fftSize; j++) {
-      const windowVal = 0.5 * (1 - Math.cos((2 * Math.PI * j) / (fftSize - 1)));
-      re[j] *= windowVal;
-    }
-    
-    fft(re, im);
-    
-    const normFactor = fftSize / 2;
-    for (let j = 0; j < fftSize / 2; j++) {
-      const mag = Math.sqrt(re[j]*re[j] + im[j]*im[j]) / normFactor;
-      avgSpectrum[j] += mag / numSlices;
-    }
-  }
-  
-  const rms = Math.sqrt(sumRMS2 / numSlices);
-  const rmsDb = 20 * Math.log10(rms || 0.0001);
-  const peakDb = 20 * Math.log10(maxAbsSample || 0.0001);
-  
-  let avgCorrelation = 1.0;
-  if (totalEnergyL2 > 0 && totalEnergyR2 > 0) {
-    avgCorrelation = totalDotProduct / Math.sqrt(totalEnergyL2 * totalEnergyR2);
-    avgCorrelation = Math.max(-1.0, Math.min(1.0, avgCorrelation));
-  }
-  
-  // Calculate band energies exactly like analyzeAudioResonances
-  const binSub = Math.floor((20 * fftSize) / sampleRate);
-  const binBassEnd = Math.floor((160 * fftSize) / sampleRate);
-  const binMidStart = binBassEnd + 1;
-  const binMidEnd = Math.floor((800 * fftSize) / sampleRate);
-  const binHighMidStart = binMidEnd + 1;
-  const binHighMidEnd = Math.floor((5000 * fftSize) / sampleRate);
-  const binAirStart = binHighMidEnd + 1;
-  const binAirEnd = Math.min(fftSize / 2 - 1, Math.floor((20000 * fftSize) / sampleRate));
-  
-  let bassSum = 0;
-  for (let j = binSub; j <= binBassEnd; j++) bassSum += avgSpectrum[j];
-  const energyBass = bassSum / (binBassEnd - binSub + 1);
-  
-  let lowMidSum = 0;
-  for (let j = binMidStart; j <= binMidEnd; j++) lowMidSum += avgSpectrum[j];
-  const energyLowMid = lowMidSum / (binMidEnd - binMidStart + 1);
-  
-  let highMidSum = 0;
-  for (let j = binHighMidStart; j <= binHighMidEnd; j++) highMidSum += avgSpectrum[j];
-  const energyHighMid = highMidSum / (binHighMidEnd - binHighMidStart + 1);
-  
-  let trebleSum = 0;
-  for (let j = binAirStart; j <= binAirEnd; j++) trebleSum += avgSpectrum[j];
-  const energyTreble = trebleSum / (binAirEnd - binAirStart + 1);
-  
-  // Ratios converted to dB using 20 * Math.log10 to match analyzeAudioResonances exactly!
-  const outLowDiffDb = 20 * Math.log10((energyBass / (energyLowMid + 1e-6)) + 1e-12);
-  const outTrebleDiffDb = 20 * Math.log10((energyTreble / (energyLowMid + 1e-6)) + 1e-12);
-  
-  return {
-    rmsDb,
-    peakDb,
-    clippingSamples,
-    avgCorrelation,
-    outLowDiffDb,
-    outTrebleDiffDb,
-    maxPeak: maxAbsSample
-  };
-}
-
-let evaluationId = 0;
-
-async function runOutputEvaluation() {
-  if (!audioBuffer) return;
-  
-  const currentEvaluationId = ++evaluationId;
-  
-  try {
-    const currentParams = getCombinedParams();
-    const metrics = await analyzeMasteredOutput(currentParams);
-    
-    // If a newer evaluation has been started, ignore this old result!
-    if (currentEvaluationId !== evaluationId) return;
-    if (!metrics) return;
-    
-    const rmsDb = metrics.rmsDb;
-    const avgCorrelation = metrics.avgCorrelation;
-    const outLowDiffDb = metrics.outLowDiffDb;
-    const outTrebleDiffDb = metrics.outTrebleDiffDb;
-    const clippingSamples = metrics.clippingSamples;
-    const maxPeak = metrics.maxPeak;
-    const peakDb = metrics.peakDb;
-    
-    // Retrieve the target ratio for the current genre and convert it to dB
-    const genreSelect = document.getElementById('preset-select');
-    const genreKey = genreSelect ? genreSelect.value : 'auto';
-    const target = GENRE_TARGETS[genreKey] || GENRE_TARGETS.auto;
-    const targetLowDb = 20 * Math.log10(target.low);
-    const lowDiffDb = outLowDiffDb - targetLowDb;
-    
-    const items = [];
-    let status = "SAFE";
-    let badgeColor = "#20c997";
-    
-    // 1. Peak / Clipping Evaluation
-    if (clippingSamples > 15) {
-      status = "DANGER";
-      badgeColor = "#dc3545";
-      items.push({
-        type: "danger",
-        title: "音割れ（クリッピング）警告",
-        desc: `出力波形に ${clippingSamples} 箇所の歪み（波形潰れ）が検出されました。Input Gain を下げるか、Output Ceiling を下げることで解消します。`
-      });
-    } else if (maxPeak > 0.99) {
-      if (status !== "DANGER") status = "WARNING";
-      if (badgeColor !== "#dc3545") badgeColor = "#ffc107";
-      items.push({
-        type: "warning",
-        title: "音量オーバーヘッドの警告",
-        desc: "限界音量（0.0 dBFS）に達しています。再生環境によっては歪む可能性があるため、Output Ceiling を -1.0 dB に下げることを推奨します。"
-      });
-    } else {
-      items.push({
-        type: "success",
-        title: `最大ピーク: ${peakDb.toFixed(1)} dBFS (安全)`,
-        desc: "出力波形はクリッピングせず、安全な音量マージンが確保されています。"
-      });
-    }
-    
-    // 2. Loudness / RMS Evaluation
-    if (rmsDb > -8.5) {
-      if (status !== "DANGER") status = "WARNING";
-      if (badgeColor !== "#dc3545") badgeColor = "#ffc107";
-      items.push({
-        type: "warning",
-        title: `平均音圧が高すぎます (${rmsDb.toFixed(1)} dB RMS)`,
-        desc: "ダイナミックレンジが失われ、耳が痛くなりやすい状態です。Limiter Boost または Loudness Push を下げて調整してください。"
-      });
-    } else if (rmsDb < -16.0) {
-      items.push({
-        type: "info",
-        title: `平均音圧は控えめです (${rmsDb.toFixed(1)} dB RMS)`,
-        desc: "音割れの心配はありません。もう少し迫力が欲しい場合は Limiter Boost を上げてください。"
-      });
-    } else {
-      items.push({
-        type: "success",
-        title: `平均音圧: ${rmsDb.toFixed(1)} dB RMS (最適)`,
-        desc: "主要プラットフォームの配信基準を満たした、音割れのない最適な音圧バランスです。"
-      });
-    }
-    
-    // 3. Bass Balance Evaluation
-    if (lowDiffDb < -1.8) {
-      items.push({
-        type: "info",
-        title: "低域がやや細めです",
-        desc: "全体に対して低音が少し薄いです。マニュアル調整で Low EQ (低域) のスライダーを上げることで、ベースやドラムを豊かに補強できます。"
-      });
-    } else if (lowDiffDb > 1.8) {
-      if (status !== "DANGER") status = "WARNING";
-      if (badgeColor !== "#dc3545") badgeColor = "#ffc107";
-      items.push({
-        type: "warning",
-        title: "低域が過剰です (モコモコ感)",
-        desc: "低音が強すぎて音が濁り、中高音が埋もれがちです。Low EQ を下げるか、Rumble Cut スイッチを有効にしてください。"
-      });
-    } else {
-      items.push({
-        type: "success",
-        title: "低音の量感バランス良好",
-        desc: "ベースラインが濁らずに、引き締まった心地よい低音が出力されています。"
-      });
-    }
-    
-    // 4. Vocal & Mid-Range Clarity Evaluation
-    const midGain = currentParams.eqMidGain || 0;
-    if (midGain > 1.5) {
-      items.push({
-        type: "info",
-        title: "中音域が強調されています (Vocal Focus)",
-        desc: "歌声やリード楽器の存在感が高くなっています。中音域が強すぎてうるさいと感じる場合は、Mid EQ を少し下げてください。"
-      });
-    } else if (midGain < -1.5) {
-      items.push({
-        type: "info",
-        title: "中音域がスッキリしています (Donshari)",
-        desc: "ドンシャリ傾向のモダンなサウンドバランスです。歌声をもっと前に出したい場合は、Mid EQ を上げてください。"
-      });
-    } else {
-      items.push({
-        type: "success",
-        title: "中音域の解像度・歌声定位感良好",
-        desc: "低域と高域に埋もれることなく、ボーカルや主要楽器の中音域がクリアに鳴り響いています。"
-      });
-    }
-    
-    // 5. High-Frequency & Sibilance Evaluation
-    const highGain = currentParams.eqHighGain || 0;
-    const deesser = currentParams.deesserAmount || 0;
-    if (highGain > 1.8 && deesser < 30) {
-      if (status !== "DANGER") status = "WARNING";
-      if (badgeColor !== "#dc3545") badgeColor = "#ffc107";
-      items.push({
-        type: "warning",
-        title: "高音域過剰・歯擦音の警告",
-        desc: "高音域が大きくブーストされていますが、DE-ESSERが弱い/オフのため、サ行が刺さるリスクがあります。DE-ESSERを40〜70%に上げてください。"
-      });
-    } else if (deesser >= 40) {
-      items.push({
-        type: "success",
-        title: `ディエッサー稼働中 (${deesser}% / 歯擦音抑制)`,
-        desc: "ボーカルのサ行の突き刺さる成分が動的に抑制され、滑らかで聴きやすい高域になっています。"
-      });
-    } else {
-      items.push({
-        type: "success",
-        title: "高音域はクリアで耳に優しい抜け感",
-        desc: "金属的なキンキンした雑音が抑えられており、適度な空気感と透明感のある高音域が出力されています。"
-      });
-    }
-    
-    // 6. Stereo Phase Correlation Evaluation
-    if (avgCorrelation < 0.2) {
-      if (status !== "DANGER") status = "WARNING";
-      if (badgeColor !== "#dc3545") badgeColor = "#ffc107";
-      items.push({
-        type: "warning",
-        title: `位相干渉・モノラル互換性のリスク (相関値: ${avgCorrelation.toFixed(2)})`,
-        desc: "ステレオ幅が広すぎます。スマートフォン等のモノラルスピーカーで再生した際に、ベースやボーカルの音が消えやすくなります。Stereo Width を下げてください。"
-      });
-    } else {
-      items.push({
-        type: "success",
-        title: `ステレオ相関値: ${avgCorrelation.toFixed(2)} (モノラル再生OK)`,
-        desc: "ステレオ感が豊かでありながら、シングルスピーカー（スマホ単体など）で聴いても音が劣化しません。"
-      });
-    }
-    
-    // UI Update
-    const card = document.getElementById('mastering-evaluation-card');
-    const badge = document.getElementById('evaluation-status-badge');
-    const container = document.getElementById('evaluation-items');
-    
-    if (badge && container) {
-      if (card) card.style.display = 'block';
-      badge.innerText = status;
-      badge.style.background = badgeColor;
-      badge.style.boxShadow = `0 0 6px ${badgeColor}66`;
-      
-      container.innerHTML = items.map(item => {
-        let icon = '<i class="fa-solid fa-circle-check" style="color: #20c997; margin-right: 6px;"></i>';
-        if (item.type === 'danger') {
-          icon = '<i class="fa-solid fa-circle-xmark" style="color: #dc3545; margin-right: 6px;"></i>';
-        } else if (item.type === 'warning') {
-          icon = '<i class="fa-solid fa-triangle-exclamation" style="color: #ffc107; margin-right: 6px;"></i>';
-        } else if (item.type === 'info') {
-          icon = '<i class="fa-solid fa-circle-info" style="color: #00f2fe; margin-right: 6px;"></i>';
-        }
-        return `
-          <div style="background: rgba(255,255,255,0.015); border-left: 3px solid ${item.type === 'danger' ? '#dc3545' : item.type === 'warning' ? '#ffc107' : item.type === 'info' ? '#00f2fe' : '#20c997'}; padding: 6px 8px; border-radius: 3px;">
-            <div style="font-weight: 700; color: #fff; margin-bottom: 2px; display: flex; align-items: center;">${icon}${item.title}</div>
-            <div style="color: var(--text-muted); font-size: 0.58rem; line-height: 1.25; padding-left: 16px;">${item.desc}</div>
-          </div>
-        `;
-      }).join('');
-    }
-  } catch (e) {
-    console.error("Mastering evaluation failed", e);
-    const badge = document.getElementById('evaluation-status-badge');
-    if (badge) {
-      badge.innerText = "ERROR";
-      badge.style.background = "#dc3545";
-    }
-    logToUI("[QA Error] " + e.message, "danger");
-  }
 }
