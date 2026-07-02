@@ -142,10 +142,11 @@ const params = {
   // Noise Cleaner
   rumbleCutEnabled: false,
   hissReductionAmount: 0, // 0 to 100%
+  deesserAmount: 0,
   sibilanceDynamicFreq: 0 // Detected sibilance frequency (0 if none)
 };
 
-// AI Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
+// Audio Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
 let aiSuggestedParams = null;
 let aiDetectedGenre = null;
 
@@ -294,6 +295,25 @@ export const GENRE_PRESETS = {
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
     stereoWidth: 1.25, limiterBoost: 2.5, sideHighPassFreq: 90
   }
+};
+
+// Genre Targets Configuration
+export const GENRE_TARGETS = {
+  auto: { low: 2.8, high: 0.10, presence: 0.42 },
+  pops: { low: 2.6, high: 0.11, presence: 0.44 },
+  rnb: { low: 3.2, high: 0.10, presence: 0.41 },
+  rock: { low: 2.9, high: 0.09, presence: 0.43 },
+  metal: { low: 3.0, high: 0.11, presence: 0.42 },
+  edm: { low: 3.2, high: 0.11, presence: 0.40 },
+  hiphop: { low: 3.3, high: 0.09, presence: 0.38 },
+  lofi: { low: 3.1, high: 0.06, presence: 0.36 },
+  hardcore: { low: 3.2, high: 0.12, presence: 0.42 },
+  ambient: { low: 2.9, high: 0.14, presence: 0.44 },
+  podcast: { low: 1.6, broadband_high: 0.08, presence: 0.47 },
+  classic: { low: 2.2, high: 0.08, presence: 0.39 },
+  jazz: { low: 2.7, high: 0.09, presence: 0.41 },
+  acoustic: { low: 2.4, high: 0.10, presence: 0.43 },
+  custom: { low: 2.8, high: 0.10, presence: 0.42 }
 };
 
 // Loudness Targets
@@ -529,9 +549,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
   const sibilanceNotchDynamicGain = context.createGain();
-  // Decoupled from hissAmount: always fully active (-6.0dB max depth) if sibilance is detected
-  const isSibilant = (parameters.sibilanceDynamicFreq && parameters.sibilanceDynamicFreq > 0);
-  const initDynamicCut = isSibilant ? -6.0 : 0.0;
+  // Decoupled from hissAmount: active if deesserAmount > 0
+  const deesserAmt = parameters.deesserAmount || 0;
+  const initDynamicCut = -12.0 * (deesserAmt / 100.0);
   sibilanceNotchDynamicGain.gain.setValueAtTime(initDynamicCut, context.currentTime);
   envelopeSmoother.connect(sibilanceNotchDynamicGain);
   sibilanceNotchDynamicGain.connect(sibilanceNotch.gain);
@@ -1569,10 +1589,10 @@ function updateNoiseCutNodes() {
     const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
 
-    // Decoupled from hissAmount: always active at -6.0dB max if sibilance is detected
+    // Decoupled from hissAmount: active if deesserAmount > 0
     if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
-      const isSibilant = (params.sibilanceDynamicFreq && params.sibilanceDynamicFreq > 0);
-      const dynamicCut = isSibilant ? -6.0 : 0.0;
+      const amount = params.deesserAmount || 0;
+      const dynamicCut = -12.0 * (amount / 100.0);
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.sibilanceDynamicFreq || 9000, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
@@ -1653,6 +1673,7 @@ function updateCompressorNode() {
 }
 
 function updateStereoWidthNode() {
+  invalidatePeakCache();
   if (activeNodes.midGain && activeNodes.sideGain) {
     const p = getCombinedParams();
     activeNodes.midGain.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.01);
@@ -2004,24 +2025,15 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
   const basePreset = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
 
-  const genreTargets = {
-    auto: { low: 2.8, high: 0.10, presence: 0.42 },
-    pops: { low: 2.6, high: 0.11, presence: 0.44 },
-    rnb: { low: 3.2, high: 0.10, presence: 0.41 },
-    rock: { low: 2.9, high: 0.09, presence: 0.43 },
-    metal: { low: 3.0, high: 0.11, presence: 0.42 },
-    edm: { low: 3.2, high: 0.11, presence: 0.40 },
-    hiphop: { low: 3.3, high: 0.09, presence: 0.38 },
-    lofi: { low: 3.1, high: 0.06, presence: 0.36 },
-    hardcore: { low: 3.2, high: 0.12, presence: 0.42 },
-    ambient: { low: 2.9, high: 0.14, presence: 0.44 },
-    podcast: { low: 1.6, high: 0.08, presence: 0.47 },
-    classic: { low: 2.2, high: 0.08, presence: 0.39 },
-    jazz: { low: 2.7, high: 0.09, presence: 0.41 },
-    acoustic: { low: 2.4, high: 0.10, presence: 0.43 },
-    custom: { low: 2.8, high: 0.10, presence: 0.42 }
-  };
-  const target = genreTargets[genreKey] || genreTargets.auto;
+  // EDM, HIPHOP, HARDCORE などの重低音（サブベース）を重視するジャンルの場合、
+  // 80Hz以下の帯域を急峻にカットする Rumble Cut はサブベースをごそっと削り取ってしまうため、AI自動解析によるONを禁止します。
+  const isSubBassGenre = (detectedGenre === 'edm' || detectedGenre === 'hiphop' || detectedGenre === 'hardcore' ||
+                          genreKey === 'edm' || genreKey === 'hiphop' || genreKey === 'hardcore');
+  if (isSubBassGenre) {
+    sugRumbleCut = false;
+  }
+
+  const target = GENRE_TARGETS[genreKey] || GENRE_TARGETS.auto;
 
   const lowDiffDb = 20 * Math.log10(actualLowMidRatio / target.low);
   const highDiffDb = 20 * Math.log10(actualHighMidRatio / target.high);
@@ -2232,6 +2244,13 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   
   finalLimiterBoost = Math.round(finalLimiterBoost * 10) / 10;
 
+  // 動的なディエッサー強度の算出
+  let suggestedDeesserAmount = 40; // デフォルトで基本有効（40%）
+  if (sibilanceDynamicFreq > 0 && rawSibilancePeaks.length > 0) {
+    const maxScore = rawSibilancePeaks[0].score;
+    suggestedDeesserAmount = Math.round(Math.min(85, Math.max(40, 40 + (maxScore - 1.15) * 60)));
+  }
+
   return {
     detected: filteredPeaks.length > 0,
     notches: filteredPeaks,
@@ -2268,7 +2287,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       limiterBoost: finalLimiterBoost,
       rumbleCutEnabled: sugRumbleCut,
       hissReductionAmount: sugHissAmount,
-      sibilanceDynamicFreq: sibilanceDynamicFreq
+      sibilanceDynamicFreq: sibilanceDynamicFreq,
+      deesserAmount: suggestedDeesserAmount
     }
   };
 }
@@ -2314,6 +2334,7 @@ function loadGenrePreset(genreKey) {
     params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
     params.limiterBoost = aiSuggestedParams.limiterBoost;
     params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
+    params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
     // Set UI badge to show detected genre
     const genreBadge = document.getElementById('ai-detected-genre-badge');
     if (genreBadge && aiDetectedGenre) {
@@ -2325,10 +2346,12 @@ function loadGenrePreset(genreKey) {
       params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
       params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
       params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
+      params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
       params.sibilanceDynamicFreq = 0;
+      params.deesserAmount = 0;
     }
     
     // Reset UI badge back to AUTO if loading normal auto template or another preset
@@ -2640,6 +2663,14 @@ function updateGuiControls() {
   if (hissValEl) {
     hissValEl.innerText = params.hissReductionAmount > 0 ? `${params.hissReductionAmount}%` : 'OFF';
   }
+  const deesserSliderEl = document.getElementById('deesser-slider');
+  if (deesserSliderEl) {
+    deesserSliderEl.value = params.deesserAmount;
+  }
+  const deesserValEl = document.getElementById('deesser-val');
+  if (deesserValEl) {
+    deesserValEl.innerText = params.deesserAmount > 0 ? `${params.deesserAmount}%` : 'OFF';
+  }
 }
 
 function updatePlayButtonUI(playing) {
@@ -2674,6 +2705,13 @@ function registerGuiEvents() {
   // Noise Cleaner
   document.getElementById('rumble-cut-enable').addEventListener('change', (e) => {
     params.rumbleCutEnabled = e.target.checked;
+    selectCustomPreset();
+    updateNoiseCutNodes();
+  });
+
+  document.getElementById('deesser-slider').addEventListener('input', (e) => {
+    params.deesserAmount = parseInt(e.target.value);
+    document.getElementById('deesser-val').innerText = params.deesserAmount > 0 ? `${params.deesserAmount}%` : 'OFF';
     selectCustomPreset();
     updateNoiseCutNodes();
   });
@@ -3072,6 +3110,7 @@ function resetMasterSettings() {
   // Reset Noise Cleaner
   params.rumbleCutEnabled = false;
   params.hissReductionAmount = 0;
+  params.deesserAmount = 0;
   
   // 2. Reset sibilance corrective notches
   params.correctiveNotches.forEach(n => {
@@ -3108,7 +3147,7 @@ function runAiAnalysis(showLog = true) {
     logToUI("AI Assistant: Analyzing frequency spectrum & dynamics...", "info");
   }
   
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
       const result = analyzeAudioResonances(audioBuffer);
       
@@ -3156,7 +3195,7 @@ function runAiAnalysis(showLog = true) {
           logToUI(`[AI Assistant] Dynamically optimized the selected ${genreSelect.value.toUpperCase()} preset parameters to match this track's sonic profile.`, "success");
         }
       }
-
+      
       // Noise Cleanerの検出ステータスをコンソールログに出力
       if (showLog) {
         if (sug.rumbleCutEnabled) {
@@ -3181,7 +3220,7 @@ function runAiAnalysis(showLog = true) {
           logToUI(`[AI Assistant] Detected wide stereo low-end / deep phase reverb (Correlation: ${result.correlation.toFixed(2)}). Centered sub-bass below ${sug.sideHighPassFreq}Hz and adjusted limiting to prevent low-end distortion.`, "warning");
         }
       }
-      
+
       params.inputGainDb = sug.inputGainDb;
       params.satEnabled = sug.satEnabled;
       params.satType = sug.satType;
@@ -3199,6 +3238,8 @@ function runAiAnalysis(showLog = true) {
       params.rumbleCutEnabled = sug.rumbleCutEnabled;
       params.hissReductionAmount = sug.hissReductionAmount;
       params.sibilanceDynamicFreq = sug.sibilanceDynamicFreq || 0;
+      params.deesserAmount = sug.deesserAmount || 0;
+      params.ceiling = sug.ceiling !== undefined ? sug.ceiling : -1.0;
       
       // UIスライダーコントロールの同期
       updateGuiControls();
@@ -3608,3 +3649,5 @@ function getProcessedPeaks() {
   }
   return cachedProcessedPeaks;
 }
+
+

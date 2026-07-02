@@ -2025,6 +2025,14 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
   const basePreset = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
 
+  // EDM, HIPHOP, HARDCORE などの重低音（サブベース）を重視するジャンルの場合、
+  // 80Hz以下の帯域を急峻にカットする Rumble Cut はサブベースをごそっと削り取ってしまうため、AI自動解析によるONを禁止します。
+  const isSubBassGenre = (detectedGenre === 'edm' || detectedGenre === 'hiphop' || detectedGenre === 'hardcore' ||
+                          genreKey === 'edm' || genreKey === 'hiphop' || genreKey === 'hardcore');
+  if (isSubBassGenre) {
+    sugRumbleCut = false;
+  }
+
   const target = GENRE_TARGETS[genreKey] || GENRE_TARGETS.auto;
 
   const lowDiffDb = 20 * Math.log10(actualLowMidRatio / target.low);
