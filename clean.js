@@ -149,6 +149,7 @@ const params = {
 // AI Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
 let aiSuggestedParams = null;
 let aiDetectedGenre = null;
+let isAiAnalyzing = false; // Prevents premature QA evaluation while the primary AI analysis/calibration is running
 
 // Audio Spices State Configuration
 const spices = {
@@ -3141,6 +3142,15 @@ function runAiAnalysis(showLog = true) {
     logToUI("AI Assistant: Analyzing frequency spectrum & dynamics...", "info");
   }
   
+  isAiAnalyzing = true;
+  // Trigger ANALYZING badge state immediately to prevent visual flicker
+  const badge = document.getElementById('evaluation-status-badge');
+  if (badge) {
+    badge.innerText = "ANALYZING...";
+    badge.style.background = "#9d4ede";
+    badge.style.boxShadow = "0 0 8px rgba(157,78,221,0.5)";
+  }
+  
   setTimeout(async () => {
     try {
       const result = analyzeAudioResonances(audioBuffer);
@@ -3438,6 +3448,8 @@ function runAiAnalysis(showLog = true) {
         aiAnalyzeBtn.disabled = false;
         aiAnalyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> ANALYZE & AUTO-CORRECT EQ';
       }
+      isAiAnalyzing = false;
+      triggerOutputEvaluation();
     }
   }, 100);
 }
@@ -3747,6 +3759,7 @@ let evaluationDebounceTimer = null;
 function triggerOutputEvaluation() {
   if (!audioBuffer) return;
   if (isPlaying) return; // Do not run evaluation while the song is playing!
+  if (isAiAnalyzing) return; // Defer evaluation while the AI analysis/calibration loops are active!
   
   // Set UI to analyzing state immediately
   const badge = document.getElementById('evaluation-status-badge');
