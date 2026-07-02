@@ -2034,26 +2034,33 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   let eqLowAdjustment = 0;
   if (lowDiffDb > 0.5) {
-    eqLowAdjustment = -Math.min(3.5, lowDiffDb * 0.75); // 絞りすぎ防止
+    eqLowAdjustment = -Math.min(3.5, lowDiffDb * 0.75);
   } else if (lowDiffDb < -0.5) {
-    eqLowAdjustment = Math.min(2.2, -lowDiffDb * 0.75); // 不足分引き上げ
+    eqLowAdjustment = Math.min(2.2, -lowDiffDb * 0.75);
   }
-  const eqLowGain = Math.max(-5.0, Math.min(3.0, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 2) / 2)); // クランプ範囲を元に戻す
+  const eqLowGain = Math.max(-5.0, Math.min(3.0, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 2) / 2));
+
   let eqMidAdjustment = 0;
   if (presenceDiffDb > 0.5) {
-    eqMidAdjustment = -Math.min(1.5, presenceDiffDb * 0.75);
+    eqMidAdjustment = -Math.min(1.8, presenceDiffDb * 0.5); // 派手すぎる場合は中域を抑えてマイルドに（最大-1.8dB）
   } else if (presenceDiffDb < -0.5) {
-    eqMidAdjustment = Math.min(1.5, -presenceDiffDb * 0.75);
+    eqMidAdjustment = Math.min(1.2, -presenceDiffDb * 0.45); // こもっている場合はマイルドに補強（最大+1.2dB）
   }
-  const eqMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2));
+  const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
 
   let eqHighAdjustment = 0;
   if (highDiffDb > 0.5) {
-    eqHighAdjustment = -Math.min(2.0, highDiffDb * 0.75);
+    eqHighAdjustment = -Math.min(2.0, highDiffDb * 0.5); // 派手すぎる場合はマイルドに減衰（最大-2.0dB）
   } else if (highDiffDb < -0.5) {
-    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.75);
+    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.45); // 不足している場合はマイルドに補強（最大+1.5dB）
   }
-  let eqHighGain = Math.max(-3.0, Math.min(1.5, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+
+  let eqHighGain = Math.max(-5.0, Math.min(1.2, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+1.2dBに制限
+
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを禁止し、安全のために少なくとも-1.5dB以下の減衰量にクランプ
+  if (sibilanceDynamicFreq > 0) {
+    eqHighGain = Math.min(-1.5, eqHighGain);
+  }
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
@@ -3199,7 +3206,7 @@ function runAiAnalysis(showLog = true) {
       params.hissReductionAmount = sug.hissReductionAmount;
       params.sibilanceDynamicFreq = sug.sibilanceDynamicFreq || 0;
       params.deesserAmount = sug.deesserAmount || 0;
-      params.ceiling = sug.ceiling !== undefined ? sug.ceiling : -0.2;
+      params.ceiling = sug.ceiling !== undefined ? sug.ceiling : -1.0;
       
       // UIスライダーコントロールの同期
       updateGuiControls();
