@@ -188,111 +188,111 @@ export const GENRE_PRESETS = {
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
     eqHighGain: 0.0, eqHighFreq: 9000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
-    stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
+    stereoWidth: 1.15, limiterBoost: 2.2, sideHighPassFreq: 110
   },
   pops: {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10,
     eqLowGain: 1.5, eqLowFreq: 100,
-    eqMidGain: 1.2, eqMidFreq: 1800, eqMidQ: 1.0,
-    eqHighGain: 2.2, eqHighFreq: 12000,
+    eqMidGain: 0.6, eqMidFreq: 1800, eqMidQ: 1.0,
+    eqHighGain: 0.6, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
-    stereoWidth: 1.22, limiterBoost: 4.2, sideHighPassFreq: 110
+    stereoWidth: 1.22, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   rnb: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12,
     eqLowGain: 2.2, eqLowFreq: 75,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
-    eqHighGain: 2.0, eqHighFreq: 10000,
+    eqHighGain: 0.4, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
-    stereoWidth: 1.25, limiterBoost: 4.2, sideHighPassFreq: 110
+    stereoWidth: 1.25, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   rock: {
     satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12,
     eqLowGain: 2.0, eqLowFreq: 90,
-    eqMidGain: 1.5, eqMidFreq: 2800, eqMidQ: 1.2,
-    eqHighGain: 1.5, eqHighFreq: 8000,
+    eqMidGain: 0.8, eqMidFreq: 2800, eqMidQ: 1.2,
+    eqHighGain: 0.5, eqHighFreq: 8000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
-    stereoWidth: 1.15, limiterBoost: 4.8, sideHighPassFreq: 110
+    stereoWidth: 1.15, limiterBoost: 3.2, sideHighPassFreq: 110
   },
   metal: {
     satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14,
     eqLowGain: 2.2, eqLowFreq: 85,
-    eqMidGain: -1.8, eqMidFreq: 400, eqMidQ: 0.8,
-    eqHighGain: 2.5, eqHighFreq: 8500,
+    eqMidGain: -1.5, eqMidFreq: 400, eqMidQ: 0.8,
+    eqHighGain: 0.8, eqHighFreq: 8500,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
-    stereoWidth: 1.28, limiterBoost: 5.2, sideHighPassFreq: 120
+    stereoWidth: 1.28, limiterBoost: 3.5, sideHighPassFreq: 120
   },
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20,
     eqLowGain: 1.8, eqLowFreq: 90,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
-    eqHighGain: 2.0, eqHighFreq: 11000,
-    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20, // Tamed attack (50ms) and ratio (1.35) to prevent bass cycles clipping/buzzing
-    stereoWidth: 1.30, limiterBoost: 5.0, sideHighPassFreq: 150 // Slightly reduced limiter boost (5.0dB) for safer headroom
+    eqHighGain: 0.6, eqHighFreq: 11000,
+    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
+    stereoWidth: 1.30, limiterBoost: 3.5, sideHighPassFreq: 150
   },
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14,
     eqLowGain: 1.8, eqLowFreq: 65,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
-    eqHighGain: 1.2, eqHighFreq: 10000,
+    eqHighGain: 0.2, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
-    stereoWidth: 1.20, limiterBoost: 4.8, sideHighPassFreq: 150
+    stereoWidth: 1.20, limiterBoost: 3.2, sideHighPassFreq: 150
   },
   lofi: {
     satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30,
     eqLowGain: 3.5, eqLowFreq: 150,
-    eqMidGain: 1.5, eqMidFreq: 1200, eqMidQ: 1.0,
+    eqMidGain: 0.8, eqMidFreq: 1200, eqMidQ: 1.0,
     eqHighGain: -4.5, eqHighFreq: 7000,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.5, compAttack: 0.06, compRelease: 0.30,
-    stereoWidth: 0.92, limiterBoost: 3.2, sideHighPassFreq: 110
+    stereoWidth: 0.92, limiterBoost: 2.2, sideHighPassFreq: 110
   },
   hardcore: {
     satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22,
     eqLowGain: 3.0, eqLowFreq: 80,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
-    eqHighGain: 3.0, eqHighFreq: 12000,
+    eqHighGain: 0.8, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
-    stereoWidth: 1.38, limiterBoost: 6.0, sideHighPassFreq: 150
+    stereoWidth: 1.38, limiterBoost: 4.0, sideHighPassFreq: 150
   },
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6,
     eqLowGain: 2.0, eqLowFreq: 80,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
-    eqHighGain: 3.0, eqHighFreq: 12000,
+    eqHighGain: 1.0, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -6.0, compRatio: 1.2, compAttack: 0.12, compRelease: 0.40,
-    stereoWidth: 1.55, limiterBoost: 2.2, sideHighPassFreq: 90
+    stereoWidth: 1.55, limiterBoost: 1.5, sideHighPassFreq: 90
   },
   podcast: {
     satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5,
     eqLowGain: -2.0, eqLowFreq: 120,
-    eqMidGain: 1.2, eqMidFreq: 1600, eqMidQ: 1.0,
-    eqHighGain: 0.8, eqHighFreq: 8000,
+    eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 1.0,
+    eqHighGain: 0.0, eqHighFreq: 8000,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.3, compAttack: 0.02, compRelease: 0.15,
-    stereoWidth: 1.00, limiterBoost: 3.0, sideHighPassFreq: 150
+    stereoWidth: 1.00, limiterBoost: 2.0, sideHighPassFreq: 150
   },
   classic: {
     satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0,
     eqLowGain: 0.5, eqLowFreq: 100,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
-    eqHighGain: 0.5, eqHighFreq: 10000,
+    eqHighGain: 0.0, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -4.0, compRatio: 1.15, compAttack: 0.15, compRelease: 0.50,
-    stereoWidth: 1.30, limiterBoost: 1.8, sideHighPassFreq: 90
+    stereoWidth: 1.30, limiterBoost: 1.0, sideHighPassFreq: 90
   },
   jazz: {
     satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8,
     eqLowGain: 1.2, eqLowFreq: 110,
-    eqMidGain: 0.5, eqMidFreq: 1500, eqMidQ: 1.0,
-    eqHighGain: 1.0, eqHighFreq: 10000,
+    eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
+    eqHighGain: 0.2, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.06, compRelease: 0.25,
-    stereoWidth: 1.20, limiterBoost: 2.8, sideHighPassFreq: 90
+    stereoWidth: 1.20, limiterBoost: 1.8, sideHighPassFreq: 90
   },
   acoustic: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8,
     eqLowGain: 1.0, eqLowFreq: 120,
-    eqMidGain: 0.8, eqMidFreq: 2000, eqMidQ: 1.0,
-    eqHighGain: 1.8, eqHighFreq: 11000,
+    eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
+    eqHighGain: 0.4, eqHighFreq: 11000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
-    stereoWidth: 1.25, limiterBoost: 3.0, sideHighPassFreq: 90
+    stereoWidth: 1.25, limiterBoost: 2.0, sideHighPassFreq: 90
   }
 };
 
@@ -2002,21 +2002,21 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   // high: Treble/LowMid 比率 (目標 -17.1dB 付近)
   // presence: HighMid/LowMid 比率 (目標 -6.9dB 付近)
   const genreTargets = {
-    auto: { low: 2.8, high: 0.12, presence: 0.42 },     // AI AUTO: スタディオリファレンス・フラット (高域ターゲットを0.14➔0.12に微調整)
-    pops: { low: 2.6, high: 0.14, presence: 0.44 },     // POPS: ボーカル明瞭、高音は煌びやか (0.16➔0.14)
-    rnb: { low: 3.2, high: 0.13, presence: 0.41 },      // R&B: サブベース強調、中高域は控えめ (0.15➔0.13)
-    rock: { low: 2.9, high: 0.11, presence: 0.43 },     // ROCK: キック厚め、エッジの効いた中音 (0.13➔0.11)
-    metal: { low: 3.0, high: 0.13, presence: 0.42 },    // METAL: 重厚な低域とエッジの効いた高域 (0.15➔0.13)
-    edm: { low: 3.2, high: 0.14, presence: 0.40 },      // EDM: 太いサブベース、高域シンセのヌケ (0.16➔0.14)
-    hiphop: { low: 3.3, high: 0.11, presence: 0.38 },   // HIPHOP: 極太ローエンド、ボーカルフォーカス (0.13➔0.11)
-    lofi: { low: 3.1, high: 0.07, presence: 0.36 },     // LOFI: 温かみのある中低域、ナローな高域 (0.08➔0.07)
-    hardcore: { low: 3.2, high: 0.15, presence: 0.42 }, // HARDCORE: 極限のクラブ音圧、サチュレーション (0.18➔0.15)
-    ambient: { low: 2.9, high: 0.17, presence: 0.44 },  // AMBIENT: ワイドで広がりのある空気感 (0.20➔0.17)
-    podcast: { low: 1.6, high: 0.09, presence: 0.47 },  // PODCAST: 会話明瞭、低域カット (0.10➔0.09)
-    classic: { low: 2.2, high: 0.10, presence: 0.39 },  // CLASSIC: ナチュラルの強弱、広い奥行き (0.11➔0.10)
-    jazz: { low: 2.7, high: 0.11, presence: 0.41 },     // JAZZ: 有機的なウッドベースと生音感 (0.12➔0.11)
-    acoustic: { low: 2.4, high: 0.12, presence: 0.43 }, // ACOUSTIC: 繊細な弦の響きと生楽器の共鳴 (0.13➔0.12)
-    custom: { low: 2.8, high: 0.12, presence: 0.42 }
+    auto: { low: 2.8, high: 0.10, presence: 0.42 },     // AI AUTO: スタディオリファレンス・フラット (高域ターゲットを0.14➔0.12に微調整)
+    pops: { low: 2.6, high: 0.11, presence: 0.44 },     // POPS: ボーカル明瞭、高音は煌びやか (0.16➔0.14)
+    rnb: { low: 3.2, high: 0.10, presence: 0.41 },      // R&B: サブベース強調、中高域は控えめ (0.15➔0.13)
+    rock: { low: 2.9, high: 0.09, presence: 0.43 },     // ROCK: キック厚め、エッジの効いた中音 (0.13➔0.11)
+    metal: { low: 3.0, high: 0.11, presence: 0.42 },    // METAL: 重厚な低域とエッジの効いた高域 (0.15➔0.13)
+    edm: { low: 3.2, high: 0.11, presence: 0.40 },      // EDM: 太いサブベース、高域シンセのヌケ (0.16➔0.14)
+    hiphop: { low: 3.3, high: 0.09, presence: 0.38 },   // HIPHOP: 極太ローエンド、ボーカルフォーカス (0.13➔0.11)
+    lofi: { low: 3.1, high: 0.06, presence: 0.36 },     // LOFI: 温かみのある中低域、ナローな高域 (0.08➔0.07)
+    hardcore: { low: 3.2, high: 0.12, presence: 0.42 }, // HARDCORE: 極限のクラブ音圧、サチュレーション (0.18➔0.15)
+    ambient: { low: 2.9, high: 0.14, presence: 0.44 },  // AMBIENT: ワイドで広がりのある空気感 (0.20➔0.17)
+    podcast: { low: 1.6, high: 0.08, presence: 0.47 },  // PODCAST: 会話明瞭、低域カット (0.10➔0.09)
+    classic: { low: 2.2, high: 0.08, presence: 0.39 },  // CLASSIC: ナチュラルの強弱、広い奥行き (0.11➔0.10)
+    jazz: { low: 2.7, high: 0.09, presence: 0.41 },     // JAZZ: 有機的なウッドベースと生音感 (0.12➔0.11)
+    acoustic: { low: 2.4, high: 0.10, presence: 0.43 }, // ACOUSTIC: 繊細な弦の響きと生楽器の共鳴 (0.13➔0.12)
+    custom: { low: 2.8, high: 0.10, presence: 0.42 }
   };
   const target = genreTargets[genreKey] || genreTargets.auto;
 
