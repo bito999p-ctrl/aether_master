@@ -3178,103 +3178,6 @@ function runAiAnalysis(showLog = true) {
       // 自動提案パラメーターの適用とグローバル保存
       const sug = result.suggestedParams;
       const genreSelect = document.getElementById('preset-select');
-      const userGenreKey = genreSelect ? genreSelect.value : 'auto';
-      const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
-      
-      if (showLog) {
-        logToUI("[AI Optimization] Starting closed-loop iterative mastering calibration...", "info");
-      }
-      
-      // Clone current params as the base, then overlay suggested parameters for calibration
-      let opt = {
-        ...params,
-        ...JSON.parse(JSON.stringify(sug))
-      };
-      
-      // Run closed-loop feedback optimization up to 3 iterations
-      const maxIterations = 3;
-      
-      for (let iter = 1; iter <= maxIterations; iter++) {
-        // Run analysis on the current optimized parameters
-        const metrics = await analyzeMasteredOutput(opt);
-        if (!metrics) break;
-        
-        const target = GENRE_TARGETS[genreKey] || GENRE_TARGETS.auto;
-        const targetLowDb = 20 * Math.log10(target.low);
-        const targetHighDb = 20 * Math.log10(target.high);
-        
-        const lowDiffDb = metrics.outLowDiffDb - targetLowDb;
-        const trebleDiffDb = metrics.outTrebleDiffDb - targetHighDb;
-        const rmsDb = metrics.rmsDb;
-        
-        // Target criteria check (SAFE range margins)
-        const lowOk = Math.abs(lowDiffDb) <= 1.2;
-        const rmsOk = rmsDb >= -13.5 && rmsDb <= -9.5;
-        const clippingOk = metrics.clippingSamples <= 5;
-        
-        if (lowOk && rmsOk && clippingOk) {
-          if (showLog && iter > 1) {
-            logToUI(`[AI Optimization] Iteration ${iter}: Output is mathematically balanced and meets safe margins.`, "success");
-          }
-          break;
-        }
-        
-        let adjustments = [];
-        
-        // 1. Loudness / Limiter Boost calibration
-        if (rmsDb > -9.2) {
-          const delta = (rmsDb - -10.5) * 0.7;
-          opt.limiterBoost = Math.max(1.0, opt.limiterBoost - delta);
-          adjustments.push(`Loudness too high (${rmsDb.toFixed(1)} dB RMS) -> Limiter Boost reduced`);
-        } else if (rmsDb < -13.2) {
-          const delta = (-11.5 - rmsDb) * 0.8;
-          opt.limiterBoost = Math.min(12.0, opt.limiterBoost + delta);
-          adjustments.push(`Loudness too low (${rmsDb.toFixed(1)} dB RMS) -> Limiter Boost increased`);
-        }
-        
-        // 2. Bass balance calibration
-        if (lowDiffDb < -1.2) {
-          const delta = -lowDiffDb * 0.55;
-          opt.eqLowGain = Math.min(3.0, opt.eqLowGain + delta);
-          adjustments.push(`Bass too thin (${lowDiffDb.toFixed(1)} dB) -> Low EQ boosted`);
-        } else if (lowDiffDb > 1.2) {
-          const delta = lowDiffDb * 0.45;
-          opt.eqLowGain = Math.max(-5.0, opt.eqLowGain - delta);
-          adjustments.push(`Bass too heavy (${lowDiffDb.toFixed(1)} dB) -> Low EQ reduced`);
-        }
-        
-        // 3. Treble balance calibration
-        if (trebleDiffDb > 1.5) {
-          const delta = trebleDiffDb * 0.5;
-          opt.eqHighGain = Math.max(-5.0, opt.eqHighGain - delta);
-          opt.deesserAmount = Math.min(95, opt.deesserAmount + 10);
-          adjustments.push(`Treble too bright (${trebleDiffDb.toFixed(1)} dB) -> High EQ reduced / De-esser increased`);
-        } else if (trebleDiffDb < -1.5) {
-          const delta = -trebleDiffDb * 0.5;
-          opt.eqHighGain = Math.min(1.5, opt.eqHighGain + delta);
-          adjustments.push(`Treble too dark (${trebleDiffDb.toFixed(1)} dB) -> High EQ boosted`);
-        }
-        
-        // 4. Headroom / Clipping calibration
-        if (metrics.clippingSamples > 15) {
-          opt.inputGainDb = Math.max(-6.0, opt.inputGainDb - 1.0);
-          opt.ceiling = Math.max(-2.0, opt.ceiling - 0.2);
-          adjustments.push(`Clipping detected (${metrics.clippingSamples} samples) -> Headroom ceiling lowered`);
-        }
-        
-        if (showLog && adjustments.length > 0) {
-          logToUI(`[AI Optimization] Iteration ${iter} Adjustments:\n - ${adjustments.join('\n - ')}`, "warning");
-        }
-      }
-      
-      // Write optimized values back to suggestedParams (sug)
-      sug.inputGainDb = Math.round(opt.inputGainDb * 10) / 10;
-      sug.eqLowGain = Math.round(opt.eqLowGain * 10) / 10;
-      sug.eqHighGain = Math.round(opt.eqHighGain * 10) / 10;
-      sug.limiterBoost = Math.round(opt.limiterBoost * 10) / 10;
-      sug.deesserAmount = opt.deesserAmount;
-      sug.ceiling = opt.ceiling;
-      
       const isAutoMode = (genreSelect && genreSelect.value === 'auto');
       
       if (isAutoMode) {
@@ -3297,31 +3200,6 @@ function runAiAnalysis(showLog = true) {
         }
       }
 
-      // Noise Cleanerの検出ステータスをコンソールログに出力
-      if (showLog) {
-        if (sug.rumbleCutEnabled) {
-          logToUI(`[Noise Cleaner] Low-end rumble/sub-bass noise detected (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Rumble Cut (80Hz HPF) auto-activated.`, "warning");
-        } else {
-          logToUI(`[Noise Cleaner] Low-end noise floor is clean (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Subsonic protection active (18Hz HPF).`, "info");
-        }
-        
-        if (sug.hissReductionAmount > 0) {
-          logToUI(`[Noise Cleaner] High-frequency hiss/sibilance detected (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer auto-set to ${sug.hissReductionAmount}%.`, "warning");
-        } else {
-          logToUI(`[Noise Cleaner] High-frequency noise floor is clean (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer is OFF.`, "info");
-        }
-
-        // サ行のキンキン共鳴音（シビランス）の検知・クランプ保護のログ
-        if (sug.sibilanceDynamicFreq > 0) {
-          logToUI(`[AI Assistant] Detected harsh vocal sibilance at ${sug.sibilanceDynamicFreq} Hz. Clamped High Shelf EQ to ${sug.eqHighGain.toFixed(1)} dB to prevent ear fatigue and activated dynamic De-esser notch.`, "warning");
-        }
-
-        // 広帯域ステレオ低域／リバーブの検知ログ
-        if (result.correlation < 0.72) {
-          logToUI(`[AI Assistant] Detected wide stereo low-end / deep phase reverb (Correlation: ${result.correlation.toFixed(2)}). Centered sub-bass below ${sug.sideHighPassFreq}Hz and adjusted limiting to prevent low-end distortion.`, "warning");
-        }
-      }
-      
       params.inputGainDb = sug.inputGainDb;
       params.satEnabled = sug.satEnabled;
       params.satType = sug.satType;
@@ -3811,8 +3689,8 @@ async function analyzeMasteredOutput(parameters) {
   const sampleCount = rendered.length * numChannels;
   
   // FFT analysis on the rendered buffer to match analyzeAudioResonances exactly
-  const fftSize = 4096;
-  const numSlices = 16;
+  const fftSize = 2048;
+  const numSlices = 32;
   
   const chL = rendered.getChannelData(0);
   const chR = rendered.numberOfChannels > 1 ? rendered.getChannelData(1) : chL;
