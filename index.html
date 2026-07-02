@@ -121,19 +121,6 @@
       </section>
     </div>
 
-    <!-- Independent Mastering Quality Assurance Panel -->
-    <section class="panel qa-panel" id="mastering-evaluation-card" style="display: none; border: 1px solid rgba(0, 242, 254, 0.25); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); margin-top: 15px; margin-bottom: 15px; width: 100%;">
-      <div class="panel-header" style="justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; flex-direction: row; display: flex; width: 100%;">
-        <h2 class="panel-title" style="margin: 0; font-size: 0.72rem; letter-spacing: 0.5px; color: var(--accent-cyan);">
-          <i class="fa-solid fa-circle-check"></i> MASTERING QUALITY ASSURANCE <span class="help-icon" data-tooltip="マスタリング後の出力音声をリアルタイムで監視・評価し、音割れや音圧、低音バランスに問題がないか診断します。"><i class="fa-regular fa-circle-question"></i></span>
-        </h2>
-        <span id="evaluation-status-badge" style="background: #20c997; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.58rem; font-weight: 800; display: inline-block; box-shadow: 0 0 6px rgba(32,201,151,0.4); text-transform: uppercase;">SAFE</span>
-      </div>
-      <div id="evaluation-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 0.65rem;">
-        <div style="color: var(--text-muted); font-style: italic; padding: 2px; grid-column: span 2;">Waiting for audio upload...</div>
-      </div>
-    </section>
-
       <main class="dashboard-grid">
         <section class="panel meter-panel">
         <div class="panel-header">
@@ -284,8 +271,6 @@
               <div style="color: var(--text-muted); font-style: italic; padding: 2px;">No adjustments applied yet.</div>
             </div>
 
-
-
           </div>
         </div>
       </section>
@@ -305,11 +290,6 @@
           <span class="control-label">HISS REDUCER <span class="help-icon" data-tooltip="スライダーを右に動かすと、曲の後ろで鳴っている「サー」という砂嵐ノイズを除去します。演奏中は自動でオフになり音質を守ります。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="hiss-reducer-slider" min="0" max="100" step="1" value="0">
           <span class="value-readout" id="hiss-reducer-val">OFF</span>
-        </div>
-        <div class="control-row">
-          <span class="control-label">DE-ESSER <span class="help-icon" data-tooltip="スライダーを右に動かすと、ボーカルの「サ、シ、ス、セ、ソ」に含まれる耳に刺さるキンキンした歯擦音（シビランス）を自動検知して抑えます。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="deesser-slider" min="0" max="100" step="1" value="0">
-          <span class="value-readout" id="deesser-val">OFF</span>
         </div>
       </section>
 
