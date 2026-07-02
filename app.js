@@ -3187,6 +3187,31 @@ function runAiAnalysis(showLog = true) {
           logToUI(`[AI Assistant] Dynamically optimized the selected ${genreSelect.value.toUpperCase()} preset parameters to match this track's sonic profile.`, "success");
         }
       }
+      
+      // Noise Cleanerの検出ステータスをコンソールログに出力
+      if (showLog) {
+        if (sug.rumbleCutEnabled) {
+          logToUI(`[Noise Cleaner] Low-end rumble/sub-bass noise detected (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Rumble Cut (80Hz HPF) auto-activated.`, "warning");
+        } else {
+          logToUI(`[Noise Cleaner] Low-end noise floor is clean (${result.rumbleNoiseFloorDb.toFixed(1)} dB). Subsonic protection active (18Hz HPF).`, "info");
+        }
+        
+        if (sug.hissReductionAmount > 0) {
+          logToUI(`[Noise Cleaner] High-frequency hiss/sibilance detected (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer auto-set to ${sug.hissReductionAmount}%.`, "warning");
+        } else {
+          logToUI(`[Noise Cleaner] High-frequency noise floor is clean (${result.hissNoiseFloorDb.toFixed(1)} dB). Hiss Reducer is OFF.`, "info");
+        }
+
+        // サ行のキンキン共鳴音（シビランス）の検知・クランプ保護のログ
+        if (sug.sibilanceDynamicFreq > 0) {
+          logToUI(`[AI Assistant] Detected harsh vocal sibilance at ${sug.sibilanceDynamicFreq} Hz. Clamped High Shelf EQ to ${sug.eqHighGain.toFixed(1)} dB to prevent ear fatigue and activated dynamic De-esser notch.`, "warning");
+        }
+
+        // 広帯域ステレオ低域／リバーブの検知ログ
+        if (result.correlation < 0.72) {
+          logToUI(`[AI Assistant] Detected wide stereo low-end / deep phase reverb (Correlation: ${result.correlation.toFixed(2)}). Centered sub-bass below ${sug.sideHighPassFreq}Hz and adjusted limiting to prevent low-end distortion.`, "warning");
+        }
+      }
 
       params.inputGainDb = sug.inputGainDb;
       params.satEnabled = sug.satEnabled;
