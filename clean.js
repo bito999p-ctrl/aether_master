@@ -194,7 +194,7 @@ export const GENRE_PRESETS = {
   },
   pops: {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10,
-    eqLowGain: 2.0, eqLowFreq: 100,
+    eqLowGain: 1.5, eqLowFreq: 100,
     eqMidGain: 0.6, eqMidFreq: 1800, eqMidQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
@@ -210,7 +210,7 @@ export const GENRE_PRESETS = {
   },
   rock: {
     satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12,
-    eqLowGain: 2.4, eqLowFreq: 90,
+    eqLowGain: 2.0, eqLowFreq: 90,
     eqMidGain: 0.8, eqMidFreq: 2800, eqMidQ: 1.2,
     eqHighGain: 0.6, eqHighFreq: 8000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
@@ -218,7 +218,7 @@ export const GENRE_PRESETS = {
   },
   metal: {
     satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14,
-    eqLowGain: 2.6, eqLowFreq: 85,
+    eqLowGain: 2.2, eqLowFreq: 85,
     eqMidGain: -1.5, eqMidFreq: 400, eqMidQ: 0.8,
     eqHighGain: 1.2, eqHighFreq: 8500,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
@@ -226,7 +226,7 @@ export const GENRE_PRESETS = {
   },
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20,
-    eqLowGain: 2.2, eqLowFreq: 90,
+    eqLowGain: 1.8, eqLowFreq: 90,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 11000,
     compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
@@ -234,7 +234,7 @@ export const GENRE_PRESETS = {
   },
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14,
-    eqLowGain: 2.5, eqLowFreq: 65,
+    eqLowGain: 1.8, eqLowFreq: 65,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
     eqHighGain: 0.5, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
@@ -250,7 +250,7 @@ export const GENRE_PRESETS = {
   },
   hardcore: {
     satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22,
-    eqLowGain: 3.2, eqLowFreq: 80,
+    eqLowGain: 3.0, eqLowFreq: 80,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
     eqHighGain: 1.5, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
@@ -258,7 +258,7 @@ export const GENRE_PRESETS = {
   },
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6,
-    eqLowGain: 2.2, eqLowFreq: 80,
+    eqLowGain: 2.0, eqLowFreq: 80,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
     eqHighGain: 1.8, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -6.0, compRatio: 1.2, compAttack: 0.12, compRelease: 0.40,
@@ -274,7 +274,7 @@ export const GENRE_PRESETS = {
   },
   classic: {
     satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0,
-    eqLowGain: 0.8, eqLowFreq: 100,
+    eqLowGain: 0.5, eqLowFreq: 100,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
     eqHighGain: 0.0, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -4.0, compRatio: 1.15, compAttack: 0.15, compRelease: 0.50,
@@ -282,7 +282,7 @@ export const GENRE_PRESETS = {
   },
   jazz: {
     satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8,
-    eqLowGain: 1.5, eqLowFreq: 110,
+    eqLowGain: 1.2, eqLowFreq: 110,
     eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
     eqHighGain: 0.4, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.06, compRelease: 0.25,
@@ -290,7 +290,7 @@ export const GENRE_PRESETS = {
   },
   acoustic: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8,
-    eqLowGain: 1.2, eqLowFreq: 120,
+    eqLowGain: 1.0, eqLowFreq: 120,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
     eqHighGain: 0.8, eqHighFreq: 11000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
