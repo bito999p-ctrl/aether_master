@@ -202,13 +202,11 @@
         <div class="version-header">
           <span class="version-tag major">v4.1.0</span>
           <span class="version-date">2026.07.03</span>
-          <span class="version-title">「独立自己評価監査システム（MQA）」＆「手動/動的 DE-ESSER」の完全統合</span>
+          <span class="version-title">「手動/動的 DE-ESSER」コントロールの搭載 ＆ UI操作性の向上</span>
         </div>
         <ul class="update-list">
-          <li><span class="badge-add">機能</span><strong>独立型「Mastering Quality Assurance（自己評価監査）」パネルの搭載</strong>：マスタリング処理後の音声をリアルタイム（30秒間の高速シミュレーションレンダリング）で監査し、最大ピーク、平均音圧（RMS）、低域バランス、中域ボーカル定位、高域ノイズ・サ行成分、ステレオ相関値（モノラル互換性）の6項目を多角的に測定。安全基準に適合しているかを「SAFE」「WARNING」「DANGER」の3段階で診断・アドバイスします。</li>
           <li><span class="badge-add">機能</span><strong>「DE-ESSER（ディエッサー）」コントロールスライダーの追加</strong>：ボーカルの「サ・シ・ス・セ・ソ」の突き刺さる高域成分を抑制するディエッサーの効き具合を、UI上のスライダーで 0%（OFF）から 100% まで手動変更可能に。AI解析実行時には、検出されたシビランス共鳴値に基づいて自動で最適な強さ（40%〜85%）を設定します。</li>
-          <li><span class="badge-change">改善</span><strong>FFT測定パラメータの完全同期と排他制御（タイミング不整合の解消）</strong>：QA評価システムのFFTサイズを共鳴解析器と完全に同一（2048ビン、32スライス）に統一し、誤差のない絶対的な診断精度を実現。また、AI解析を実行している間はQA診断を一時サスペンド（保留）し、AIパラメータが完全にノードへ適用し終わった直後に一発で同期・更新されるように排他制御を導入しました。</li>
-          <li><span class="badge-change">改善</span><strong>シングルパスAIによる芸術的ミキシングバランスの保護</strong>：無理な目標値への機械的な押し込み（ベースの過ブーストによる音圧潰れ）を防ぐため、AIオート設定を破綻のない「シングルパス（1発最適化）」に固定。QA監査レポートと連携することで、機械任せの歪みを回避し、プロ水準 of ダイナミクスと自然な抜け感を両立しました。</li>
+          <li><span class="badge-change">改善</span><strong>シビランス共鳴ノッチ回路の動的減衰レンジ拡張</strong>：サ行の成分が強く出た瞬間のみ、最大 `-12.0 dB` までピンポイントで動的に低減するよう減衰レンジをチューニングし、より強力かつ滑らかに耳障りなキンキン音を抑制します。</li>
         </ul>
       </div>
 
