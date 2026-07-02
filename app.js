@@ -167,16 +167,16 @@ function getCombinedParams() {
     satDrive: Math.max(0, Math.min(100, params.satDrive + (spices.analogWarmth ? 15 : 0))),
     satMix: Math.max(0, Math.min(100, params.satMix + (spices.analogWarmth ? 18 : 0))),
     eqLowGain: params.eqLowGain, // No low shelf boost for kickPunch (prevents bass guitar mud)
-    kickPeakingGain: spices.kickPunch ? 4.5 : 0.0, // Dedicated narrow 55Hz kick thump peaking boost
-    eqMidGain: params.eqMidGain + (spices.vocalPresence ? 2.5 : 0.0),
-    eqHighGain: params.eqHighGain + (spices.airTreble ? 3.0 : 0.0),
+    kickPeakingGain: spices.kickPunch ? 3.0 : 0.0, // Dedicated narrow 55Hz kick thump peaking boost
+    eqMidGain: params.eqMidGain + (spices.vocalPresence ? 1.2 : 0.0),
+    eqHighGain: params.eqHighGain + (spices.airTreble ? 1.5 : 0.0),
     compEnabled: params.compEnabled || spices.kickPunch,
     compThreshold: params.compThreshold, // No aggressive threshold lowering to prevent pumping
     compRatio: params.compRatio,         // Keep ratio natural and transparent
     compAttack: Math.max(0.001, Math.min(0.5, params.compAttack + (spices.kickPunch ? 0.030 : 0.0))), // Let transient punch pop out
     compRelease: params.compRelease,
     stereoWidth: Math.max(0.0, Math.min(2.0, params.stereoWidth + (spices.stereoWider ? 0.45 : 0.0))),
-    limiterBoost: Math.max(0.0, Math.min(15.0, params.limiterBoost + (spices.loudnessPush ? 2.5 : 0.0)))
+    limiterBoost: Math.max(0.0, Math.min(15.0, params.limiterBoost + (spices.loudnessPush ? 1.5 : 0.0)))
   };
 }
 
@@ -188,111 +188,111 @@ export const GENRE_PRESETS = {
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
     eqHighGain: 0.0, eqHighFreq: 9000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
-    stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
+    stereoWidth: 1.15, limiterBoost: 2.2, sideHighPassFreq: 110
   },
   pops: {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10,
     eqLowGain: 1.5, eqLowFreq: 100,
-    eqMidGain: 1.2, eqMidFreq: 1800, eqMidQ: 1.0,
-    eqHighGain: 2.2, eqHighFreq: 12000,
+    eqMidGain: 0.6, eqMidFreq: 1800, eqMidQ: 1.0,
+    eqHighGain: 1.2, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
-    stereoWidth: 1.22, limiterBoost: 4.2, sideHighPassFreq: 110
+    stereoWidth: 1.22, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   rnb: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12,
     eqLowGain: 2.2, eqLowFreq: 75,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
-    eqHighGain: 2.0, eqHighFreq: 10000,
+    eqHighGain: 1.2, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
-    stereoWidth: 1.25, limiterBoost: 4.2, sideHighPassFreq: 110
+    stereoWidth: 1.25, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   rock: {
     satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12,
     eqLowGain: 2.0, eqLowFreq: 90,
-    eqMidGain: 1.5, eqMidFreq: 2800, eqMidQ: 1.2,
-    eqHighGain: 1.5, eqHighFreq: 8000,
+    eqMidGain: 0.8, eqMidFreq: 2800, eqMidQ: 1.2,
+    eqHighGain: 1.0, eqHighFreq: 8000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
-    stereoWidth: 1.15, limiterBoost: 4.8, sideHighPassFreq: 110
+    stereoWidth: 1.15, limiterBoost: 3.2, sideHighPassFreq: 110
   },
   metal: {
     satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14,
     eqLowGain: 2.2, eqLowFreq: 85,
-    eqMidGain: -1.8, eqMidFreq: 400, eqMidQ: 0.8,
-    eqHighGain: 2.5, eqHighFreq: 8500,
+    eqMidGain: -1.5, eqMidFreq: 400, eqMidQ: 0.8,
+    eqHighGain: 1.4, eqHighFreq: 8500,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
-    stereoWidth: 1.28, limiterBoost: 5.2, sideHighPassFreq: 120
+    stereoWidth: 1.28, limiterBoost: 3.5, sideHighPassFreq: 120
   },
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20,
     eqLowGain: 1.8, eqLowFreq: 90,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
-    eqHighGain: 2.0, eqHighFreq: 11000,
-    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20, // Tamed attack (50ms) and ratio (1.35) to prevent bass cycles clipping/buzzing (v4.0.2)
-    stereoWidth: 1.30, limiterBoost: 5.0, sideHighPassFreq: 150 // Slightly reduced limiter boost (5.0dB) for safer headroom
+    eqHighGain: 1.2, eqHighFreq: 11000,
+    compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
+    stereoWidth: 1.30, limiterBoost: 3.5, sideHighPassFreq: 150
   },
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14,
     eqLowGain: 1.8, eqLowFreq: 65,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
-    eqHighGain: 1.2, eqHighFreq: 10000,
+    eqHighGain: 0.8, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
-    stereoWidth: 1.20, limiterBoost: 4.8, sideHighPassFreq: 150
+    stereoWidth: 1.20, limiterBoost: 3.2, sideHighPassFreq: 150
   },
   lofi: {
     satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30,
     eqLowGain: 3.5, eqLowFreq: 150,
-    eqMidGain: 1.5, eqMidFreq: 1200, eqMidQ: 1.0,
+    eqMidGain: 0.8, eqMidFreq: 1200, eqMidQ: 1.0,
     eqHighGain: -4.5, eqHighFreq: 7000,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.5, compAttack: 0.06, compRelease: 0.30,
-    stereoWidth: 0.92, limiterBoost: 3.2, sideHighPassFreq: 110
+    stereoWidth: 0.92, limiterBoost: 2.2, sideHighPassFreq: 110
   },
   hardcore: {
     satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22,
     eqLowGain: 3.0, eqLowFreq: 80,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
-    eqHighGain: 3.0, eqHighFreq: 12000,
+    eqHighGain: 1.6, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
-    stereoWidth: 1.38, limiterBoost: 6.0, sideHighPassFreq: 150
+    stereoWidth: 1.38, limiterBoost: 4.0, sideHighPassFreq: 150
   },
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6,
     eqLowGain: 2.0, eqLowFreq: 80,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
-    eqHighGain: 3.0, eqHighFreq: 12000,
+    eqHighGain: 1.8, eqHighFreq: 12000,
     compEnabled: true, compThreshold: -6.0, compRatio: 1.2, compAttack: 0.12, compRelease: 0.40,
-    stereoWidth: 1.55, limiterBoost: 2.2, sideHighPassFreq: 90
+    stereoWidth: 1.55, limiterBoost: 1.5, sideHighPassFreq: 90
   },
   podcast: {
     satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5,
     eqLowGain: -2.0, eqLowFreq: 120,
-    eqMidGain: 1.2, eqMidFreq: 1600, eqMidQ: 1.0,
-    eqHighGain: 0.8, eqHighFreq: 8000,
+    eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 1.0,
+    eqHighGain: 0.4, eqHighFreq: 8000,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.3, compAttack: 0.02, compRelease: 0.15,
-    stereoWidth: 1.00, limiterBoost: 3.0, sideHighPassFreq: 150
+    stereoWidth: 1.00, limiterBoost: 2.0, sideHighPassFreq: 150
   },
   classic: {
     satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0,
     eqLowGain: 0.5, eqLowFreq: 100,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
-    eqHighGain: 0.5, eqHighFreq: 10000,
+    eqHighGain: 0.2, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -4.0, compRatio: 1.15, compAttack: 0.15, compRelease: 0.50,
-    stereoWidth: 1.30, limiterBoost: 1.8, sideHighPassFreq: 90
+    stereoWidth: 1.30, limiterBoost: 1.0, sideHighPassFreq: 90
   },
   jazz: {
     satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8,
     eqLowGain: 1.2, eqLowFreq: 110,
-    eqMidGain: 0.5, eqMidFreq: 1500, eqMidQ: 1.0,
-    eqHighGain: 1.0, eqHighFreq: 10000,
+    eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
+    eqHighGain: 0.5, eqHighFreq: 10000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.06, compRelease: 0.25,
-    stereoWidth: 1.20, limiterBoost: 2.8, sideHighPassFreq: 90
+    stereoWidth: 1.20, limiterBoost: 1.8, sideHighPassFreq: 90
   },
   acoustic: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8,
     eqLowGain: 1.0, eqLowFreq: 120,
-    eqMidGain: 0.8, eqMidFreq: 2000, eqMidQ: 1.0,
-    eqHighGain: 1.8, eqHighFreq: 11000,
+    eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
+    eqHighGain: 1.0, eqHighFreq: 11000,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
-    stereoWidth: 1.25, limiterBoost: 3.0, sideHighPassFreq: 90
+    stereoWidth: 1.25, limiterBoost: 2.0, sideHighPassFreq: 90
   }
 };
 
@@ -2042,7 +2042,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   } else if (presenceDiffDb < -0.5) {
     eqMidAdjustment = Math.min(1.2, -presenceDiffDb * 0.45); // こもっている場合はマイルドに補強（最大+1.2dB）
   }
-  const eqMidGain = Math.max(-4.0, Math.min(1.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.5dBにクランプ
+  const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
 
   let eqHighAdjustment = 0;
   if (highDiffDb > 0.5) {
@@ -2051,15 +2051,13 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.45); // 不足している場合はマイルドに補強（最大+1.5dB）
   }
 
-  let eqHighGain = Math.max(-5.0, Math.min(2.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+2.0dBに制限
+  let eqHighGain = Math.max(-5.0, Math.min(1.2, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+1.2dBに制限
 
   // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを禁止し、安全のために少なくとも-1.5dB以下の減衰量にクランプ
   if (sibilanceDynamicFreq > 0) {
     eqHighGain = Math.min(-1.5, eqHighGain);
   }
 
-  // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
-  // バグ修正: AIオートコレクトの重複加算を防ぐため、スライダー変更で 'custom' になる前の基準ターゲット (baseLoudnessTarget) を参照
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
   let baseBoost = 4.0;
@@ -2102,7 +2100,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     hardcore: 7.5,  // HARDCORE: 最大限の押し込み
     ambient: 13.5,  // AMBIENT: 広い強弱と空気感
     podcast: 10.5,  // PODCAST: 会話の聞き取りやすさ優先
-    classic: 14.5,  // CLASSIC: 生楽器의 ダイナミクスを最大限活かす
+    classic: 14.5,  // CLASSIC: 生楽器のダイナミクスを最大限活かす
     jazz: 12.5,     // JAZZ: アコースティックなニュアンス
     acoustic: 13.0, // ACOUSTIC: ピッキング等の生々しさ
     custom: 10.5
@@ -2118,8 +2116,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     compRatio = Math.min(1.6, basePreset.compRatio + ratioFactor);
     crestDesc = "High (Highly Dynamic)";
     
-    // リミッターを適正にドライブして音圧を出す
-    const bonus = Math.min(3.5, crestDiff * 0.75);
+    // リミッターを適正にドライブして音圧を出す (過剰な音圧を防ぐためbonusを最大+1.8dBに制限)
+    const bonus = Math.min(1.8, crestDiff * 0.4);
     limiterBoost = baseBoost + bonus;
   } else {
     // 音源がすでに強く圧縮されている -> 二重圧縮での音割れを防ぐため、コンプレッサーを逃がし（浅くし）、ブーストも下げる
@@ -2129,8 +2127,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     compRatio = Math.max(1.15, basePreset.compRatio - ratioFactor);
     crestDesc = "Low (Highly Compressed)";
     
-    const penalty = Math.min(3.0, -crestDiff * 0.6);
-    limiterBoost = Math.max(1.5, baseBoost - penalty);
+    const penalty = Math.min(4.0, -crestDiff * 0.8);
+    limiterBoost = Math.max(1.0, baseBoost - penalty);
   }
 
   // 低域飽和による音割れ・ビビリ防止（低域が基準ターゲットより著しく大きい場合、リミッターブーストを自動で控えめにする）
@@ -2139,8 +2137,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     limiterBoost = Math.max(2.0, limiterBoost - bassOverloadPenalty);
   }
 
-  // 0.0〜10.0dB の範囲に制限し（歪み防止のため最大値を10dBに抑制）、小数点第一位に丸める
-  limiterBoost = Math.max(0.0, Math.min(10.0, Math.round(limiterBoost * 10) / 10));
+  // 0.0〜8.0dB の範囲に制限し（耳を保護するため最大値を8.0dBに抑制）、小数点第一位に丸める
+  limiterBoost = Math.max(0.0, Math.min(8.0, Math.round(limiterBoost * 10) / 10));
 
   // ステレオ幅の補正 (位相相関に基づいた連続的スケーリング)
   let stereoWidth = basePreset.stereoWidth;

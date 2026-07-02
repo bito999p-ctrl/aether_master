@@ -2043,7 +2043,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   } else if (presenceDiffDb < -0.5) {
     eqMidAdjustment = Math.min(1.2, -presenceDiffDb * 0.45); // こもっている場合はマイルドに補強（最大+1.2dB）
   }
-  const eqMidGain = Math.max(-4.0, Math.min(1.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.5dBにクランプ
+  const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
 
   // 高域: Highが派手すぎる場合は下げ、こもっている場合は持ち上げる
   let eqHighAdjustment = 0;
@@ -2052,7 +2052,12 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   } else if (highDiffDb < -0.5) {
     eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.45); // 不足している場合はマイルドに補強（最大+1.5dB）
   }
-  let eqHighGain = Math.max(-5.0, Math.min(2.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+2.0dBに制限
+  let eqHighGain = Math.max(-5.0, Math.min(1.2, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+1.2dBに制限
+
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを禁止し、安全のために少なくとも-1.5dB以下の減衰量にクランプ
+  if (sibilanceDynamicFreq > 0) {
+    eqHighGain = Math.min(-1.5, eqHighGain);
+  }
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
@@ -2112,8 +2117,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     compRatio = Math.min(1.6, basePreset.compRatio + ratioFactor);
     crestDesc = "High (Highly Dynamic)";
     
-    // リミッターを適正にドライブして音圧を出す
-    const bonus = Math.min(3.5, crestDiff * 0.75);
+    // リミッターを適正にドライブして音圧を出す (過剰な音圧を防ぐためbonusを最大+1.8dBに制限)
+    const bonus = Math.min(1.8, crestDiff * 0.4);
     limiterBoost = baseBoost + bonus;
   } else {
     // 音源がすでに強く圧縮されている -> 二重圧縮での音割れを防ぐため、コンプレッサーを逃がし（浅くし）、ブーストも下げる
@@ -2123,8 +2128,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     compRatio = Math.max(1.15, basePreset.compRatio - ratioFactor);
     crestDesc = "Low (Highly Compressed)";
     
-    const penalty = Math.min(3.0, -crestDiff * 0.6);
-    limiterBoost = Math.max(1.5, baseBoost - penalty);
+    const penalty = Math.min(4.0, -crestDiff * 0.8);
+    limiterBoost = Math.max(1.0, baseBoost - penalty);
   }
 
   // 低域飽和による音割れ・ビビリ防止（低域が基準ターゲットより著しく大きい場合、リミッターブーストを自動で控えめにする）
@@ -2133,8 +2138,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     limiterBoost = Math.max(2.0, limiterBoost - bassOverloadPenalty);
   }
 
-  // 0.0〜10.0dB の範囲に制限し（歪み防止のため最大値を10dBに抑制）、小数点第一位に丸める
-  limiterBoost = Math.max(0.0, Math.min(10.0, Math.round(limiterBoost * 10) / 10));
+  // 0.0〜8.0dB の範囲に制限し（耳を保護するため最大値を8.0dBに抑制）、小数点第一位に丸める
+  limiterBoost = Math.max(0.0, Math.min(8.0, Math.round(limiterBoost * 10) / 10));
 
   // ステレオ幅の補正 (位相相関に基づいた連続的スケーリング)
   let stereoWidth = basePreset.stereoWidth;
