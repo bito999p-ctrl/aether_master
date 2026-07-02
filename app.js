@@ -309,7 +309,7 @@ export const GENRE_TARGETS = {
   lofi: { low: 3.1, high: 0.06, presence: 0.36 },
   hardcore: { low: 3.2, high: 0.12, presence: 0.42 },
   ambient: { low: 2.9, high: 0.14, presence: 0.44 },
-  podcast: { low: 1.6, broadband_high: 0.08, presence: 0.47 },
+  podcast: { low: 1.6, high: 0.08, presence: 0.47 },
   classic: { low: 2.2, high: 0.08, presence: 0.39 },
   jazz: { low: 2.7, high: 0.09, presence: 0.41 },
   acoustic: { low: 2.4, high: 0.10, presence: 0.43 },
