@@ -197,6 +197,22 @@
     <div class="timeline">
       
       <!-- v3.25.0 -->
+      <!-- v4.2.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v4.2.0</span>
+          <span class="version-date">2026.07.04</span>
+          <span class="version-title">「総合ユーザーズガイド」の創設 ＆ AIマスタリング期待値・リミッターのプロ品質チューニング</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">機能</span><strong>「総合ユーザーズガイド」へのリニューアル</strong>：従来の初心者向けガイドを大幅に拡充し、AIの3ステップ解析ロジック、各DSPプロセッサーの詳細、トラブル解決FAQ（刺さる高音の抑え方、低音のパワー補強等）を内包した総合解説書を新設。アコーディオン方式のFAQで利便性を高めました。</li>
+          <li><span class="badge-change">改善</span><strong>リミッターのダイナミクス・高域保護チューニング</strong>：マキシマイザーリミッターのしきい値を `-3.0 dB` から `-1.0 dB` へ引き上げ、ニーを `4.0 dB` に軟化、リリースを `120ms` に拡張。音圧の過度な圧縮圧を逃がし、高域トランジェントの潰れや金属的な固さ（カンカン感）を徹底排除してプロクオリティの空気感を再現します。</li>
+          <li><span class="badge-change">改善</span><strong>AI低域・高域EQアライメントのデッドゾーン排除</strong>：EQ調整ロジックから `+-0.5 dB` の不感帯を排除。高音域が既に十分明るい音源には即座にカット補正を適用（最大ブースト上限を `+0.8 dB` に制限）し、低音域が不足している音源には最大 `+4.5 dB` までの豊かなダイナミック補正を適用します。</li>
+          <li><span class="badge-change">改善</span><strong>サブベース自動保護セーフガード（Rumble Cut連動）の搭載</strong>：EDM、HIPHOP、HARDCOREなどのサブベース（キックや808ベースの80Hz以下）を重視するジャンルにおいて、AIによるRumble Cut（80Hz HPF）の自動ON化を強制的に禁止。超低音の迫力を100%保ったままマスタリングを実行します。</li>
+          <li><span class="badge-change">改善</span><strong>De-esserの音楽的カーブ（Q値2.2）およびHiss Reducer抜け感の維持</strong>：サ行の刺さり音を抑えるDe-esserのQ値を `5.0` から `2.2` に広げることで、ボーカルの艶を保ったまま自然に擦れ音をケア。また、Hiss Reducer適用時でも音が曇らないよう、フィルター周波数を `13,000 Hz` 以上に留めるマイルド設計にチューニングしました。</li>
+        </ul>
+      </div>
+
       <!-- v4.1.0 -->
       <div class="timeline-item major">
         <div class="version-header">
@@ -595,7 +611,7 @@
       <div class="footer-links">
         <a href="index.html"><i class="fa-solid fa-house"></i> AetherMaster ホーム</a>
         <span class="separator">|</span>
-        <a href="guide.html"><i class="fa-solid fa-book-open"></i> 初心者向けガイド</a>
+        <a href="guide.html"><i class="fa-solid fa-book-open"></i> 総合ユーザーズガイド</a>
         <span class="separator">|</span>
         <a href="tech.html"><i class="fa-solid fa-circle-info"></i> 技術仕様・DSP詳細</a>
       </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AETHERMASTER // 初心者向けユーザーガイド</title>
+  <title>AETHERMASTER // 総合ユーザーズガイド</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -12,13 +12,13 @@
   <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
   <style>
     .doc-container {
-      max-width: 900px;
+      max-width: 950px;
       width: 100%;
       margin: 40px auto;
-      padding: 30px;
+      padding: 40px;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
-      border-radius: 12px;
+      border-radius: 16px;
       box-shadow: var(--panel-shadow);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -47,50 +47,52 @@
     }
     .doc-header {
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      padding-bottom: 25px;
+      margin-bottom: 35px;
     }
     .doc-title {
-      font-size: 2.2rem;
+      font-size: 2.4rem;
       font-weight: 800;
       background: linear-gradient(135deg, #fff 30%, var(--accent-cyan) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
     }
     .doc-subtitle {
       color: var(--text-secondary);
-      font-size: 1.1rem;
+      font-size: 1.15rem;
+      line-height: 1.6;
     }
     .section-title {
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: #fff;
-      margin-top: 40px;
+      margin-top: 45px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      border-left: 3px solid var(--accent-cyan);
-      padding-left: 12px;
+      gap: 12px;
+      border-left: 4px solid var(--accent-cyan);
+      padding-left: 14px;
     }
     .section-title i {
       color: var(--accent-cyan);
     }
     p {
       color: var(--text-secondary);
-      line-height: 1.7;
+      line-height: 1.8;
       margin-bottom: 18px;
       font-size: 0.95rem;
     }
     ol, ul {
-      margin-left: 20px;
+      margin-left: 24px;
       margin-bottom: 24px;
     }
     li {
       color: var(--text-secondary);
-      line-height: 1.7;
-      margin-bottom: 10px;
+      line-height: 1.8;
+      margin-bottom: 12px;
       font-size: 0.95rem;
     }
     li strong {
@@ -99,15 +101,15 @@
     .highlight-card {
       background: rgba(0, 242, 254, 0.04);
       border: 1px dashed rgba(0, 242, 254, 0.2);
-      border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
-      line-height: 1.6;
+      border-radius: 10px;
+      padding: 24px;
+      margin: 28px 0;
+      line-height: 1.7;
     }
     .highlight-card h4 {
       color: var(--accent-cyan);
-      margin-bottom: 8px;
-      font-size: 1rem;
+      margin-bottom: 10px;
+      font-size: 1.05rem;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -124,40 +126,139 @@
     }
     .feature-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 20px;
       margin: 24px 0;
     }
     .feature-card {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.01);
       border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      padding: 16px;
+      border-radius: 10px;
+      padding: 20px;
       transition: all var(--transition-speed);
     }
     .feature-card:hover {
-      background: rgba(255, 255, 255, 0.04);
-      border-color: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
     }
     .feature-card h4 {
       color: #fff;
-      margin-bottom: 8px;
-      font-size: 1rem;
+      margin-bottom: 10px;
+      font-size: 1.05rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .feature-card h4 i {
       color: var(--accent-purple);
     }
     .feature-card p {
-       font-size: 0.85rem;
+      font-size: 0.88rem;
+      margin-bottom: 0;
+      line-height: 1.7;
     }
+    
+    /* FAQ Accordion Styling */
+    details {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      padding: 16px 20px;
+      transition: all var(--transition-speed);
+    }
+    details[open] {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(0, 242, 254, 0.2);
+    }
+    summary {
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      outline: none;
+      font-size: 0.98rem;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::after {
+      content: '\f078';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      transition: transform var(--transition-speed);
+    }
+    details[open] summary::after {
+      transform: rotate(180deg);
+      color: var(--accent-cyan);
+    }
+    details .faq-content {
+      margin-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 14px;
+    }
+    details p {
+      margin-bottom: 10px;
+      font-size: 0.92rem;
+    }
+    details p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Logic Flow Styling */
+    .flow-container {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    .flow-step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .flow-step:last-child {
+      margin-bottom: 0;
+    }
+    .flow-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .flow-body h4 {
+      color: #fff;
+      margin-bottom: 6px;
+      font-size: 1.05rem;
+    }
+    .flow-body p {
+      font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+
     @media (max-width: 768px) {
       .doc-container {
-        padding: 16px;
+        padding: 20px;
         margin: 15px auto;
         border-radius: 8px;
+      }
+      .doc-title {
+        font-size: 1.8rem;
       }
     }
   </style>
@@ -167,19 +268,14 @@
     <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> AetherMaster に戻る</a>
     
     <header class="doc-header">
-      <h1 class="doc-title">AetherMaster 初心者ガイド</h1>
-      <div class="doc-subtitle">マスタリングの基本と、本ツールの使い方をやさしく解説します</div>
+      <h1 class="doc-title">AetherMaster 総合ユーザーズガイド</h1>
+      <div class="doc-subtitle">マスタリングの基本操作からAIの解析ロジック、各モジュールの詳細、高度なトラブルシューティングまで一冊に凝縮しました。</div>
     </header>
 
+    <!-- Section 1 -->
     <section>
-      <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> マスタリングって何？</h2>
-      <p>マスタリングとは、作った曲を世界中の人が心地よく聴けるように仕上げる<strong>「音楽制作の最終仕上げ工程」</strong>です。</p>
-      <p>ミックスされた音源の音量や音質を整え、スマホのスピーカー、高級ヘッドホン、カーステレオなど、どのような再生環境で聴いても「迫力があり、かつバランスの取れた良い音」で鳴るように、様々な音響処理を施します。</p>
-    </section>
-
-    <section>
-      <h2 class="section-title"><i class="fa-solid fa-list-ol"></i> 3ステップでできる簡単操作</h2>
-      <p>AetherMaster は、高度な AI アシスタントを搭載しているため、専門知識がなくても以下の3ステップでプロ級のマスタリングを実行できます。</p>
+      <h2 class="section-title"><i class="fa-solid fa-list-ol"></i> 基礎編：3ステップでできる簡単マスタリング</h2>
+      <p>AetherMaster は、高度なAIアシスタントを搭載しているため、専門知識がなくても以下の3ステップでプロ級のマスタリングを実行できます。</p>
       
       <ol>
         <li>
@@ -197,67 +293,140 @@
       </ol>
     </section>
 
+    <!-- Section 2 -->
     <section>
-      <h2 class="section-title"><i class="fa-solid fa-brain"></i> AI オートコレクト（AI SMART ASSISTANCE）とは？</h2>
-      <p>画面の「ANALYZE & AUTO-CORRECT EQ」ボタンをクリック（またはAUTOスイッチがONの状態でジャンル・ラウドネスを切り替え）すると、AI が一瞬で楽曲全体をスキャンし、人間では判断が難しい以下の調整を自動で行います。</p>
+      <h2 class="section-title"><i class="fa-solid fa-brain"></i> AI解析編：AIスマート・アシスタンスの内部ロジック</h2>
+      <p>「ANALYZE & AUTO-CORRECT EQ」ボタンをクリックすると、AIが楽曲全体をバックグラウンドで解析し、最も音が良くなる設計値を自動で算出します。このとき内部では、以下のステップが順番に走っています。</p>
       
-      <ul>
-        <li><strong>耳障りな周波数（シャリシャリ音）の自動制御</strong>：高音域で耳に刺さる嫌なピーク（シビランス）を検出し、高域EQが過剰にブーストされるのを自動でクランプ保護しつつ、ディエッサーで抑え込むことで、耳に優しい澄んだ音質にします。</li>
-        <li><strong>ダイナミクス（強弱の幅）の最適化</strong>：音の強弱の幅を計算し、音割れ（歪み）しないギリギリのラインまで音圧を引き上げます。</li>
-        <li><strong>周波数バランスの修正</strong>：ジャンル別の理想的な音響バランス（ターゲット）と元の音源を比較し、低音（Bass）や高音（Treble）を自然な量に微調整します。</li>
-      </ul>
+      <div class="flow-container">
+        <div class="flow-step">
+          <div class="flow-icon">1</div>
+          <div class="flow-body">
+            <h4>多角形音響スキャン (FFT & Dynamics Scan)</h4>
+            <p>音源の「最も静かな区間」「最も盛り上がっている区間」をサンプリングし、FFT（高速フーリエ変換）を用いて、低域・中域・高域・プレゼンス（歌声の帯域）の比率を厳密に測定します。また、音の強弱のダイナミクス幅（クレストファクター）や左右の位相ズレ（ステレオ相関値）も同時に測定します。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-icon">2</div>
+          <div class="flow-body">
+            <h4>ジャンル特徴量の自動推定 (Style Identification)</h4>
+            <p>測定された比率から、この楽曲が「どのジャンル（EDM, HipHop, Pops, Rockなど）の音響プロファイルに最も近いか」を自動で推定します。推定結果は操作ログに「推奨ジャンル」として表示され、手動選択の目安になります。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-icon">3</div>
+          <div class="flow-body">
+            <h4>目標期待値（Targets）への自動アライメント</h4>
+            <p>AIは、元の音源の周波数バランスと、ターゲットとする「理想的な基準バランス」を比較します。
+            <strong>AI AUTO（デフォルト）状態では、ジャンルに依存しない最もニュートラルなスタジオ基準値（Studio Reference Target）</strong>を目標としてEQのブースト/カットを計算します。これにより、ジャンル判定が万が一違っていた場合でも、不自然な音色になるのを防ぎます。</p>
+          </div>
+        </div>
+      </div>
 
       <div class="highlight-card">
-        <h4><i class="fa-solid fa-circle-exclamation"></i> ボーカル音源や高域の「シャリシャリ・キンキン音」対策について</h4>
-        <p>ボーカル音源やデジタルシンセサイザーを多用した楽曲では、<strong>「8kHz〜11kHz」付近に強い金属的なシャリシャリ・キンキンした雑音（耳が痛くなるサ行のシビランス音）</strong>が発生しやすい傾向があります。</p>
-        <p>AetherMaster の AI アシスタントは、この帯域を特別に監視し、共鳴ピークが検出された場合は高域イコライザー（High EQ）の過度なブーストを自動で制限（クランプ）します。同時に、内蔵された高性能な<strong>「動的ディエッサー（Sibilance Notch）」</strong>が連動して、刺さる雑音成分のみを狙い撃ちで優しく圧縮し、長時間のリスニングでも聴き疲れしないシルキーな質感に自動補正します。</p>
+        <h4><i class="fa-solid fa-circle-info"></i> AUTO（自動）と個別ジャンルプリセットの違い</h4>
+        <p>AI AUTOモードは常に「原音の良さを崩さないフラットな高音質」を狙います。一方で、ドロップダウンメニューから特定のジャンル（例：`EDM`）を手動で選択すると、AIは<strong>「そのジャンル専用のターゲット期待値（EDMなら重低音と超高域が引き立つVシェイプ）」</strong>に向けてEQを瞬時に再計算し、そのジャンルに特化した色付け（Coloration）を施します。</p>
       </div>
     </section>
 
+    <!-- Section 3 -->
     <section>
-      <h2 class="section-title"><i class="fa-solid fa-sliders"></i> 主要コントロールの解説</h2>
-      <p>手動で音を追い込みたい方向けに、代表的なエフェクトの役割を解説します。</p>
+      <h2 class="section-title"><i class="fa-solid fa-sliders"></i> DSPモジュール編：各プロセッサーの役割（上級者向け）</h2>
+      <p>AetherMaster の内部シグナルチェーンは、プロのスタジオ機材と同等の各種プロセッサーで構成されています。それぞれの役割と調整のコツは以下の通りです。</p>
       
       <div class="feature-grid">
         <div class="feature-card">
-          <h4><i class="fa-solid fa-fire"></i> サチュレーター</h4>
-          <p>音にアナログテープや真空管（Tube）の温かみと「ジリッ」とした倍音成分を加えます。音がふくよかになり、全体のまとまり感が増します。</p>
+          <h4><i class="fa-solid fa-fire"></i> サチュレーター (Saturator)</h4>
+          <p>アナログの真空管（Tube）やテープを過大入力した際に生じる、心地よい「倍音（歪み）」をシミュレートして加えます。デジタル特有の冷たさを取り除き、音が太く、温かくまとまります。</p>
         </div>
         <div class="feature-card">
-          <h4><i class="fa-solid fa-broom"></i> ノイズクリーナー (NOISE CLEANER)</h4>
-          <p>「Rumble Cut」で不要な低域の空調・電源ハム音をカットし、「Hiss Reducer」で無音部分の「サー」というヒスノイズを消去します。演奏中は自動でフィルターが全開になるため、高音の艶感を損なわないプロ仕様です。</p>
+          <h4><i class="fa-solid fa-broom"></i> ノイズクリーナー (Noise Cleaner)</h4>
+          <p><strong>Rumble Cut</strong>: 80Hz以下の空調ノイズや不要な重低音をカットします。ただし、EDMやHipHopなどのサブベースが命のジャンルでは、AIが自動でONにするのを防ぐ安全セーフガードが働きます。<br>
+          <strong>Hiss Reducer</strong>: 無音部分のサー音を消去する動的フィルターです。音が曇らないように13,000Hz以上の帯域のみをマイルドに狙い撃ちします。</p>
         </div>
         <div class="feature-card">
-          <h4><i class="fa-solid fa-sliders"></i> 3バンドEQ (イコライザー)</h4>
-          <p>低域（キックやベース）、中域（ボーカルや楽器のボディ）、高域（空気感や煌びやかさ）の3つの帯域の音量を調整し、音色をデザインします。</p>
+          <h4><i class="fa-solid fa-sliders"></i> 3バンドEQ (Equalizer)</h4>
+          <p>低音域（Low）、中音域（Mid/歌声）、高音域（High/空気感）の3つをコントロールします。AIは自動解析時、低音域を最大 `+4.5 dB`、高音域を最大 `+0.8 dB` までの安全範囲内で緻密にブースト/カットします。</p>
         </div>
         <div class="feature-card">
           <h4><i class="fa-solid fa-compress"></i> Glue コンプレッサー</h4>
-          <p>飛び出た突発的な音量を自動で圧縮し、曲全体の音量のばらつきを抑えて「1つの楽曲としてのまとまり（Glue）」を生み出します。</p>
+          <p>ばらついた音量をなだらかに均一化し、バラバラだった各楽器の音をまるで一つの接着剤（Glue）でくっつけたかのように一体化させ、楽曲のまとまり感を高めます。</p>
         </div>
         <div class="feature-card">
           <h4><i class="fa-solid fa-arrows-left-right"></i> ステレオイメージャー</h4>
-          <p>音が左右に広がる幅を調整します。100%以上に広げることで壮大な空間を作れますが、ベース等の重低音は自動でセンターに集めるため、音がスカスカになるのを防ぎます。</p>
+          <p>音の左右の広がり幅を調整します。ベースやキックなどの110Hz以下のエネルギーは自動でセンターにモノラル化して固定されるため、位相の打ち消し合いによるスカスカ感を防ぎ、引き締まった定位を保ちます。</p>
         </div>
         <div class="feature-card">
           <h4><i class="fa-solid fa-volume-high"></i> マキシマイザー＆リミッター</h4>
-          <p>最終段で全体の音量を商業用CDや配信サイトで流れるレベルまで引き上げます。どれだけ音量を上げても、設定した上限（OUTPUT CEILING）を超えないように制限し、音割れを防ぎます。</p>
+          <p>音割れを起こさずに、音圧（全体の迫力・音量）を極限まで引き上げる最終段のプロセッサーです。アタックが固く潰れすぎないよう、しきい値 `-1.0 dB`、リリース `120ms` という耳に優しいプロのスタジオ仕様で動作します。</p>
         </div>
         <div class="feature-card">
           <h4><i class="fa-solid fa-microphone"></i> DE-ESSER (ディエッサー)</h4>
-          <p>ボーカルの「サ、シ、ス、セ、ソ」など、耳に突き刺さるキンキンした高域成分（シビランス）を自動検知して的確に抑え、滑らかな高域に整えます。</p>
+          <p>ボーカルの「サ、シ、ス、セ、ソ」が刺さるキンキンした擦れ音（8kHz〜11kHz）を抑える、サ行専用のエフェクトです。Q値 `2.2` という音楽的で滑らかなカーブで動作し、ボーカルの艶感を保ったまま痛い音だけを取り除きます。</p>
         </div>
       </div>
     </section>
 
-
+    <!-- Section 4 -->
     <section>
-      <h2 class="section-title"><i class="fa-solid fa-circle-question"></i> よくある質問とトラブル解決</h2>
-      <ul>
-        <li><strong>音が割れている・ビリビリ聞こえる</strong>：音量（LIMITER GAIN BOOST）を上げすぎているか、元音源の低音が大きすぎます。プリセットを「POPS」などにするか、リミッターブーストを下げてください。また、RESETボタンを押すとAI推奨値にすぐ戻せます。</li>
-        <li><strong>設定をいじりすぎて音が分からなくなった</strong>：パネル右上にある「RESET」ボタンをクリックすると、余計な設定をすべてクリアし、ファイルを読み込んだ直後のAIによる自動最適化バランスへ一瞬で復元されます。</li>
-        <li><strong>スマートフォンで音が出ない</strong>：iOSなどでマナーモード（サイレントスイッチ）がオンになっていると音が出ない場合があります。本体の音量を上げるか、消音スイッチを確認してください（AetherMasterはバックグラウンド再生およびマナーモード時の再生維持に対応しています）。</li>
-      </ul>
+      <h2 class="section-title"><i class="fa-solid fa-circle-question"></i> 実践編：お悩み解決＆使いこなすためのFAQ</h2>
+      <p>聞き比べや音色調整でよく突き当たる問題の解決方法をまとめました。クリックして回答を展開できます。</p>
+
+      <details>
+        <summary>Q1. AIが推定したジャンル表示（コンソールログ）が、自分の意図と違っていたら？</summary>
+        <div class="faq-content">
+          <p>A. <strong>解決は非常に簡単です。メニュー左上の「PRESET」から、あなたの意図する正しいジャンルを手動で選択してください。</strong></p>
+          <p>AetherMasterのAIは、ジャンルを「間違ったからといって変な音にする」ことはありません。AUTO（自動）のときは常にニュートラルなスタジオ標準値を目指して処理されます。手動でジャンル（例：`EDM` や `ROCK`）を選択した瞬間に、AIはそのジャンルの期待値（ターゲット）に合わせてEQやコンプレッサーのパラメーターを一瞬で再計算し、好ましい色付けを適用します。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Q2. 高音域が耳に痛い、金属音がカンカン・シャリシャリして固く感じたら？</summary>
+        <div class="faq-content">
+          <p>A. 以下の3つのアプローチを試すことで、非常に滑らかで聴きやすい高域に整えることができます。</p>
+          <ol>
+            <li><strong>「DE-ESSER」スライダーを上げる</strong>: サ行やキンキンする高音のアタックを狙い撃ちで抑え込みます。まずは 50%〜80% 付近でお試しください。</li>
+            <li><strong>「High EQ」を 0.5dB〜1.0dB 程度下げる</strong>: 高域全体の明るさをマイルドにします。</li>
+            <li><strong>「LIMITER GAIN BOOST」を少し下げる</strong>: リミッターの突っ込みすぎによる音の潰れ（固さ）が緩和され、トランジェント（アタック）に余裕が生まれます。</li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary>Q3. 低音がスカスカして物足りない、ベースやキックにプロのような圧が欲しい場合は？</summary>
+        <div class="faq-content">
+          <p>A. 以下の調整でプロ仕様の重厚なボトムエンド（低音）を構築できます。</p>
+          <ol>
+            <li><strong>「Low EQ」を 1.0dB〜2.5dB 程度ブーストする</strong>: 低音域のふくよかさを直接補強します。AIは最大+4.5dBまでの安全な範囲で豊かな低音をサポートします。</li>
+            <li><strong>PRESETを「EDM」または「HIPHOP」にする</strong>: 低音のターゲット比率が高いジャンルに切り替えることで、AIが自動的に重低音を重視したカーブを算出します。</li>
+            <li><strong>「Rumble Cut」スイッチをOFFにする</strong>: EDMやヒップホップ等のサブベース（80Hz以下）がカットされてしまわないよう、スイッチがOFFになっていることを確認してください（AI判定では自動的にOFFになります）。</li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary>Q4. ノイズクリーナーを使ったら、音がこもって（暗くなって）しまったら？</summary>
+        <div class="faq-content">
+          <p>A. <strong>「HISS REDUCER」スライダーの値を下げてください。</strong></p>
+          <p>AetherMasterのHISS REDUCERは、音が曇りにくいように13,000Hz以上の超高域のサー音のみをマイルドに吸い取る高精度設計になっていますが、スライダーを100%近くまで上げすぎると、音源によっては高域のクリアさ（空気感）が減少したように聞こえる場合があります。ノイズがあまり気にならないクリーンな音源では、OFFまたは 10%〜30% 程度の低い値に設定することをおすすめします。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Q5. 出力された音源が歪んで聞こえたり、ビリビリ鳴ったり（クリッピング）したら？</summary>
+        <div class="faq-content">
+          <p>A. <strong>「LIMITER GAIN BOOST」を下げてください。</strong></p>
+          <p>元々の音源の音量が非常に大きい（または低音が過剰にブーストされている）状態で、さらにリミッターのゲインを上げすぎると、いくら高性能なリミッターであっても音が飽和して歪みが生じます。再生中に画面右側の「LIMITER ACTIVE」ランプ（赤色）が激しく点灯しっぱなしになる場合は、ランプが時々点滅する程度までスライダーを下げてください。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Q6. スマートフォン（特にiPhoneやiPad）で音が全く再生されない、途中で止まる場合は？</summary>
+        <div class="faq-content">
+          <p>A. <strong>iOSデバイスの「消音スイッチ（マナーモード）」がONになっている可能性があります。</strong></p>
+          <p>iOS（Safari）の仕様により、本体側面のサイレントスイッチがオレンジ色（消音状態）になっていると、ブラウザ上の音声（Web Audio API）が完全にミュートされます。スイッチを解除してマナーモードをOFFにするか、コントロールセンターから音量を上げてください。</p>
+        </div>
+      </details>
     </section>
 
     <footer class="app-footer" style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
