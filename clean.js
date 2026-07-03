@@ -706,11 +706,11 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   // 7. Brickwall Limiter
   const limiter = context.createDynamicsCompressor();
-  limiter.threshold.setValueAtTime(-3.0, context.currentTime); // -3.0dB threshold provides look-ahead emulation cushion (Web Audio automatic makeup gain restores peak level)
-  limiter.knee.setValueAtTime(3.0, context.currentTime);      // Smooth knee
-  limiter.ratio.setValueAtTime(20.0, context.currentTime);    // Dynamic limiting brickwall
-  limiter.attack.setValueAtTime(0.0001, context.currentTime); // 0.1ms (near-instant reaction to catch peaks)
-  limiter.release.setValueAtTime(0.08, context.currentTime);  // 80ms (optimized to prevent low-end distortion)
+  limiter.threshold.setValueAtTime(-1.0, context.currentTime); // -1.0dB に引き上げて過剰な圧縮圧と高域トランジェントの潰れを低減（ダイナミクスを保護）
+  limiter.knee.setValueAtTime(4.0, context.currentTime);      // 4.0dB に広げてよりなだらかで滑らかな制限動作へ
+  limiter.ratio.setValueAtTime(20.0, context.currentTime);    // 変わらずブリックウォール比率
+  limiter.attack.setValueAtTime(0.0001, context.currentTime); // 0.1ms (超高速ピークキャッチ)
+  limiter.release.setValueAtTime(0.12, context.currentTime);  // 120ms に拡張し、高域の微細な歪みやポンピング（音の硬さ）を防止
 
   // 7b. Safety Soft Clipper (WaveShaper Node)
   const safetyClipper = context.createWaveShaper();
