@@ -545,7 +545,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
   sibilanceNotch.frequency.setValueAtTime(parameters.sibilanceDynamicFreq || 9000, context.currentTime);
-  sibilanceNotch.Q.setValueAtTime(5.0, context.currentTime); // surgical Q targeting sibilance peak
+  sibilanceNotch.Q.setValueAtTime(2.2, context.currentTime); // musical Q for smooth sibilance band attenuation
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
   const sibilanceNotchDynamicGain = context.createGain();
@@ -2057,10 +2057,10 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
 
   let eqHighAdjustment = 0;
-  if (highDiffDb > 0.5) {
-    eqHighAdjustment = -Math.min(2.0, highDiffDb * 0.5); // 派手すぎる場合はマイルドに減衰（最大-2.0dB）
-  } else if (highDiffDb < -0.5) {
-    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.45); // 不足している場合はマイルドに補強（最大+1.5dB）
+  if (highDiffDb > 0.0) { // 音源が既にターゲットより明るい場合は、高域EQを抑制・カット方向に動的調整（デッドゾーンを排除してキンキン音を防止）
+    eqHighAdjustment = -Math.min(2.5, highDiffDb * 0.75);
+  } else if (highDiffDb < 0.0) { // 不足している場合はマイルドに補強
+    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.5);
   }
 
   let eqHighGain = Math.max(-5.0, Math.min(1.2, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+1.2dBに制限
