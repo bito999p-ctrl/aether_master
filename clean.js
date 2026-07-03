@@ -1943,16 +1943,15 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   }
 
   let sugHissAmount = 0;
-  if (hissNoiseFloorDb > -73.0) { // Lowered threshold from -68dB to -73dB for higher sensitivity
-    // -73dB で 0%、-40dB で最大 90% になるよう調整（3.5倍スケール）
-    const rawHiss = Math.round(Math.max(0, Math.min(90, (hissNoiseFloorDb + 73.0) * 3.5)));
+  if (hissNoiseFloorDb > -78.0) { // しきい値を-73dBから-78dBに下げて検出感度を向上
+    // -78dB で 0%、-50dB付近で最大 95% になるよう調整（4.5倍スケールでダイナミックに変化）
+    const rawHiss = Math.round(Math.max(0, Math.min(95, (hissNoiseFloorDb + 78.0) * 4.5)));
     
-    // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音（シンセパッドやエフェ蔵等）である可能性が高いため
-    // LPFの過剰カットを防ぐため、Hiss Reducerの適用度を減衰する安全スケーラー
+    // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音である可能性が高いため
+    // LPFの過剰カットを防ぐため、Hiss Reducerの適用度を少し抑える安全スケーラー（最小減衰幅を0.70に緩和して感度を維持）
     let quietnessScale = 1.0;
     if (minRmsVal > 0.05) {
-      // 最低RMSが 0.05（約-26dBFS）〜0.13（約-17dBFS）の間で、スケール値を 1.0 から 0.50 まで滑らかに減衰（適用量をより敏感に残すように調整）
-      quietnessScale = Math.max(0.50, 1.0 - (minRmsVal - 0.05) / 0.08);
+      quietnessScale = Math.max(0.70, 1.0 - (minRmsVal - 0.05) / 0.15);
     }
     sugHissAmount = Math.round(rawHiss * quietnessScale);
   }
