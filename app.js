@@ -1845,7 +1845,7 @@ function fft(re, im) {
 }
 
 // 分析関数：オーディオバッファをマルチスライス分析し、ダイナミクス、ステレオ音像、周波数バランス、耳障りな周波数（シャリシャリ音）を検出する
-function analyzeAudioResonances(buffer, userPresetKey) {
+export function analyzeAudioResonances(buffer, userPresetKey) {
   const fftSize = 2048;
   const numSlices = 32; // サンプリング精度を高めるため、32箇所を走査
   const sampleRate = buffer.sampleRate;
@@ -1990,12 +1990,37 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const actualPresenceRatio = energyHighMid / (energyLowMid + 1e-6);
 
   // Noise Floor Estimation in the quietest segment
+  let maxRmsVal = 0.001;
+  for (let i = 0; i < sliceRMSList.length; i++) {
+    if (sliceRMSList[i] > maxRmsVal) {
+      maxRmsVal = sliceRMSList[i];
+    }
+  }
+
   let minRmsIdx = 0;
   let minRmsVal = 1.0;
+  let foundValidBlock = false;
+  // デジタル無音や曲の前後にある完全無音区間をノイズ解析から除外するためのしきい値（最大音量の2%以下は無音判定）
+  const silenceThreshold = maxRmsVal * 0.02;
+
   for (let i = 0; i < sliceRMSList.length; i++) {
-    if (sliceRMSList[i] < minRmsVal) {
-      minRmsVal = sliceRMSList[i];
-      minRmsIdx = i;
+    if (sliceRMSList[i] >= silenceThreshold) {
+      if (sliceRMSList[i] < minRmsVal) {
+        minRmsVal = sliceRMSList[i];
+        minRmsIdx = i;
+        foundValidBlock = true;
+      }
+    }
+  }
+
+  // 万が一すべての区間が閾値以下になった場合は、従来の絶対最小の区間を使用
+  if (!foundValidBlock) {
+    minRmsVal = 1.0;
+    for (let i = 0; i < sliceRMSList.length; i++) {
+      if (sliceRMSList[i] < minRmsVal) {
+        minRmsVal = sliceRMSList[i];
+        minRmsIdx = i;
+      }
     }
   }
 
@@ -2026,9 +2051,10 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   }
 
   let sugHissAmount = 0;
-  if (hissNoiseFloorDb > -78.0) { // しきい値を-73dBから-78dBに下げて検出感度を向上
-    // ノイズフロアに応じて20%〜98%の間でより強力に適用されるようスケール調整
-    const rawHiss = Math.round(Math.max(0, Math.min(98, 20 + (hissNoiseFloorDb + 78.0) * 5.0)));
+  // しきい値を-78dBから-83dBに引き下げ（ヘッドホン等で聞こえる微小なアナログサー音やヒスノイズまで検知可能に）
+  if (hissNoiseFloorDb > -83.0) {
+    // ノイズフロアに応じて15%〜98%の間で段階的に適用度を算出するスケール
+    const rawHiss = Math.round(Math.max(0, Math.min(98, 15 + (hissNoiseFloorDb + 83.0) * 6.0)));
     
     // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音である可能性が高いため
     // LPFの過剰カットを防ぐため、Hiss Reducerの適用度を少し抑える安全スケーラー（最小減衰幅を0.70に緩和して感度を維持）

@@ -196,6 +196,32 @@
 
     <div class="timeline">
       
+      <!-- v4.3.2 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v4.3.2</span>
+          <span class="version-date">2026.07.04</span>
+          <span class="version-title">AIノイズクリーナー（Hiss Reducer）判定ロジックの改善 ＆ 無音除外フィルタの搭載</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>デジタル無音および前後リードイン無音の自動除外</strong>：曲の最初や最後にある無音区間（デジタルゼロ）をAIのノイズ推定対象から自動で除外するフィルターを搭載。無音をノイズが全く無いと誤認してしまうバグを解消しました。</li>
+          <li><span class="badge-change">改善</span><strong>ヒスノイズ検出しきい値の感度向上（-83dBへの引き下げ）</strong>：人間にははっきりと聞き取れる微細なアナログテープヒスや部屋鳴り（-78dB〜-83dB付近）まで確実に検知できるようにしきい値を引き下げ。マキシマイザーで持ち上げた際の残留ノイズを適切にケアします。</li>
+        </ul>
+      </div>
+
+      <!-- v4.3.1 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v4.3.1</span>
+          <span class="version-date">2026.07.04</span>
+          <span class="version-title">電子音楽（EDM / Metal / Hardcore）におけるシンセ高域倍音＆アタック感の維持チューニング</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>サチュレーター内LPFのジャンル可変（EDM/Hardcoreで16kHz解放）</strong>：電子音楽ジャンルではシンセ音（ピコピコ感）のきらびやかさとギラつきを損なわないよう、サチュレーション制限を16kHzまで解放（Metalは10kHz）。ポップス等のボーカル曲では4.5kHzで滑らかに留めるジャンル可変設計に変更。</li>
+          <li><span class="badge-change">改善</span><strong>電子音楽における高域EQ制限の自動緩和（最大+1.2dB）</strong>：EDMなどのシンセアタックを活かすため、高域シェルフEQの最大ブースト上限を+1.2dBまで自動解放。サ行保護時のブーストクランプも+0.8dBに緩和しました。</li>
+        </ul>
+      </div>
+
       <!-- v4.3.0 -->
       <div class="timeline-item major">
         <div class="version-header">
