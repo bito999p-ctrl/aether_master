@@ -196,6 +196,25 @@
 
     <div class="timeline">
       
+      <!-- v4.3.4 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v4.3.4</span>
+          <span class="version-date">2026.07.04</span>
+          <span class="version-title">HISS REDUCER と DE-ESSER の高音域「曇り・くぐもり感」の完全な解消（マスタリング品質へのリファイン）</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>HISS REDUCERの遮断周波数範囲の最適化</strong>：ヒスノイズ軽減用のLPFの下限周波数を大幅に引き上げ、100%適用時でも13,000Hz以下に落ちないよう設計変更（元の仕様では3,750Hzまで落ちて極端に曇っていました）。また、演奏中はカットオフが20,000Hz（全開）まで動的追従するよう改善しました。</li>
+          <li><span class="badge-change">改善</span><strong>DE-ESSERのトリガー周波数と最大減衰量の緩和</strong>：
+            <ul>
+              <li>サイドチェーンの検出用ハイパスを2,000Hzから6,000Hzに引き上げ、ボーカルや他の楽器の通常のメロディ成分による「常時De-esserがONになってしまう現象」を解消。本物のサ行（シビランス）やhi-hatアタックのみに綺麗に追従させました。</li>
+              <li>最大減衰量の上限値を-14.0dBから-4.5dBに緩和し、強いDe-esser設定時でも高域が曇らず透明感が維持されるように修正しました。</li>
+            </ul>
+          </li>
+          <li><span class="badge-change">改善</span><strong>AI検出デフォルト値の無効化（0%）</strong>：AI自動解析において、サ行（シビランス）が全く検出されなかった場合はDe-esserの設定値をデフォルトで0%（完全にOFF）にするように修正しました。</li>
+        </ul>
+      </div>
+
       <!-- v4.3.3 -->
       <div class="timeline-item major">
         <div class="version-header">

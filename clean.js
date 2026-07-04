@@ -479,14 +479,16 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   hissFilter.type = 'lowpass';
   
   const hissAmount = parameters.hissReductionAmount || 0;
-  const baseFreq = 20000.0 - (16250.0 * (hissAmount / 100.0)); // Maps 80% to 7,000Hz and 100% to 3,750Hz (dynamic VCF cleans 8kHz/7.4kHz metallic noise at default 80% setting)
+  // ヒスノイズ除去のベース周波数を引き上げ、ボーカルや楽器の明瞭度を保ちます（100%適用時でも13,000Hz以下に落とさない）
+  const baseFreq = 20000.0 - (7000.0 * (hissAmount / 100.0));
   hissFilter.frequency.setValueAtTime(baseFreq, context.currentTime);
   hissFilter.Q.setValueAtTime(0.5, context.currentTime); // Gentle slope
 
   // Sidechain Envelope Follower for Hiss Filter
   const sidechainHpf = context.createBiquadFilter();
   sidechainHpf.type = 'highpass';
-  sidechainHpf.frequency.setValueAtTime(2000.0, context.currentTime); // Lowered to 2,000Hz to detect vocal/midrange energy and open the filter.
+  // サイドチェーンの周波数を6,000Hzに引き上げ、中域のメロディ音量に惑わされず超高音域の音量だけに反応させます
+  sidechainHpf.frequency.setValueAtTime(6000.0, context.currentTime);
   sidechainHpf.Q.setValueAtTime(0.707, context.currentTime);
 
   const sidechainGainNode = context.createGain();
@@ -497,12 +499,12 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   const envelopeSmoother = context.createBiquadFilter();
   envelopeSmoother.type = 'lowpass';
-  envelopeSmoother.frequency.setValueAtTime(2.0, context.currentTime); // Slowed down from 10Hz to 2Hz to smooth out dynamic filter sweeps and eliminate swirling/phasing artifacts on reverb tails and cheers.
+  envelopeSmoother.frequency.setValueAtTime(2.0, context.currentTime);
   envelopeSmoother.Q.setValueAtTime(0.707, context.currentTime);
 
   const hissEnvelopeGain = context.createGain();
-  // 高域ヒスノイズ（13kHz〜20kHz）が楽曲再生中も完全に消え去るよう、上限遮断周波数（天井）を制限
-  const ceilFreq = 20000.0 - (7000.0 * (hissAmount / 100.0)); // hissAmount=100%で最大天井を13,000Hzに固定
+  // 楽曲演奏時にはフィルターの遮断周波数を20kHz近くまで全開にするため、天井周波数を引き上げます
+  const ceilFreq = 20000.0 - (500.0 * (hissAmount / 100.0));
   const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
   hissEnvelopeGain.gain.setValueAtTime(maxEnvGain, context.currentTime);
 
@@ -1649,18 +1651,18 @@ function updateNoiseCutNodes() {
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
     const hissAmount = params.hissReductionAmount || 0;
-    const baseFreq = 20000.0 - (16250.0 * (hissAmount / 100.0)); // Maps 80% to 7,000Hz and 100% to 3,750Hz (dynamic VCF cleans 8kHz/7.4kHz metallic noise at default 80% setting)
+    const baseFreq = 20000.0 - (7000.0 * (hissAmount / 100.0));
     activeNodes.hissFilter.frequency.setTargetAtTime(baseFreq, audioContext.currentTime, 0.02);
     
-    // 高域ヒスノイズ（13kHz〜20kHz）が楽曲再生中も完全に消え去るよう、上限遮断周波数（天井）を制限
-    const ceilFreq = 20000.0 - (7000.0 * (hissAmount / 100.0)); // hissAmount=100%で最大天井を13,000Hzに固定
+    const ceilFreq = 20000.0 - (500.0 * (hissAmount / 100.0));
     const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
 
     // Decoupled from hissAmount: active if deesserAmount > 0
     if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
       const amount = params.deesserAmount || 0;
-      const dynamicCut = -14.0 * (amount / 100.0);
+      // 最大減衰量を-4.5dBにクランプし、ボーカルやハットが高域で曇るのを防止
+      const dynamicCut = -4.5 * (amount / 100.0);
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.sibilanceDynamicFreq || 9000, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
@@ -2458,10 +2460,11 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   
   finalLimiterBoost = Math.round(finalLimiterBoost * 10) / 10;
 
-  let suggestedDeesserAmount = 50; // デフォルトで基本有効（50%）
+  let suggestedDeesserAmount = 0; // デフォルトは 0 (無効)
   if (sibilanceDynamicFreq > 0 && rawSibilancePeaks.length > 0) {
     const maxScore = rawSibilancePeaks[0].score;
-    suggestedDeesserAmount = Math.round(Math.min(98, Math.max(50, 50 + (maxScore - 1.15) * 80)));
+    // 共鳴ピークが検出された場合のみアクティブにし、スコアに応じて35%〜80%の範囲で適用
+    suggestedDeesserAmount = Math.round(Math.max(35, Math.min(80, 35 + (maxScore - 1.15) * 60)));
   }
 
   // AI Dynamic Q-value calculation based on the correction gains
