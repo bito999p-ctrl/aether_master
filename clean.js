@@ -2204,31 +2204,11 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   const airToBrillianceRatio = airEnergy / (brillianceEnergy + 1e-6);
 
-  // Calculate the high-frequency spectral center of gravity (centroid) of the song (from 6000Hz to 16000Hz)
-  const binStart6k = Math.floor((6000 * fftSize) / sampleRate);
-  const binEnd16k = Math.floor((16000 * fftSize) / sampleRate);
-  let totalHighEnergy = 0;
-  for (let j = binStart6k; j <= binEnd16k; j++) {
-    totalHighEnergy += avgSpectrum[j];
-  }
-  
-  let targetBin = binStart6k;
-  if (totalHighEnergy > 0) {
-    let cumulativeEnergy = 0;
-    for (let j = binStart6k; j <= binEnd16k; j++) {
-      cumulativeEnergy += avgSpectrum[j];
-      if (cumulativeEnergy >= totalHighEnergy * 0.48) { // 48% cumulative energy centroid
-        targetBin = j;
-        break;
-      }
-    }
-  }
-  
-  let suggestedEqHighFreq = (targetBin * sampleRate) / fftSize;
-  // Round to nearest 250Hz for professional step increments
+  // Calculate the high-frequency crossover frequency dynamically based on the treble roll-off slope (airToBrillianceRatio)
+  const normalizedRatio = Math.max(0.08, Math.min(0.38, airToBrillianceRatio));
+  let suggestedEqHighFreq = 8000 + ((normalizedRatio - 0.08) / 0.30) * 4500;
   suggestedEqHighFreq = Math.round(suggestedEqHighFreq / 250) * 250;
-  // Clamp within safe high shelf ranges (7,500Hz to 13,000Hz)
-  suggestedEqHighFreq = Math.max(7500, Math.min(13000, suggestedEqHighFreq));
+  suggestedEqHighFreq = Math.max(8000, Math.min(12500, suggestedEqHighFreq));
 
   // 4. Stereo Bass phase cancellation safeguard (ビビリ音・歪み防止)
   let finalEqLowGain = eqLowGain;
