@@ -397,6 +397,27 @@
         </div>
         <div class="eq-band">
           <div class="eq-band-header">
+            <span class="band-name">MID-HIGH PEAK</span>
+            <span class="value-readout" id="eq-mid-high-val">0.0 dB</span>
+          </div>
+          <div class="eq-row">
+            <input type="range" id="eq-mid-high-gain" min="-12" max="12" step="0.5" value="0.0">
+            <div class="freq-input-group">
+              <input type="number" id="eq-mid-high-freq" min="2000" max="5000" value="3000">
+              <span class="unit">Hz</span>
+            </div>
+          </div>
+          <div class="eq-row" style="margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
+              <span class="band-name" style="font-size: 0.65rem;">MID-HIGH Q</span>
+              <span class="help-icon" data-tooltip="ミッドハイ（中高域）のQ値です。ボーカルの抜けや存在感（距離感）を調節します。"><i class="fa-regular fa-circle-question"></i></span>
+            </div>
+            <input type="range" id="eq-mid-high-q" min="0.3" max="3.0" step="0.1" value="1.0">
+            <span class="value-readout" id="eq-mid-high-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">1.0</span>
+          </div>
+        </div>
+        <div class="eq-band">
+          <div class="eq-band-header">
             <span class="band-name">HIGH SHELF</span>
             <span class="value-readout" id="eq-high-val">+1.5 dB</span>
           </div>

@@ -120,9 +120,15 @@ const params = {
   eqLowGain: 1.0,
   eqLowFreq: 120,
   eqLowQ: 0.70,
+  eqLowMidGain: 0.0,
+  eqLowMidFreq: 200,
+  eqLowMidQ: 0.60,
   eqMidGain: -0.5,
   eqMidFreq: 1000,
   eqMidQ: 1.0,
+  eqMidHighGain: 0.0,
+  eqMidHighFreq: 3000,
+  eqMidHighQ: 1.0,
   eqHighGain: 1.5,
   eqHighFreq: 10000,
   eqHighQ: 0.70,
@@ -190,6 +196,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 0.0, eqLowFreq: 90, eqLowQ: 0.70,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.0, eqHighFreq: 9000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
     stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
@@ -199,6 +206,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.5, eqLowFreq: 100, eqLowQ: 0.70,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.6, eqMidFreq: 1800, eqMidQ: 1.0,
+    eqMidHighGain: 0.5, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 12000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
     stereoWidth: 1.22, limiterBoost: 3.5, sideHighPassFreq: 110
@@ -208,6 +216,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 2.2, eqLowFreq: 75, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.8, eqHighFreq: 10000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
     stereoWidth: 1.25, limiterBoost: 3.5, sideHighPassFreq: 110
@@ -217,6 +226,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 2.0, eqLowFreq: 90, eqLowQ: 0.65,
     eqLowMidGain: 0.8, eqLowMidFreq: 220, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 2800, eqMidQ: 1.2,
+    eqMidHighGain: 0.4, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.6, eqHighFreq: 8000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
@@ -226,6 +236,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 2.2, eqLowFreq: 85, eqLowQ: 0.60,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.5, eqMidFreq: 400, eqMidQ: 0.8,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.2, eqHighFreq: 8500, eqHighQ: 0.75,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
     stereoWidth: 1.28, limiterBoost: 4.5, sideHighPassFreq: 120
@@ -235,6 +246,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.8, eqLowFreq: 90, eqLowQ: 0.85,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 11000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
     stereoWidth: 1.30, limiterBoost: 4.5, sideHighPassFreq: 150
@@ -244,6 +256,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.90,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.5, eqHighFreq: 10000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
     stereoWidth: 1.20, limiterBoost: 4.2, sideHighPassFreq: 150
@@ -253,6 +266,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 3.5, eqLowFreq: 150, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1200, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: -4.5, eqHighFreq: 7000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.5, compAttack: 0.06, compRelease: 0.30,
     stereoWidth: 0.92, limiterBoost: 2.8, sideHighPassFreq: 110
@@ -262,6 +276,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 3.0, eqLowFreq: 80, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.5, eqHighFreq: 12000, eqHighQ: 0.80,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
     stereoWidth: 1.38, limiterBoost: 5.0, sideHighPassFreq: 150
@@ -271,6 +286,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 2.0, eqLowFreq: 80, eqLowQ: 0.50,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.8, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -6.0, compRatio: 1.2, compAttack: 0.12, compRelease: 0.40,
     stereoWidth: 1.55, limiterBoost: 2.0, sideHighPassFreq: 90
@@ -280,6 +296,7 @@ export const GENRE_PRESETS = {
     eqLowGain: -2.0, eqLowFreq: 120, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.2, eqHighFreq: 8000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.3, compAttack: 0.02, compRelease: 0.15,
     stereoWidth: 1.00, limiterBoost: 2.5, sideHighPassFreq: 150
@@ -289,6 +306,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 0.5, eqLowFreq: 100, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.0, eqHighFreq: 10000, eqHighQ: 0.55,
     compEnabled: true, compThreshold: -4.0, compRatio: 1.15, compAttack: 0.15, compRelease: 0.50,
     stereoWidth: 1.30, limiterBoost: 1.5, sideHighPassFreq: 90
@@ -298,6 +316,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.2, eqLowFreq: 110, eqLowQ: 0.60,
     eqLowMidGain: 1.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
+    eqMidHighGain: 0.2, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.4, eqHighFreq: 10000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.06, compRelease: 0.25,
     stereoWidth: 1.20, limiterBoost: 2.2, sideHighPassFreq: 90
@@ -307,6 +326,7 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.60,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
+    eqMidHighGain: 0.3, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.8, eqHighFreq: 11000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
     stereoWidth: 1.25, limiterBoost: 2.5, sideHighPassFreq: 90
@@ -568,6 +588,13 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqMid.frequency.setValueAtTime(parameters.eqMidFreq, context.currentTime);
   eqMid.gain.setValueAtTime(parameters.eqMidGain, context.currentTime);
 
+  // Dedicated Mid-High Peaking Filter for Vocal Presence & Distance (3000Hz)
+  const eqMidHigh = context.createBiquadFilter();
+  eqMidHigh.type = 'peaking';
+  eqMidHigh.frequency.setValueAtTime(parameters.eqMidHighFreq || 3000.0, context.currentTime);
+  eqMidHigh.gain.setValueAtTime(parameters.eqMidHighGain || 0.0, context.currentTime);
+  eqMidHigh.Q.setValueAtTime(parameters.eqMidHighQ || 1.0, context.currentTime);
+
   const eqHigh = context.createBiquadFilter();
   eqHigh.type = 'highshelf';
   eqHigh.frequency.setValueAtTime(parameters.eqHighFreq, context.currentTime);
@@ -644,7 +671,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqLow.connect(eqLowMid);
   eqLowMid.connect(kickPeaking);
   kickPeaking.connect(eqMid);
-  eqMid.connect(eqHigh);
+  eqMid.connect(eqMidHigh);
+  eqMidHigh.connect(eqHigh);
   eqHigh.connect(sibilanceNotch);
   sibilanceNotch.connect(eqCorrective1);
   eqCorrective1.connect(eqCorrective2);
@@ -777,6 +805,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     eqLowMid,
     kickPeaking,
     eqMid,
+    eqMidHigh,
     eqHigh,
     sibilanceNotch,
     sibilanceNotchDynamicGain,
@@ -928,6 +957,7 @@ function startPlayback() {
   activeNodes.eqLowMid = chain.eqLowMid;
   activeNodes.kickPeaking = chain.kickPeaking;
   activeNodes.eqMid = chain.eqMid;
+  activeNodes.eqMidHigh = chain.eqMidHigh;
   activeNodes.eqHigh = chain.eqHigh;
   activeNodes.sibilanceNotch = chain.sibilanceNotch;
   activeNodes.sibilanceNotchDynamicGain = chain.sibilanceNotchDynamicGain;
@@ -1674,6 +1704,11 @@ function updateEqNodes() {
     activeNodes.eqMid.gain.setTargetAtTime(p.eqMidGain, audioContext.currentTime, 0.01);
     activeNodes.eqMid.Q.setTargetAtTime(p.eqMidQ, audioContext.currentTime, 0.01);
   }
+  if (activeNodes.eqMidHigh) {
+    activeNodes.eqMidHigh.frequency.setTargetAtTime(p.eqMidHighFreq || 3000, audioContext.currentTime, 0.01);
+    activeNodes.eqMidHigh.gain.setTargetAtTime(p.eqMidHighGain || 0.0, audioContext.currentTime, 0.01);
+    activeNodes.eqMidHigh.Q.setTargetAtTime(p.eqMidHighQ || 1.0, audioContext.currentTime, 0.01);
+  }
   if (activeNodes.eqHigh) {
     activeNodes.eqHigh.frequency.setTargetAtTime(p.eqHighFreq, audioContext.currentTime, 0.01);
     activeNodes.eqHigh.gain.setTargetAtTime(p.eqHighGain, audioContext.currentTime, 0.01);
@@ -2165,6 +2200,16 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   }
   const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
 
+  let eqMidHighAdjustment = 0;
+  if (presenceDiffDb > 0.5) {
+    // 派手すぎる場合は中高域を抑えてマイルドに
+    eqMidHighAdjustment = -Math.min(1.5, (presenceDiffDb - 0.5) * 0.5);
+  } else if (presenceDiffDb < -0.5) {
+    // ボーカルが遠く聞こえる場合は、存在感を前に出して距離感を詰めるため中高域（3000Hz）を補強ブースト
+    eqMidHighAdjustment = Math.min(1.2, (-presenceDiffDb - 0.5) * 0.6);
+  }
+  const eqMidHighGain = Math.max(-3.0, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
+
   let eqHighAdjustment = 0;
   if (highDiffDb > 0.0) { // 音源が既にターゲットより明るい場合は、高域EQを抑制・カット方向に動的調整（デッドゾーンを排除してキンキン音を防止）
     eqHighAdjustment = -Math.min(2.5, highDiffDb * 0.75);
@@ -2399,6 +2444,9 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       eqMidGain: eqMidGain,
       eqMidFreq: basePreset.eqMidFreq,
       eqMidQ: basePreset.eqMidQ || 1.0,
+      eqMidHighGain: eqMidHighGain,
+      eqMidHighFreq: basePreset.eqMidHighFreq || 3000,
+      eqMidHighQ: basePreset.eqMidHighQ || 1.0,
       eqHighGain: eqHighGain,
       eqHighFreq: suggestedEqHighFreq,
       eqHighQ: finalEqHighQ,
@@ -2444,6 +2492,9 @@ function loadGenrePreset(genreKey) {
   params.eqMidGain = src.eqMidGain;
   params.eqMidFreq = src.eqMidFreq;
   params.eqMidQ = src.eqMidQ || 1.0;
+  params.eqMidHighGain = src.eqMidHighGain || 0.0;
+  params.eqMidHighFreq = src.eqMidHighFreq || 3000;
+  params.eqMidHighQ = src.eqMidHighQ || 1.0;
   params.eqHighGain = src.eqHighGain;
   params.eqHighFreq = src.eqHighFreq;
   params.eqHighQ = src.eqHighQ || 0.70;
@@ -2752,6 +2803,17 @@ function updateGuiControls() {
   document.getElementById('eq-mid-q').value = params.eqMidQ;
   document.getElementById('eq-mid-q-val').innerText = params.eqMidQ.toFixed(1);
   
+  const eqMidHighGainInput = document.getElementById('eq-mid-high-gain');
+  if (eqMidHighGainInput) eqMidHighGainInput.value = params.eqMidHighGain || 0.0;
+  const eqMidHighFreqInput = document.getElementById('eq-mid-high-freq');
+  if (eqMidHighFreqInput) eqMidHighFreqInput.value = params.eqMidHighFreq || 3000;
+  const eqMidHighVal = document.getElementById('eq-mid-high-val');
+  if (eqMidHighVal) eqMidHighVal.innerText = `${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB`;
+  const eqMidHighQInput = document.getElementById('eq-mid-high-q');
+  if (eqMidHighQInput) eqMidHighQInput.value = params.eqMidHighQ || 1.0;
+  const eqMidHighQVal = document.getElementById('eq-mid-high-q-val');
+  if (eqMidHighQVal) eqMidHighQVal.innerText = (params.eqMidHighQ || 1.0).toFixed(2);
+  
   document.getElementById('eq-high-gain').value = params.eqHighGain;
   document.getElementById('eq-high-freq').value = params.eqHighFreq;
   document.getElementById('eq-high-val').innerText = `${params.eqHighGain >= 0 ? '+' : ''}${params.eqHighGain.toFixed(1)} dB`;
@@ -2976,6 +3038,37 @@ function registerGuiEvents() {
     selectCustomPreset();
     updateEqNodes();
   });
+
+  // EQ Mid-High
+  const eqMidHighGainSlider = document.getElementById('eq-mid-high-gain');
+  if (eqMidHighGainSlider) {
+    eqMidHighGainSlider.addEventListener('input', (e) => {
+      params.eqMidHighGain = parseFloat(e.target.value);
+      const eqMidHighVal = document.getElementById('eq-mid-high-val');
+      if (eqMidHighVal) eqMidHighVal.innerText = `${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB`;
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+  const eqMidHighFreqInput = document.getElementById('eq-mid-high-freq');
+  if (eqMidHighFreqInput) {
+    eqMidHighFreqInput.addEventListener('change', (e) => {
+      params.eqMidHighFreq = Math.max(2000, Math.min(5000, parseInt(e.target.value)));
+      e.target.value = params.eqMidHighFreq;
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+  const eqMidHighQSlider = document.getElementById('eq-mid-high-q');
+  if (eqMidHighQSlider) {
+    eqMidHighQSlider.addEventListener('input', (e) => {
+      params.eqMidHighQ = parseFloat(e.target.value);
+      const eqMidHighQVal = document.getElementById('eq-mid-high-q-val');
+      if (eqMidHighQVal) eqMidHighQVal.innerText = params.eqMidHighQ.toFixed(2);
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
 
   // EQ High
   document.getElementById('eq-high-gain').addEventListener('input', (e) => {
@@ -3527,6 +3620,10 @@ function runAiAnalysis(showLog = true) {
         <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
           <span>EQ LOW-MID:</span>
           <span style="color: #00f2fe; font-weight: 600;">${sug.eqLowMidGain >= 0 ? '+' : ''}${sug.eqLowMidGain.toFixed(1)} dB</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span>EQ MID-HIGH:</span>
+          <span style="color: #00f2fe; font-weight: 600;">${sug.eqMidHighGain >= 0 ? '+' : ''}${sug.eqMidHighGain.toFixed(1)} dB</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
           <span>EQ HIGH:</span>
