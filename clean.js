@@ -2259,6 +2259,102 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
 
   // 5. HIGH EQ (高域・エアバンド補正: 14000Hz)
   // ターゲットからのズレを100%反転して直接補正。曇った音源は明るく、うるさい音源は暖かく整えます（最大+3.5dB〜-4.5dB）
+  // 1. 入力ゲインステージングの先行計算（ピークレベルを -6.0dBFS に整えヘッドルームを確保）
+  const originalPeakDb = 20 * Math.log10(maxAbsSample + 1e-6);
+  const suggestedInputGainDb = Math.max(-12.0, Math.min(12.0, -6.0 - originalPeakDb));
+
+  // 2. ダイナミクス補正 (音楽理論・ダイナミックレンジ基準によるクレストファクター分析 ＆ 目標ラウドネス自動追従)
+  let compThreshold = basePreset.compThreshold;
+  let compRatio = basePreset.compRatio;
+  let crestDesc = "Normal (Balanced)";
+
+  // ピーク正規化後の信号の平均音量（RMS dBFS）
+  const avgRmsDb = 20 * Math.log10(avgRMS + 1e-6);
+  const rmsAfterGainDb = avgRmsDb + suggestedInputGainDb;
+
+  // ジャンル別目標平均音量（RMS dB FS。-14LUFSターゲットに準拠）
+  const genreTargetRmsDb = {
+    auto: -14.5,
+    pops: -14.0,     // Pops/J-POP: 標準ストリーミング (-14 LUFS相当)
+    rnb: -13.5,
+    rock: -13.0,
+    metal: -12.5,    // Metal: 迫力ある音圧壁 (-12.5 dB)
+    edm: -11.5,      // EDM: クラブ向け最大音圧 (-11.5 dB)
+    hiphop: -12.5,
+    lofi: -15.5,
+    hardcore: -10.5, // Hardcore: 限界の押し込み (-10.5 dB)
+    ambient: -17.5,
+    podcast: -15.0,
+    classic: -19.5,
+    jazz: -16.0,
+    acoustic: -16.5,
+    custom: -14.5
+  };
+  const targetRmsDb = genreTargetRmsDb[genreKey] || genreTargetRmsDb.auto;
+
+  // 目標ラウドネスまでに不足しているゲイン量（dB）
+  let requiredBoost = targetRmsDb - rmsAfterGainDb;
+
+  // クレストファクター（ダイナミックレンジの広さ）に応じたコンプレッションと音圧補正
+  const genreTargetCrest = {
+    auto: 10.5, pops: 11.0, rnb: 10.0, rock: 11.0, metal: 9.5, edm: 8.5,
+    hiphop: 9.0, lofi: 12.0, hardcore: 7.5, ambient: 13.5, podcast: 10.5,
+    classic: 14.5, jazz: 12.5, acoustic: 13.0, custom: 10.5
+  };
+  const targetCrest = genreTargetCrest[genreKey] || genreTargetCrest.auto;
+  const crestDiff = crestFactorDb - targetCrest;
+
+  if (crestDiff > 0.0) {
+    // 音源がダイナミック（強弱が広い）-> コンプのしきい値を下げ、リミッターのブースト量を増やしてダイナミクスを制御
+    const compressionFactor = Math.min(6.0, crestDiff * 0.45);
+    const ratioFactor = Math.min(0.3, crestDiff * 0.06);
+    compThreshold = Math.max(-14.0, basePreset.compThreshold - compressionFactor);
+    compRatio = Math.min(1.8, basePreset.compRatio + ratioFactor);
+    crestDesc = "High (Highly Dynamic)";
+    
+    // 強弱が広いものはリミッターで叩く余地を増やすためにブーストを加算
+    requiredBoost += Math.min(1.5, crestDiff * 0.35);
+  } else {
+    // 音源がすでに強く圧縮されている -> 二重圧縮を防ぐため、コンプレッサーを逃がす
+    const releaseFactor = Math.min(4.0, -crestDiff * 0.5);
+    const ratioFactor = Math.min(0.2, -crestDiff * 0.05);
+    compThreshold = Math.min(-5.0, basePreset.compThreshold + releaseFactor);
+    compRatio = Math.max(1.15, basePreset.compRatio - ratioFactor);
+    crestDesc = "Low (Highly Compressed)";
+    
+    // すでにダイナミクスがないためリミッターでの歪みを防ぐようブーストを減衰
+    requiredBoost += Math.max(-2.5, crestDiff * 0.5);
+  }
+
+  let limiterBoost = requiredBoost;
+
+  // 低域飽和による歪み・ビビリ防止（低域が基準ターゲットより著しく大きい場合、マキシマイザーブーストを自動制限）
+  if (lowDiffDb > 1.0) {
+    const bassOverloadPenalty = Math.min(1.5, (lowDiffDb - 1.0) * 0.75);
+    limiterBoost = Math.max(1.5, limiterBoost - bassOverloadPenalty);
+  }
+
+  // どんなに静かな音源でも上限+10.0dB、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
+  limiterBoost = Math.max(1.0, Math.min(10.0, Math.round(limiterBoost * 10) / 10));
+
+  // GUI表示用のラウドネス説明テキストの構築
+  const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
+  let baseLoudnessDesc = "STREAMING (-14 LUFS)";
+  if (loudnessKey === 'genre') {
+    const genreName = genreKey.toUpperCase();
+    baseLoudnessDesc = `GENRE DEFAULT (${genreName})`;
+  } else if (LOUDNESS_TARGETS[loudnessKey]) {
+    const targetNames = {
+      streaming: "STREAMING (-14 LUFS)",
+      club: "CLUB/MODERN (-9 LUFS)",
+      loud: "LOUD (-7 LUFS)",
+      pure: "PURE (-18 LUFS)"
+    };
+    baseLoudnessDesc = targetNames[loudnessKey] || `TARGET (${loudnessKey})`;
+  } else {
+    baseLoudnessDesc = "CUSTOM";
+  }
+  
   const eqHighAdjustment = -highDiffDb * 1.0;
   
   const isElectronicGenre = (detectedGenre === 'edm' || detectedGenre === 'hardcore' || detectedGenre === 'metal' ||
@@ -2273,88 +2369,6 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     const sibilanceClampLimit = isElectronicGenre ? 1.5 : 0.8;
     eqHighGain = Math.min(sibilanceClampLimit, eqHighGain);
   }
-
-  // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
-  const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
-  let baseBoost = 4.0;
-  let baseLoudnessDesc = "STREAMING (-14 LUFS)";
-  
-  if (loudnessKey === 'genre') {
-    baseBoost = basePreset.limiterBoost;
-    const genreName = genreKey.toUpperCase();
-    baseLoudnessDesc = `GENRE DEFAULT (${genreName}: +${baseBoost.toFixed(1)} dB)`;
-  } else if (LOUDNESS_TARGETS[loudnessKey] && LOUDNESS_TARGETS[loudnessKey].boost !== null) {
-    baseBoost = LOUDNESS_TARGETS[loudnessKey].boost;
-    const targetNames = {
-      streaming: "STREAMING (-14 LUFS)",
-      club: "CLUB/MODERN (-9 LUFS)",
-      loud: "LOUD (-7 LUFS)",
-      pure: "PURE (-18 LUFS)"
-    };
-    baseLoudnessDesc = targetNames[loudnessKey] || `TARGET (+${baseBoost.toFixed(1)} dB)`;
-  } else {
-    baseBoost = params.limiterBoost;
-    baseLoudnessDesc = `CUSTOM (+${baseBoost.toFixed(1)} dB)`;
-  }
-
-  // ダイナミクス補正 (音楽理論・ダイナミックレンジ基準によるクレストファクター分析)
-  let compThreshold = basePreset.compThreshold;
-  let compRatio = basePreset.compRatio;
-  let limiterBoost = baseBoost;
-  let crestDesc = "Normal (Balanced)";
-
-  // ジャンル別理想ターゲット・クレストファクター（強弱の幅）
-  const genreTargetCrest = {
-    auto: 10.5,     // AI AUTO: リファレンス中立（適正ダイナミクス）
-    pops: 11.0,     // POPS: 標準的なポップス
-    rnb: 10.0,      // R&B: 低域圧縮とグルーヴ
-    rock: 11.0,     // ROCK: 生ドラムのパンチ感を残す
-    metal: 9.5,     // METAL: 音圧の壁とタイトさ
-    edm: 8.5,       // EDM: クラブ向けの均一で高い音圧
-    hiphop: 9.0,    // HIPHOP: キックの抜けとアタック重視
-    lofi: 12.0,     // LOFI: 生音の暖かみ・広がり
-    hardcore: 7.5,  // HARDCORE: 最大限の押し込み
-    ambient: 13.5,  // AMBIENT: 広い強弱と空気感
-    podcast: 10.5,  // PODCAST: 会話の聞き取りやすさ優先
-    classic: 14.5,  // CLASSIC: 生楽器のダイナミクスを最大限活かす
-    jazz: 12.5,     // JAZZ: アコースティックなニュアンス
-    acoustic: 13.0, // ACOUSTIC: ピッキング等の生々しさ
-    custom: 10.5
-  };
-  const targetCrest = genreTargetCrest[genreKey] || genreTargetCrest.auto;
-
-  const crestDiff = crestFactorDb - targetCrest;
-  if (crestDiff > 0.0) {
-    // 音源がターゲットよりもダイナミック（強弱が広い） -> コンプレッサーのしきい値を下げ、リミッターのブースト量を増やして適正レベルに収束させる
-    const compressionFactor = Math.min(6.0, crestDiff * 0.4); // 最大-6dBしきい値を下げる
-    const ratioFactor = Math.min(0.2, crestDiff * 0.05);     // 圧縮比もマイルドに加算
-    compThreshold = Math.max(-14.0, basePreset.compThreshold - compressionFactor);
-    compRatio = Math.min(1.6, basePreset.compRatio + ratioFactor);
-    crestDesc = "High (Highly Dynamic)";
-    
-    // リミッターを適正にドライブして音圧を出す (過剰な音圧を防ぐためbonusを最大+1.8dBに制限)
-    const bonus = Math.min(1.8, crestDiff * 0.4);
-    limiterBoost = baseBoost + bonus;
-  } else {
-    // 音源がすでに強く圧縮されている -> 二重圧縮での音割れを防ぐため、コンプレッサーを逃がし（浅くし）、ブーストも下げる
-    const releaseFactor = Math.min(4.0, -crestDiff * 0.5);
-    const ratioFactor = Math.min(0.2, -crestDiff * 0.05);
-    compThreshold = Math.min(-5.0, basePreset.compThreshold + releaseFactor);
-    compRatio = Math.max(1.15, basePreset.compRatio - ratioFactor);
-    crestDesc = "Low (Highly Compressed)";
-    
-    const penalty = Math.min(4.0, -crestDiff * 0.8);
-    limiterBoost = Math.max(1.0, baseBoost - penalty);
-  }
-
-  // 低域飽和による音割れ・ビビリ防止（低域が基準ターゲットより著しく大きい場合、リミッターブーストを自動で控えめにする）
-  if (lowDiffDb > 1.0) {
-    const bassOverloadPenalty = Math.min(1.5, (lowDiffDb - 1.0) * 0.75);
-    limiterBoost = Math.max(2.0, limiterBoost - bassOverloadPenalty);
-  }
-
-  // J-pop/rock等の楽曲感とデジタル歪み（音の硬さ）防止のため、自動ブースト上限を5.5dBに制限
-  limiterBoost = Math.max(0.0, Math.min(5.5, Math.round(limiterBoost * 10) / 10));
 
   // ステレオ幅の補正 (位相相関に基づいた連続的スケーリング)
   let stereoWidth = basePreset.stereoWidth;
@@ -2386,10 +2400,6 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     satDrive = Math.min(100, basePreset.satDrive + 5);
     satMix = Math.min(100, basePreset.satMix + 5);
   }
-
-  // 入力音量の自動ゲインステージング（ピークを-6.0dBに合わせることで歪みを防ぎ、ヘッドルームを確保する）
-  const originalPeakDb = 20 * Math.log10(maxAbsSample + 1e-6);
-  const suggestedInputGainDb = Math.max(-12.0, Math.min(12.0, -6.0 - originalPeakDb));
 
   // High Shelf Frequency Dynamic Calculation
   const bin4k = Math.floor((4000 * fftSize) / sampleRate);
