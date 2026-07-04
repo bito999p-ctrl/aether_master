@@ -2326,12 +2326,14 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     requiredBoost += Math.max(-2.5, crestDiff * 0.5);
   }
 
-  let limiterBoost = requiredBoost;
+  // 音量低下を防止するための最低限のリミッターブースト（出力ピークが少なくとも-1.0dBFSに達するように補償）
+  const baselineLimiterBoost = -1.0 - (suggestedInputGainDb + originalPeakDb);
+  let limiterBoost = Math.max(baselineLimiterBoost, requiredBoost);
 
   // 低域飽和による歪み・ビビリ防止（低域が基準ターゲットより著しく大きい場合、マキシマイザーブーストを自動制限）
   if (lowDiffDb > 1.0) {
     const bassOverloadPenalty = Math.min(1.5, (lowDiffDb - 1.0) * 0.75);
-    limiterBoost = Math.max(1.5, limiterBoost - bassOverloadPenalty);
+    limiterBoost = Math.max(baselineLimiterBoost - 1.0, limiterBoost - bassOverloadPenalty);
   }
 
   // どんなに静かな音源でも上限+10.0dB、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
@@ -2609,6 +2611,9 @@ function loadGenrePreset(genreKey) {
       genreBadge.innerText = aiDetectedGenre.toUpperCase();
     }
   } else {
+    // プリセット変更時は、AIが自動適用した入力ゲインを0.0dB(ニュートラル)に戻して各プリセットの標準音量を担保します
+    params.inputGainDb = 0.0;
+    
     // 楽曲自体のノイズ状態はプリセット変更で変わらないため、AI検出済みのノイズクリーナー設定があれば継承し、なければOFFにする
     if (aiSuggestedParams !== null) {
       params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
