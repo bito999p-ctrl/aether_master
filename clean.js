@@ -3539,6 +3539,9 @@ function runAiAnalysis(showLog = true) {
       params.eqMidGain = sug.eqMidGain;
       params.eqMidFreq = sug.eqMidFreq;
       params.eqMidQ = sug.eqMidQ || 1.0;
+      params.eqMidHighGain = sug.eqMidHighGain || 0.0;
+      params.eqMidHighFreq = sug.eqMidHighFreq || 3000;
+      params.eqMidHighQ = sug.eqMidHighQ || 1.0;
       params.eqHighGain = sug.eqHighGain;
       params.eqHighFreq = sug.eqHighFreq;
       params.eqHighQ = sug.eqHighQ || 0.70;
@@ -3628,6 +3631,10 @@ function runAiAnalysis(showLog = true) {
         <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
           <span>EQ LOW-MID:</span>
           <span style="color: #00f2fe; font-weight: 600;">${sug.eqLowMidGain >= 0 ? '+' : ''}${sug.eqLowMidGain.toFixed(1)} dB</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span>EQ MID:</span>
+          <span style="color: #00f2fe; font-weight: 600;">${sug.eqMidGain >= 0 ? '+' : ''}${sug.eqMidGain.toFixed(1)} dB</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
           <span>EQ MID-HIGH:</span>
