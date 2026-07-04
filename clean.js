@@ -1963,8 +1963,64 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     sugHissAmount = Math.round(rawHiss * quietnessScale);
   }
 
-  // 8連サージカルノッチフィルターはバイパスしますが、サ行のキンキン音（sibilance）を検知して高域EQのブーストを安全クランプするためにスキャンを実行します
+  // 歌の音域のカーン域共鳴音（1000Hz-4000Hz）および高域の鋭いピーク（4000Hz-12000Hz）をマルチスキャンして自動補正ノッチを構築
   const filteredPeaks = [];
+  const scanMinBin = Math.floor((1000 * fftSize) / sampleRate);
+  const scanMaxBin = Math.min(fftSize / 2 - 1, Math.floor((12000 * fftSize) / sampleRate));
+  const rawResonancePeaks = [];
+
+  for (let j = scanMinBin; j < scanMaxBin; j++) {
+    const val = avgSpectrum[j];
+    const peakFreq = Math.round((j * sampleRate) / fftSize);
+    
+    if (val > avgSpectrum[j - 1] && val > avgSpectrum[j + 1]) {
+      const localBins = [
+        avgSpectrum[j - 4], avgSpectrum[j - 3], avgSpectrum[j - 2],
+        avgSpectrum[j + 2], avgSpectrum[j + 3], avgSpectrum[j + 4]
+      ];
+      const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
+      const ratio = val / (localFloor + 1e-9);
+
+      // Mid range (1kHz-4kHz) vs High range (4kHz-12kHz) detection thresholds
+      const isMidRange = (peakFreq >= 1000 && peakFreq < 4000);
+      const thresholdMultiplier = isMidRange ? 1.25 : 1.15; // Mid is slightly more robust, high is sensitive
+      
+      if (ratio > thresholdMultiplier) {
+        let cutDb = 0;
+        let targetQ = 10.0;
+        
+        if (isMidRange) {
+          // Mid range (vocals, "ka-n" resonance): apply gentle notch (-1.0dB to -2.8dB max) to avoid hollow vocals
+          cutDb = -Math.min(2.8, 1.0 + (ratio - thresholdMultiplier) * 5.0);
+          targetQ = 10.0; // musical Q for voice resonance removal
+        } else {
+          // High range (whistles, sibilance): apply surgical notch (-1.5dB to -4.5dB max)
+          cutDb = -Math.min(4.5, 1.5 + (ratio - thresholdMultiplier) * 7.0);
+          targetQ = 15.0; // very narrow Q for high frequency whistle notch
+        }
+
+        rawResonancePeaks.push({
+          freq: peakFreq,
+          cut: Math.round(cutDb * 10) / 10,
+          q: targetQ,
+          score: ratio,
+          isBroad: isMidRange
+        });
+      }
+    }
+  }
+
+  // Sort peaks by prominence score descending
+  rawResonancePeaks.sort((a, b) => b.score - a.score);
+
+  // Select top 8 peaks that are at least 350Hz apart to avoid clustering
+  for (const peak of rawResonancePeaks) {
+    if (filteredPeaks.length >= 8) break;
+    const tooClose = filteredPeaks.some(p => Math.abs(p.freq - peak.freq) < 350);
+    if (!tooClose) {
+      filteredPeaks.push(peak);
+    }
+  }
   let sibilanceDynamicFreq = 0;
   
   const sibilanceMinBin = Math.floor((8000 * fftSize) / sampleRate);
