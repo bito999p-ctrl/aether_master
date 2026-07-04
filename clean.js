@@ -205,8 +205,8 @@ export const GENRE_PRESETS = {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10,
     eqLowGain: 1.5, eqLowFreq: 100, eqLowQ: 0.70,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
-    eqMidGain: 0.6, eqMidFreq: 1800, eqMidQ: 1.0,
-    eqMidHighGain: 0.5, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
+    eqMidGain: -0.5, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.9, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 12000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
     stereoWidth: 1.22, limiterBoost: 3.5, sideHighPassFreq: 110
@@ -225,8 +225,8 @@ export const GENRE_PRESETS = {
     satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12,
     eqLowGain: 2.0, eqLowFreq: 90, eqLowQ: 0.65,
     eqLowMidGain: 0.8, eqLowMidFreq: 220, eqLowMidQ: 0.60,
-    eqMidGain: 0.8, eqMidFreq: 2800, eqMidQ: 1.2,
-    eqMidHighGain: 0.4, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
+    eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.8, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.6, eqHighFreq: 8000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
@@ -3758,6 +3758,53 @@ function initializeApp() {
       const logContainer = document.getElementById('debug-log');
       if (logContainer) {
         logContainer.innerHTML = '<div class="log-line info" style="color: #00f2fe;">[SYSTEM] Log cleared.</div>';
+      }
+    });
+  }
+  
+  // Copy log button
+  const copyLogBtn = document.getElementById('btn-copy-log');
+  if (copyLogBtn) {
+    copyLogBtn.addEventListener('click', () => {
+      const logContainer = document.getElementById('debug-log');
+      if (logContainer) {
+        const logLines = Array.from(logContainer.querySelectorAll('.log-line'))
+          .map(el => el.innerText)
+          .join('\n');
+          
+        navigator.clipboard.writeText(logLines)
+          .then(() => {
+            const originalText = copyLogBtn.innerHTML;
+            copyLogBtn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED!';
+            copyLogBtn.style.color = '#00f2fe';
+            setTimeout(() => {
+              copyLogBtn.innerHTML = originalText;
+              copyLogBtn.style.color = '';
+            }, 1500);
+          })
+          .catch(err => {
+            console.error('Failed to copy log:', err);
+            try {
+              const textarea = document.createElement('textarea');
+              textarea.value = logLines;
+              textarea.style.position = 'fixed';
+              textarea.style.opacity = '0';
+              document.body.appendChild(textarea);
+              textarea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textarea);
+              const originalText = copyLogBtn.innerHTML;
+              copyLogBtn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED!';
+              copyLogBtn.style.color = '#00f2fe';
+              setTimeout(() => {
+                copyLogBtn.innerHTML = originalText;
+                copyLogBtn.style.color = '';
+              }, 1500);
+            } catch (fallbackErr) {
+              console.error('Fallback copy failed:', fallbackErr);
+              alert('ログのコピーに失敗しました。');
+            }
+          });
       }
     });
   }

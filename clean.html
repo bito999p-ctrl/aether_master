@@ -610,9 +610,12 @@
       <section class="panel console-panel full-width">
         <div class="panel-header">
           <h2 class="panel-title"><i class="fa-solid fa-terminal"></i> SYSTEM DIAGNOSTIC LOG <span class="help-icon" data-tooltip="AIが曲のどこを検知して、どう補正したかの「思考プロセス」をリアルタイムで表示する診断モニターです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <button id="btn-clear-log" class="tab-btn">CLEAR LOG</button>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-copy-log" class="tab-btn" style="display: flex; align-items: center; gap: 4px;"><i class="fa-regular fa-copy"></i> COPY LOG</button>
+            <button id="btn-clear-log" class="tab-btn">CLEAR LOG</button>
+          </div>
         </div>
-        <div class="console-log-content" id="debug-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8;">
+        <div class="console-log-content" id="debug-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8; word-wrap: break-word; word-break: break-all; white-space: pre-wrap;">
           <div class="log-line info" style="color: #00f2fe;">[SYSTEM] AetherMaster Diagnostic Console Initialized. Ready.</div>
         </div>
       </section>
@@ -675,6 +678,6 @@
     </div>
   </div>
 
-  <script type="module" src="clean.js?v=4.1.1"></script>
+  <script type="module" src="clean.js?v=4.1.2"></script>
 </body>
 </html>
