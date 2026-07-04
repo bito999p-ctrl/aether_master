@@ -2211,14 +2211,10 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   }
   const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
 
-  let eqMidHighAdjustment = 0;
-  if (presenceDiffDb > 0.5) {
-    // 派手すぎる場合は中高域を抑えてマイルドに
-    eqMidHighAdjustment = -Math.min(1.5, (presenceDiffDb - 0.5) * 0.5);
-  } else if (presenceDiffDb < -0.5) {
-    // ボーカルが遠く聞こえる場合は、存在感を前に出して距離感を詰めるため中高域（3000Hz）を補強ブースト
-    eqMidHighAdjustment = Math.min(1.2, (-presenceDiffDb - 0.5) * 0.6);
-  }
+  // デッドゾーンを廃止し、中高域（プレゼンス域）の過不足に対して無段階・高感度でリニアに追従する設計に変更
+  // プレゼンス過多なら減衰、不足（ボーカルの遠さ）なら最大+1.5dBの範囲でアクティブに持ち上げて存在感を補正
+  let eqMidHighAdjustment = -presenceDiffDb * 0.8;
+  eqMidHighAdjustment = Math.max(-1.5, Math.min(1.5, eqMidHighAdjustment));
   const eqMidHighGain = Math.max(-3.0, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
 
   let eqHighAdjustment = 0;
