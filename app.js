@@ -442,7 +442,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   hissFilter.type = 'lowpass';
   
   const hissAmount = parameters.hissReductionAmount || 0;
-  const baseFreq = 20000.0 - (16250.0 * (hissAmount / 100.0)); // Maps 80% to 7,000Hz and 100% to 3,750Hz (dynamic VCF cleans 8kHz/7.4kHz metallic noise at default 80% setting)
+  // 高域の抜け（空気感）を潰さないよう、ローパスの遮断周波数の下限を13,000Hz付近に留めるマイルド設計に調整（100%設定時でも13,000Hzを維持し、音が曇るのを防止）
+  const baseFreq = 20000.0 - (7000.0 * (hissAmount / 100.0));
   hissFilter.frequency.setValueAtTime(baseFreq, context.currentTime);
   hissFilter.Q.setValueAtTime(0.5, context.currentTime); // Gentle slope
 
@@ -464,8 +465,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   envelopeSmoother.Q.setValueAtTime(0.707, context.currentTime);
 
   const hissEnvelopeGain = context.createGain();
-  // 高域ヒスノイズ（13kHz〜20kHz）が楽曲再生中も完全に消え去るよう、上限遮断周波数（天井）を制限
-  const ceilFreq = 20000.0 - (7000.0 * (hissAmount / 100.0)); // hissAmount=100%で最大天井を13,000Hzに固定
+  // 高域ヒスノイズ（超高域成分）をマイルドに抑制する天井周波数（最大でも15,000Hz以下には下げない）
+  const ceilFreq = 20000.0 - (5000.0 * (hissAmount / 100.0));
   const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
   hissEnvelopeGain.gain.setValueAtTime(maxEnvGain, context.currentTime);
 
@@ -3228,11 +3229,19 @@ function runAiAnalysis(showLog = true) {
       params.satDrive = sug.satDrive;
       params.satMix = sug.satMix;
       params.eqLowGain = sug.eqLowGain;
+      params.eqLowFreq = sug.eqLowFreq;
+      params.eqLowQ = sug.eqLowQ || 0.70;
       params.eqMidGain = sug.eqMidGain;
+      params.eqMidFreq = sug.eqMidFreq;
       params.eqMidQ = sug.eqMidQ || 1.0;
       params.eqHighGain = sug.eqHighGain;
+      params.eqHighFreq = sug.eqHighFreq;
+      params.eqHighQ = sug.eqHighQ || 0.70;
+      params.compEnabled = sug.compEnabled;
       params.compThreshold = sug.compThreshold;
       params.compRatio = sug.compRatio;
+      params.compAttack = sug.compAttack;
+      params.compRelease = sug.compRelease;
       params.stereoWidth = sug.stereoWidth;
       params.sideHighPassFreq = sug.sideHighPassFreq || 110;
       params.limiterBoost = sug.limiterBoost;
