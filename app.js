@@ -2248,9 +2248,9 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const eqLowMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment) * 10) / 10));
 
   // 3. MID EQ (中域補正: 1000Hz)
-  // ボーカルやギターの中域の膨らみ（箱鳴り）や凹みを適正化（最大+2.5dB〜-3.5dBまで拡張して中域の凹みも修正可能に）
-  const eqMidAdjustment = -presenceDiffDb * 0.6;
-  const eqMidGain = Math.max(-3.5, Math.min(2.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 10) / 10));
+  // 中域全体の箱鳴り・泥つき感（1kHz）をすっきりさせ、音の「抜け」を改善するため、全体的に少し下げる方向（最大-3.5dB〜+0.5dB）にバイアス調整
+  const eqMidAdjustment = -presenceDiffDb * 0.5 - 0.8; // 全体的に-0.8dBのカットバイアスを追加して「抜け」を確保
+  const eqMidGain = Math.max(-3.5, Math.min(0.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 10) / 10));
 
   // 4. MID-HIGH EQ (中高域・プレゼンス補正: 3000Hz)
   // プレゼンスの過不足に対して90%の高感度リニア追従を行い、埋もれたボーカルを前面に引き出します（最大+3.0dB〜-3.0dB）
