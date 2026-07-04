@@ -2267,7 +2267,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   // 1. LOW EQ (低域補正: 80Hz/100Hz/120Hz)
   // ターゲットからのズレを100%反転して補正値とします（最大+4.0dB〜-4.0dB）
   const eqLowAdjustment = -lowDiffDb * spectralCorrectionScale;
-  const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 10) / 10));
+  // Spotify基準のタイトな低音に極限まで肉薄させるため、自動算出値に対してわずか -0.3dB の微調整用カットバイアスを適用します
+  const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment - 0.3) * 10) / 10));
 
   let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
   if (lowDiffDb > 1.0) {
