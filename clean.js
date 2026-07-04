@@ -197,13 +197,13 @@ export const GENRE_PRESETS = {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10,
     eqLowGain: 1.5, eqLowFreq: 100, eqLowQ: 0.70,
     eqMidGain: 0.6, eqMidFreq: 1800, eqMidQ: 1.0,
-    eqHighGain: 1.0, eqHighFreq: 12000, eqHighQ: 0.70,
+    eqHighGain: 1.0, eqHighFreq: 12000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
     stereoWidth: 1.22, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rnb: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12,
-    eqLowGain: 2.2, eqLowFreq: 75, eqLowQ: 0.70,
+    eqLowGain: 2.2, eqLowFreq: 75, eqLowQ: 0.80,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
     eqHighGain: 0.8, eqHighFreq: 10000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
@@ -211,23 +211,23 @@ export const GENRE_PRESETS = {
   },
   rock: {
     satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12,
-    eqLowGain: 2.0, eqLowFreq: 90, eqLowQ: 0.70,
+    eqLowGain: 2.0, eqLowFreq: 90, eqLowQ: 0.65,
     eqMidGain: 0.8, eqMidFreq: 2800, eqMidQ: 1.2,
-    eqHighGain: 0.6, eqHighFreq: 8000, eqHighQ: 0.70,
+    eqHighGain: 0.6, eqHighFreq: 8000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
   },
   metal: {
     satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14,
-    eqLowGain: 2.2, eqLowFreq: 85, eqLowQ: 0.70,
+    eqLowGain: 2.2, eqLowFreq: 85, eqLowQ: 0.60,
     eqMidGain: -1.5, eqMidFreq: 400, eqMidQ: 0.8,
-    eqHighGain: 1.2, eqHighFreq: 8500, eqHighQ: 0.70,
+    eqHighGain: 1.2, eqHighFreq: 8500, eqHighQ: 0.75,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
     stereoWidth: 1.28, limiterBoost: 4.5, sideHighPassFreq: 120
   },
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20,
-    eqLowGain: 1.8, eqLowFreq: 90, eqLowQ: 0.70,
+    eqLowGain: 1.8, eqLowFreq: 90, eqLowQ: 0.85,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 11000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
@@ -235,39 +235,39 @@ export const GENRE_PRESETS = {
   },
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14,
-    eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.70,
+    eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.90,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
-    eqHighGain: 0.5, eqHighFreq: 10000, eqHighQ: 0.70,
+    eqHighGain: 0.5, eqHighFreq: 10000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
     stereoWidth: 1.20, limiterBoost: 4.2, sideHighPassFreq: 150
   },
   lofi: {
     satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30,
-    eqLowGain: 3.5, eqLowFreq: 150, eqLowQ: 0.70,
+    eqLowGain: 3.5, eqLowFreq: 150, eqLowQ: 0.55,
     eqMidGain: 0.8, eqMidFreq: 1200, eqMidQ: 1.0,
-    eqHighGain: -4.5, eqHighFreq: 7000, eqHighQ: 0.70,
+    eqHighGain: -4.5, eqHighFreq: 7000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.5, compAttack: 0.06, compRelease: 0.30,
     stereoWidth: 0.92, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   hardcore: {
     satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22,
-    eqLowGain: 3.0, eqLowFreq: 80, eqLowQ: 0.70,
+    eqLowGain: 3.0, eqLowFreq: 80, eqLowQ: 0.80,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
-    eqHighGain: 1.5, eqHighFreq: 12000, eqHighQ: 0.70,
+    eqHighGain: 1.5, eqHighFreq: 12000, eqHighQ: 0.80,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
     stereoWidth: 1.38, limiterBoost: 5.0, sideHighPassFreq: 150
   },
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6,
-    eqLowGain: 2.0, eqLowFreq: 80, eqLowQ: 0.70,
+    eqLowGain: 2.0, eqLowFreq: 80, eqLowQ: 0.50,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
-    eqHighGain: 1.8, eqHighFreq: 12000, eqHighQ: 0.70,
+    eqHighGain: 1.8, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -6.0, compRatio: 1.2, compAttack: 0.12, compRelease: 0.40,
     stereoWidth: 1.55, limiterBoost: 2.0, sideHighPassFreq: 90
   },
   podcast: {
     satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5,
-    eqLowGain: -2.0, eqLowFreq: 120, eqLowQ: 0.70,
+    eqLowGain: -2.0, eqLowFreq: 120, eqLowQ: 0.80,
     eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 1.0,
     eqHighGain: 0.2, eqHighFreq: 8000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.3, compAttack: 0.02, compRelease: 0.15,
@@ -275,25 +275,25 @@ export const GENRE_PRESETS = {
   },
   classic: {
     satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0,
-    eqLowGain: 0.5, eqLowFreq: 100, eqLowQ: 0.70,
+    eqLowGain: 0.5, eqLowFreq: 100, eqLowQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
-    eqHighGain: 0.0, eqHighFreq: 10000, eqHighQ: 0.70,
+    eqHighGain: 0.0, eqHighFreq: 10000, eqHighQ: 0.55,
     compEnabled: true, compThreshold: -4.0, compRatio: 1.15, compAttack: 0.15, compRelease: 0.50,
     stereoWidth: 1.30, limiterBoost: 1.5, sideHighPassFreq: 90
   },
   jazz: {
     satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8,
-    eqLowGain: 1.2, eqLowFreq: 110, eqLowQ: 0.70,
+    eqLowGain: 1.2, eqLowFreq: 110, eqLowQ: 0.60,
     eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
-    eqHighGain: 0.4, eqHighFreq: 10000, eqHighQ: 0.70,
+    eqHighGain: 0.4, eqHighFreq: 10000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.06, compRelease: 0.25,
     stereoWidth: 1.20, limiterBoost: 2.2, sideHighPassFreq: 90
   },
   acoustic: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8,
-    eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.70,
+    eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.60,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
-    eqHighGain: 0.8, eqHighFreq: 11000, eqHighQ: 0.70,
+    eqHighGain: 0.8, eqHighFreq: 11000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
     stereoWidth: 1.25, limiterBoost: 2.5, sideHighPassFreq: 90
   }
@@ -2258,6 +2258,29 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     suggestedDeesserAmount = Math.round(Math.min(85, Math.max(40, 40 + (maxScore - 1.15) * 60)));
   }
 
+  // AI Dynamic Q-value calculation based on the correction gains
+  let finalEqLowQ = basePreset.eqLowQ || 0.70;
+  const absLowGain = Math.abs(finalEqLowGain);
+  if (absLowGain > 2.0) {
+    // Narrow the Q slightly for deep boosts/cuts to avoid bloating adjacent low-mids (up to 0.85)
+    finalEqLowQ = Math.min(0.85, 0.70 + (absLowGain - 2.0) * 0.05);
+  } else if (absLowGain < 1.0) {
+    // Widen the Q for transparent minor corrections (down to 0.55)
+    finalEqLowQ = Math.max(0.55, 0.70 - (1.0 - absLowGain) * 0.15);
+  }
+  finalEqLowQ = Math.round(finalEqLowQ * 100) / 100;
+
+  let finalEqHighQ = basePreset.eqHighQ || 0.70;
+  const absHighGain = Math.abs(eqHighGain);
+  if (absHighGain > 1.2) {
+    // Narrow the Q slightly for deep boosts/cuts to protect critical vocal presence frequencies (up to 0.80)
+    finalEqHighQ = Math.min(0.80, 0.70 + (absHighGain - 1.2) * 0.05);
+  } else if (absHighGain < 0.6) {
+    // Widen the Q for broad, airy high-end shine (down to 0.55)
+    finalEqHighQ = Math.max(0.55, 0.70 - (0.6 - absHighGain) * 0.25);
+  }
+  finalEqHighQ = Math.round(finalEqHighQ * 100) / 100;
+
   return {
     detected: filteredPeaks.length > 0,
     notches: filteredPeaks,
@@ -2279,13 +2302,13 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       satMix: satMix,
       eqLowGain: finalEqLowGain,
       eqLowFreq: basePreset.eqLowFreq,
-      eqLowQ: basePreset.eqLowQ || 0.70,
+      eqLowQ: finalEqLowQ,
       eqMidGain: eqMidGain,
       eqMidFreq: basePreset.eqMidFreq,
       eqMidQ: basePreset.eqMidQ || 1.0,
       eqHighGain: eqHighGain,
       eqHighFreq: suggestedEqHighFreq,
-      eqHighQ: basePreset.eqHighQ || 0.70,
+      eqHighQ: finalEqHighQ,
       compEnabled: basePreset.compEnabled,
       compThreshold: compThreshold,
       compRatio: compRatio,
@@ -3268,9 +3291,11 @@ function runAiAnalysis(showLog = true) {
       params.satDrive = sug.satDrive;
       params.satMix = sug.satMix;
       params.eqLowGain = sug.eqLowGain;
+      params.eqLowQ = sug.eqLowQ || 0.70;
       params.eqMidGain = sug.eqMidGain;
       params.eqMidQ = sug.eqMidQ || 1.0;
       params.eqHighGain = sug.eqHighGain;
+      params.eqHighQ = sug.eqHighQ || 0.70;
       params.compThreshold = sug.compThreshold;
       params.compRatio = sug.compRatio;
       params.stereoWidth = sug.stereoWidth;
