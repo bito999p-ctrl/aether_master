@@ -2227,71 +2227,49 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const targetPresence = target.presence || 0.42;
   const presenceDiffDb = 20 * Math.log10(actualPresenceRatio / targetPresence);
 
-  let eqLowAdjustment = 0;
-  if (lowDiffDb > 0.0) { // 音源が既に十分な低域を持っている場合はブーストを抑制（デッドゾーンの排除）
-    eqLowAdjustment = -Math.min(3.5, lowDiffDb * 0.75);
-  } else if (lowDiffDb < 0.0) { // 低域が不足している場合は、プロのレンジに追いつくよう動的にブースト
-    eqLowAdjustment = Math.min(3.0, -lowDiffDb * 0.85); // 追従感度を高めてより豊かな低域を算出
-  }
-  // 最大ブースト許容値を +3.0dB から +4.5dB に引き上げ、薄い音源でもプロ水準の豊かな低音を再現可能に
-  const eqLowGain = Math.max(-5.0, Math.min(4.5, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 2) / 2));
+  // 1. LOW EQ (低域補正: 80Hz/100Hz/120Hz)
+  // ターゲットからのズレを100%反転して補正値とします（最大+4.0dB〜-4.0dB）
+  const eqLowAdjustment = -lowDiffDb;
+  const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 10) / 10));
 
   let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
   if (lowDiffDb > 1.0) {
-    // 低音過剰（モコモコ）な音源：低域シェルフ周波数を高めの120Hzに設定し、不要な重低音をすっきりカット
-    suggestedEqLowFreq = 120;
+    suggestedEqLowFreq = 120; // 低音過剰な場合は高めでカット
   } else if (lowDiffDb < -1.0) {
-    // 低音不足な音源：低域シェルフ周波数を低めの80Hzに下げ、超低域の土台だけをしっかりとブースト
-    suggestedEqLowFreq = 80;
+    suggestedEqLowFreq = 80;  // 低音不足な場合は低めから持ち上げ
   } else {
     suggestedEqLowFreq = 100;
   }
 
-  let eqLowMidAdjustment = 0;
-  if (lowDiffDb > 0.5) {
-    // 低音に対してローミッド（中低域）が引っ込んでいる（スカスカしている）場合、温かみを付加するため最大+1.5dBの範囲でローミッドを補正ブースト
-    eqLowMidAdjustment = Math.min(1.5, (lowDiffDb - 0.5) * 0.5);
-  } else if (lowDiffDb < -0.5) {
-    // すでに十分にローミッドが豊かすぎる場合、少しすっきりさせるため最大-1.0dBカット
-    eqLowMidAdjustment = -Math.min(1.0, (-lowDiffDb - 0.5) * 0.4);
-  }
-  const eqLowMidGain = Math.max(-2.0, Math.min(1.5, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment) * 10) / 10));
+  // 2. LOW-MID EQ (中低域補正: 200Hz)
+  // 低域全体の過不足に対して50%の割合で追従し、ふくよかさ・スッキリ感を調整します（最大+2.0dB〜-2.0dB）
+  const eqLowMidAdjustment = -lowDiffDb * 0.5;
+  const eqLowMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment) * 10) / 10));
 
-  let eqMidAdjustment = 0;
-  if (presenceDiffDb > 0.3) {
-    // 中音域（1kHz）の箱鳴りや圧迫感を防ぐため、基準より少しでも中域が膨らんでいる場合は積極的にカット（最大-2.5dB）
-    eqMidAdjustment = -Math.min(2.5, (presenceDiffDb - 0.3) * 0.8);
-  } else if (presenceDiffDb < -0.5) {
-    // 中域が凹んでいる場合でも、ボーカルの痛い響きやリミッターによる音圧過多（圧の強さ）を防ぐため、1kHzのブーストは最大でも+0.2dBに極めて小さく抑制
-    eqMidAdjustment = Math.min(0.2, (-presenceDiffDb - 0.5) * 0.2);
-  }
-  // 最大値を 0.0dB にクランプし、AIが1kHz付近を過剰にブーストするのを根本的に禁止します（痛い圧迫感を完全に防止）
-  const eqMidGain = Math.max(-4.0, Math.min(0.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2));
+  // 3. MID EQ (中域補正: 1000Hz)
+  // ボーカルやギターの中域の膨らみ（箱鳴り）や凹みを適正化（最大+2.5dB〜-3.5dBまで拡張して中域の凹みも修正可能に）
+  const eqMidAdjustment = -presenceDiffDb * 0.6;
+  const eqMidGain = Math.max(-3.5, Math.min(2.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 10) / 10));
 
-  // デッドゾーンを廃止し、中高域（プレゼンス域）の過不足に対して無段階・高感度でリニアに追従する設計に変更
-  // プレゼンス過多なら減衰、不足（ボーカルの遠さ）なら最大+1.5dBの範囲でアクティブに持ち上げて存在感を補正
-  let eqMidHighAdjustment = -presenceDiffDb * 0.8;
-  eqMidHighAdjustment = Math.max(-1.5, Math.min(1.5, eqMidHighAdjustment));
-  const eqMidHighGain = Math.max(-3.0, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
+  // 4. MID-HIGH EQ (中高域・プレゼンス補正: 3000Hz)
+  // プレゼンスの過不足に対して90%の高感度リニア追従を行い、埋もれたボーカルを前面に引き出します（最大+3.0dB〜-3.0dB）
+  const eqMidHighAdjustment = -presenceDiffDb * 0.9;
+  const eqMidHighGain = Math.max(-3.0, Math.min(3.0, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
 
-  let eqHighAdjustment = 0;
-  if (highDiffDb > 0.0) { // 音源が既にターゲットより明るい場合は、高域EQを抑制・カット方向に動的調整（デッドゾーンを排除してキンキン音を防止）
-    eqHighAdjustment = -Math.min(2.5, highDiffDb * 0.75);
-  } else if (highDiffDb < 0.0) { // 不足している場合はマイルドに補強
-    eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.5);
-  }
-
-  // J-pop/rock等のボーカル曲や通常の曲では、デジタル歪み（音の硬さ）防止のため高域EQの最大ブースト量を+0.4dBに抑制
-  // ただしEDM、Metal、Hardcore等の電子音楽・激しいジャンルでは、ピコピコしたシンセ音の輝きやアタック感を損なわないよう、最大+1.2dBまでのブーストを許容
+  // 5. HIGH EQ (高域・エアバンド補正: 14000Hz)
+  // ターゲットからのズレを100%反転して直接補正。曇った音源は明るく、うるさい音源は暖かく整えます（最大+3.5dB〜-4.5dB）
+  const eqHighAdjustment = -highDiffDb * 1.0;
+  
   const isElectronicGenre = (detectedGenre === 'edm' || detectedGenre === 'hardcore' || detectedGenre === 'metal' ||
                              genreKey === 'edm' || genreKey === 'hardcore' || genreKey === 'metal');
-  const maxHighBoost = isElectronicGenre ? 1.2 : 0.4;
-  let eqHighGain = Math.max(-5.0, Math.min(maxHighBoost, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+  
+  // 最大ブースト幅を+3.5dBまで拡張し、高域が曇った音源を鮮明にブーストできるように解放します
+  const maxHighBoost = 3.5;
+  let eqHighGain = Math.max(-4.5, Math.min(maxHighBoost, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 10) / 10));
 
-  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを安全のためにクランプ
-  // （クロスオーバーが10,500Hz以上に引き上げられたため、サ行のキンキン感を刺激せずに超高域の抜け・空気感のみを追加できます）
+  // サ行（シビランス）が検知されている場合は、高域EQの最大ブーストを安全レベルにクランプして痛くならないように配慮
   if (sibilanceDynamicFreq > 0) {
-    const sibilanceClampLimit = isElectronicGenre ? 0.8 : 0.4;
+    const sibilanceClampLimit = isElectronicGenre ? 1.5 : 0.8;
     eqHighGain = Math.min(sibilanceClampLimit, eqHighGain);
   }
 
