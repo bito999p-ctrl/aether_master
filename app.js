@@ -2238,7 +2238,11 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const genreSelect = document.getElementById('preset-select');
   const userGenreKey = userPresetKey || (genreSelect ? genreSelect.value : 'auto');
   const genreKey = (userGenreKey === 'auto' || userGenreKey === 'custom') ? 'auto' : userGenreKey;
-  const basePreset = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
+  // AI AUTO解析時は、検出されたジャンル専用のターゲットとベースプリセットを使用することで、
+  // ジャンル本来の強み（EDMなら重低音、クラシックなら控えめで自然な音響など）を損なわずに精密補正します。
+  const basePresetKey = (genreKey === 'auto') ? detectedGenre : genreKey;
+  const basePreset = GENRE_PRESETS[basePresetKey] || GENRE_PRESETS.auto;
+  const target = GENRE_TARGETS[basePresetKey] || GENRE_TARGETS.auto;
 
   // EDM, HIPHOP, HARDCORE などの重低音（サブベース）を重視するジャンルの場合、
   // 80Hz以下の帯域を急峻にカットする Rumble Cut はサブベースをごそっと削り取ってしまうため、AI自動解析によるONを禁止します。
@@ -2247,8 +2251,6 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   if (isSubBassGenre) {
     sugRumbleCut = false;
   }
-
-  const target = GENRE_TARGETS[genreKey] || GENRE_TARGETS.auto;
 
   const lowDiffDb = 20 * Math.log10(actualLowMidRatio / target.low);
   const highDiffDb = 20 * Math.log10(actualHighMidRatio / target.high);
@@ -3270,8 +3272,10 @@ function registerGuiEvents() {
   // Preset Selections
   document.getElementById('preset-select').addEventListener('change', (e) => {
     loadGenrePreset(e.target.value);
+    // ユーザーが手動で特定プリセット（EDM等）を選択した場合、AIの自動最適化で強制的にAUTOに戻されるのを防ぐため、
+    // 切り替え先が 'auto' の場合のみ自動解析を走らせます。
     const autoRun = document.getElementById('ai-auto-run').checked;
-    if (autoRun && audioBuffer) {
+    if (e.target.value === 'auto' && autoRun && audioBuffer) {
       runAiAnalysis(false);
     }
   });
@@ -3282,8 +3286,10 @@ function registerGuiEvents() {
       baseLoudnessTarget = val;
     }
     applyLoudnessTarget(val);
+    // AI AUTOモード選択中のみ、ラウドネス変更に追従して自動解析を走らせます
+    const presetSelect = document.getElementById('preset-select');
     const autoRun = document.getElementById('ai-auto-run').checked;
-    if (autoRun && audioBuffer) {
+    if (presetSelect && presetSelect.value === 'auto' && autoRun && audioBuffer) {
       runAiAnalysis(false);
     }
   });
