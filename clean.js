@@ -2204,12 +2204,15 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   const eqLowMidGain = Math.max(-2.0, Math.min(1.5, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment) * 10) / 10));
 
   let eqMidAdjustment = 0;
-  if (presenceDiffDb > 0.5) {
-    eqMidAdjustment = -Math.min(1.8, presenceDiffDb * 0.5); // 派手すぎる場合は中域を抑えてマイルドに（最大-1.8dB）
+  if (presenceDiffDb > 0.3) {
+    // 中音域（1kHz）の箱鳴りや圧迫感を防ぐため、基準より少しでも中域が膨らんでいる場合は積極的にカット（最大-2.5dB）
+    eqMidAdjustment = -Math.min(2.5, (presenceDiffDb - 0.3) * 0.8);
   } else if (presenceDiffDb < -0.5) {
-    eqMidAdjustment = Math.min(1.2, -presenceDiffDb * 0.45); // こもっている場合はマイルドに補強（最大+1.2dB）
+    // 中域が凹んでいる場合でも、ボーカルの痛い響きやリミッターによる音圧過多（圧の強さ）を防ぐため、1kHzのブーストは最大でも+0.2dBに極めて小さく抑制
+    eqMidAdjustment = Math.min(0.2, (-presenceDiffDb - 0.5) * 0.2);
   }
-  const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
+  // 最大値を 0.0dB にクランプし、AIが1kHz付近を過剰にブーストするのを根本的に禁止します（痛い圧迫感を完全に防止）
+  const eqMidGain = Math.max(-4.0, Math.min(0.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2));
 
   // デッドゾーンを廃止し、中高域（プレゼンス域）の過不足に対して無段階・高感度でリニアに追従する設計に変更
   // プレゼンス過多なら減衰、不足（ボーカルの遠さ）なら最大+1.5dBの範囲でアクティブに持ち上げて存在感を補正
