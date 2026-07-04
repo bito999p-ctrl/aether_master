@@ -196,6 +196,19 @@
 
     <div class="timeline">
       
+      <!-- v4.3.3 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v4.3.3</span>
+          <span class="version-date">2026.07.04</span>
+          <span class="version-title">AIスペクトラム解析の無音除外2パス処理による各種モジュール推定精度の全面向上</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-change">改善</span><strong>2パス処理によるアクティブ区間限定のスペクトラム平均化</strong>：1パス目で全体の音量ダイナミクスを調べて無音しきい値を決定し、2パス目で無音部分を完全に除外してFFTを実行。これにより、曲の導入部や末尾の無音によってAI平均スペクトラムが薄まる（希釈される）現象を完全に解消。</li>
+          <li><span class="badge-change">改善</span><strong>EQ、De-esser、ジャンル推定などの総合的チューニング精度向上</strong>：無音が平均値に影響を及ぼさなくなったため、耳につく突発的な高域シビランス（サ行）や中域の共鳴ピーク検出の感度が劇的に向上。より正確でブレのないEQ/De-esserセッティングが算出されます。</li>
+        </ul>
+      </div>
+
       <!-- v4.3.2 -->
       <div class="timeline-item major">
         <div class="version-header">

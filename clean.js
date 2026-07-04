@@ -1865,25 +1865,53 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     slicePoints.push(startOffset + Math.floor(range * (i / (numSlices - 1))));
   }
   
+  // 1. 第一パス：各スライスのRMSを算出して最大RMS値を特定し、無音しきい値を決定
   const sliceRMSList = [];
-  const sliceSpectrums = [];
+  let maxRmsVal = 0.001;
   
+  for (const startIdx of slicePoints) {
+    let sliceSumSq = 0.0;
+    for (let j = 0; j < fftSize; j++) {
+      const idx = startIdx + j;
+      if (idx >= buffer.length) break;
+      const l = chL[idx];
+      const r = chR[idx];
+      const mid = (l + r) * 0.5;
+      sliceSumSq += mid * mid;
+    }
+    const sliceRMS = Math.sqrt(sliceSumSq / fftSize);
+    sliceRMSList.push(sliceRMS);
+    if (sliceRMS > maxRmsVal) {
+      maxRmsVal = sliceRMS;
+    }
+  }
+
+  // 無音判定のしきい値（最大音量の2%）
+  const silenceThreshold = maxRmsVal * 0.02;
+
+  // 2. 第二パス：アクティブな（無音でない）スライスのみを対象にFFT解析と累積平均スペクトラムの計算を実行
+  let activeSliceCount = 0;
+  const sliceSpectrums = [];
   let totalEnergyL2 = 0;
   let totalEnergyR2 = 0;
   let totalDotProduct = 0;
   let maxAbsSample = 0.0;
   let sumRMS2 = 0.0;
-  let sampleCount = 0;
 
-  for (const startIdx of slicePoints) {
+  for (let i = 0; i < slicePoints.length; i++) {
+    const startIdx = slicePoints[i];
+    const sliceRMS = sliceRMSList[i];
+    
+    // このスライスがアクティブかどうか
+    const isActive = (sliceRMS >= silenceThreshold);
+    
     let sliceMax = 0.0;
     let sliceSumSq = 0.0;
-    
     let sliceDotProduct = 0;
     let sliceSumL2 = 0;
     let sliceSumR2 = 0;
 
-    // 左右チャネルの平均を窓に格納しつつ、各種統計データを集計
+    // サンプルデータの集計（統計とFFT用）
     for (let j = 0; j < fftSize; j++) {
       const idx = startIdx + j;
       if (idx >= buffer.length) break;
@@ -1892,54 +1920,59 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       const r = chR[idx];
       const mid = (l + r) * 0.5;
 
-      // FFT用データ
       re[j] = mid;
       im[j] = 0;
 
-      // True peak estimation using L/R channels to prevent input overload on wide stereo tracks
       const absL = Math.abs(l);
       const absR = Math.abs(r);
       if (absL > sliceMax) sliceMax = absL;
       if (absR > sliceMax) sliceMax = absR;
+      
       sliceSumSq += mid * mid;
-
-      // ステレオ相関用
       sliceDotProduct += l * r;
       sliceSumL2 += l * l;
       sliceSumR2 += r * r;
     }
-    
-    // 最大ピークの更新
-    if (sliceMax > maxAbsSample) maxAbsSample = sliceMax;
-    
-    // RMS集計
-    const sliceRMS = Math.sqrt(sliceSumSq / fftSize);
-    sumRMS2 += sliceRMS * sliceRMS;
 
-    // ステレオ相関の加算
+    if (sliceMax > maxAbsSample) maxAbsSample = sliceMax;
+    sumRMS2 += sliceRMS * sliceRMS;
     totalDotProduct += sliceDotProduct;
     totalEnergyL2 += sliceSumL2;
     totalEnergyR2 += sliceSumR2;
 
-    // ハニング窓（Hanning window）を適用
-    for (let j = 0; j < fftSize; j++) {
-      const windowVal = 0.5 * (1 - Math.cos((2 * Math.PI * j) / (fftSize - 1)));
-      re[j] *= windowVal;
-    }
-    
-    // FFT実行
-    fft(re, im);
-    
-    // スペクトラム強度の算出と累積（FFTサイズで正規化して正確なdBFSレベルにする）
     const spec = new Float32Array(fftSize / 2);
-    const normFactor = fftSize / 2; // Cooley-Tukey FFTの振幅正規化係数 (N/2)
-    for (let j = 0; j < fftSize / 2; j++) {
-      const mag = Math.sqrt(re[j] * re[j] + im[j] * im[j]) / normFactor;
-      avgSpectrum[j] += mag / numSlices;
-      spec[j] = mag;
+    
+    // アクティブなスライスのみFFTを実行し、平均スペクトラムに累積
+    if (isActive) {
+      for (let j = 0; j < fftSize; j++) {
+        const windowVal = 0.5 * (1 - Math.cos((2 * Math.PI * j) / (fftSize - 1)));
+        re[j] *= windowVal;
+      }
+      fft(re, im);
+      const normFactor = fftSize / 2;
+      for (let j = 0; j < fftSize / 2; j++) {
+        const mag = Math.sqrt(re[j] * re[j] + im[j] * im[j]) / normFactor;
+        avgSpectrum[j] += mag; // 後でactiveSliceCountで除算
+        spec[j] = mag;
+      }
+      activeSliceCount++;
+    } else {
+      // 無音スライスの場合はスペクトラムを0にする
+      spec.fill(0);
     }
     sliceSpectrums.push(spec);
-    sliceRMSList.push(sliceRMS);
+  }
+
+  // 平均スペクトラムの正規化（アクティブなスライス数で平均化）
+  if (activeSliceCount > 0) {
+    for (let j = 0; j < fftSize / 2; j++) {
+      avgSpectrum[j] /= activeSliceCount;
+    }
+  } else {
+    // 万が一すべてが無音だった場合は全体の平均にする
+    for (let j = 0; j < fftSize / 2; j++) {
+      avgSpectrum[j] /= numSlices;
+    }
   }
 
   // クレストファクター (dB)
@@ -1989,19 +2022,10 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const actualHighMidRatio = energyTreble / (energyLowMid + 1e-6);
   const actualPresenceRatio = energyHighMid / (energyLowMid + 1e-6);
 
-  // Noise Floor Estimation in the quietest segment
-  let maxRmsVal = 0.001;
-  for (let i = 0; i < sliceRMSList.length; i++) {
-    if (sliceRMSList[i] > maxRmsVal) {
-      maxRmsVal = sliceRMSList[i];
-    }
-  }
-
   let minRmsIdx = 0;
   let minRmsVal = 1.0;
   let foundValidBlock = false;
-  // デジタル無音や曲の前後にある完全無音区間をノイズ解析から除外するためのしきい値（最大音量の2%以下は無音判定）
-  const silenceThreshold = maxRmsVal * 0.02;
+  // (silenceThresholdは既に上部で算出されています)
 
   for (let i = 0; i < sliceRMSList.length; i++) {
     if (sliceRMSList[i] >= silenceThreshold) {
