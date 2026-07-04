@@ -193,7 +193,7 @@ function getCombinedParams() {
 // Genre Presets Configuration
 export const GENRE_PRESETS = {
   auto: {
-    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 4500,
+    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 12000,
     eqLowGain: 0.0, eqLowFreq: 90, eqLowQ: 0.70,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -203,7 +203,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   pops: {
-    satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10, satLpfFreq: 4500,
+    satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10, satLpfFreq: 12000,
     eqLowGain: 1.2, eqLowFreq: 80, eqLowQ: 0.70,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -213,7 +213,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rnb: {
-    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 6000,
+    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 10000,
     eqLowGain: 2.2, eqLowFreq: 75, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -223,7 +223,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.25, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rock: {
-    satEnabled: true, satType: 'tape', satDrive: 18, satMix: 12, satLpfFreq: 10000,
+    satEnabled: true, satType: 'tape', satDrive: 18, satMix: 12, satLpfFreq: 12000,
     eqLowGain: 1.0, eqLowFreq: 80, eqLowQ: 0.65,
     eqLowMidGain: 0.6, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -233,7 +233,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
   },
   metal: {
-    satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14, satLpfFreq: 10000,
+    satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14, satLpfFreq: 12000,
     eqLowGain: 2.2, eqLowFreq: 85, eqLowQ: 0.60,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.5, eqMidFreq: 1000, eqMidQ: 0.8,
@@ -253,7 +253,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.30, limiterBoost: 4.5, sideHighPassFreq: 150
   },
   hiphop: {
-    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14, satLpfFreq: 8000,
+    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14, satLpfFreq: 12000,
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.90,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
@@ -283,7 +283,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.38, limiterBoost: 5.0, sideHighPassFreq: 150
   },
   ambient: {
-    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 8000,
+    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 12000,
     eqLowGain: 2.0, eqLowFreq: 80, eqLowQ: 0.50,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
@@ -293,7 +293,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.55, limiterBoost: 2.0, sideHighPassFreq: 90
   },
   podcast: {
-    satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5, satLpfFreq: 4000,
+    satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5, satLpfFreq: 8000,
     eqLowGain: -2.0, eqLowFreq: 120, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 1.0,
@@ -303,7 +303,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.00, limiterBoost: 2.5, sideHighPassFreq: 150
   },
   classic: {
-    satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0, satLpfFreq: 6000,
+    satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0, satLpfFreq: 10000,
     eqLowGain: 0.5, eqLowFreq: 100, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
@@ -323,7 +323,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, limiterBoost: 2.2, sideHighPassFreq: 90
   },
   acoustic: {
-    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8, satLpfFreq: 4500,
+    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8, satLpfFreq: 12000,
     eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.60,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
@@ -773,7 +773,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   limiter.threshold.setValueAtTime(-1.0, context.currentTime); // -1.0dB に引き上げて過剰な圧縮圧と高域トランジェントの潰れを低減（ダイナミクスを保護）
   limiter.knee.setValueAtTime(4.0, context.currentTime);      // 4.0dB に広げてよりなだらかで滑らかな制限動作へ
   limiter.ratio.setValueAtTime(20.0, context.currentTime);    // 変わらずブリックウォール比率
-  limiter.attack.setValueAtTime(0.0001, context.currentTime); // 0.1ms (超高速ピークキャッチ)
+  limiter.attack.setValueAtTime(0.0015, context.currentTime); // 1.5ms に設定して、低音サイクルの波形歪み（ビビり音）を完全に防止
   limiter.release.setValueAtTime(0.12, context.currentTime);  // 120ms に拡張し、高域の微細な歪みやポンピング（音の硬さ）を防止
 
   // 7b. Safety Soft Clipper (WaveShaper Node)
@@ -2357,18 +2357,19 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     baseLoudnessDesc = "CUSTOM";
   }
   
-  const eqHighAdjustment = -highDiffDb * 1.0;
+  // 補正係数を 1.0 -> 1.25 に高め、高域の明瞭度（空気感・クリアさ）をしっかりと引き出します
+  const eqHighAdjustment = -highDiffDb * 1.25;
   
   const isElectronicGenre = (detectedGenre === 'edm' || detectedGenre === 'hardcore' || detectedGenre === 'metal' ||
                              genreKey === 'edm' || genreKey === 'hardcore' || genreKey === 'metal');
   
-  // 最大ブースト幅を+3.5dBまで拡張し、高域が曇った音源を鮮明にブーストできるように解放します
-  const maxHighBoost = 3.5;
+  // 最大ブースト幅を+4.0dBまで拡張し、高域が曇った音源をより鮮明にできるように解放します
+  const maxHighBoost = 4.0;
   let eqHighGain = Math.max(-4.5, Math.min(maxHighBoost, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 10) / 10));
 
-  // サ行（シビランス）検知時の高域クランプを少し緩和（0.8dB / 1.5dB は低すぎてラジオ感が出るため、少し解放）
+  // サ行（シビランス）検知時の高域クランプを少し緩和（超高音の曇りを防ぐため、2.2dB〜2.6dBまで許容）
   if (sibilanceDynamicFreq > 0) {
-    const sibilanceClampLimit = isElectronicGenre ? 2.2 : 1.5; // 1.5〜2.2dB まではブーストを許容
+    const sibilanceClampLimit = isElectronicGenre ? 2.6 : 2.2; // 2.2〜2.6dB までは高域ブーストを許容して抜けを確保
     eqHighGain = Math.min(sibilanceClampLimit, eqHighGain);
   }
 
