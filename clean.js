@@ -2182,6 +2182,17 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   // 最大ブースト許容値を +3.0dB から +4.5dB に引き上げ、薄い音源でもプロ水準の豊かな低音を再現可能に
   const eqLowGain = Math.max(-5.0, Math.min(4.5, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 2) / 2));
 
+  let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
+  if (lowDiffDb > 1.0) {
+    // 低音過剰（モコモコ）な音源：低域シェルフ周波数を高めの120Hzに設定し、不要な重低音をすっきりカット
+    suggestedEqLowFreq = 120;
+  } else if (lowDiffDb < -1.0) {
+    // 低音不足な音源：低域シェルフ周波数を低めの80Hzに下げ、超低域の土台だけをしっかりとブースト
+    suggestedEqLowFreq = 80;
+  } else {
+    suggestedEqLowFreq = 100;
+  }
+
   let eqLowMidAdjustment = 0;
   if (lowDiffDb > 0.5) {
     // 低音に対してローミッド（中低域）が引っ込んでいる（スカスカしている）場合、温かみを付加するため最大+1.5dBの範囲でローミッドを補正ブースト
@@ -2220,9 +2231,10 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   // J-pop/rock等の楽曲感とデジタル歪み（音の硬さ）防止のため、高域EQの最大ブースト量を+0.4dBに抑制
   let eqHighGain = Math.max(-5.0, Math.min(0.4, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
 
-  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを完全に禁止（0.0dB以下にクランプしてシャリシャリ感を徹底カット）
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを安全のために最大+0.4dBにクランプ
+  // （クロスオーバーが10,500Hz以上に引き上げられたため、サ行のキンキン感を刺激せずに超高域の抜け・空気感のみを追加できます）
   if (sibilanceDynamicFreq > 0) {
-    eqHighGain = Math.min(0.0, eqHighGain);
+    eqHighGain = Math.min(0.4, eqHighGain);
   }
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
@@ -2436,7 +2448,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       satDrive: satDrive,
       satMix: satMix,
       eqLowGain: finalEqLowGain,
-      eqLowFreq: basePreset.eqLowFreq,
+      eqLowFreq: suggestedEqLowFreq,
       eqLowQ: finalEqLowQ,
       eqLowMidGain: eqLowMidGain,
       eqLowMidFreq: basePreset.eqLowMidFreq || 200,
