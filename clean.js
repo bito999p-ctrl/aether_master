@@ -471,7 +471,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Rumble Filter (HPF)
   const rumbleFilter = context.createBiquadFilter();
   rumbleFilter.type = 'highpass';
-  rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 80.0 : 18.0, context.currentTime); // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
+  rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 90.0 : 18.0, context.currentTime); // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
   rumbleFilter.Q.setValueAtTime(0.707, context.currentTime);
 
   // Dynamic Hiss Filter (VCF High Shelf)
@@ -1647,7 +1647,7 @@ function updateCeilingNode() {
 function updateNoiseCutNodes() {
   invalidatePeakCache();
   if (activeNodes.rumbleFilter && activeNodes.hissFilter && activeNodes.hissEnvelopeGain) {
-    const targetRumbleFreq = params.rumbleCutEnabled ? 80.0 : 18.0; // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
+    const targetRumbleFreq = params.rumbleCutEnabled ? 90.0 : 18.0; // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
     const hissAmount = params.hissReductionAmount || 0;
@@ -2073,15 +2073,16 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
 
   // Suggested values (ノイズ検出時にのみONにし、ノイズ未検出時は完全にOFFのままにする仕様へ復元)
   let sugRumbleCut = false;
-  if (rumbleNoiseFloorDb > -58.0) {
+  // しきい値を-58dBから-65dBに引き下げ、微小な超低音ノイズに対しても過敏に反応してカットできるように感度を向上
+  if (rumbleNoiseFloorDb > -65.0) {
     sugRumbleCut = true;
   }
 
   let sugHissAmount = 0;
   // しきい値を-78dBから-83dBに引き下げ（ヘッドホン等で聞こえる微小なアナログサー音やヒスノイズまで検知可能に）
   if (hissNoiseFloorDb > -83.0) {
-    // ノイズフロアに応じて15%〜98%の間で段階的に適用度を算出するスケール
-    const rawHiss = Math.round(Math.max(0, Math.min(98, 15 + (hissNoiseFloorDb + 83.0) * 6.0)));
+    // ノイズフロアに応じて20%〜98%の間で段階的に適用度を算出するスケール（感度係数を8.0に高め、ノイズ検知力を向上）
+    const rawHiss = Math.round(Math.max(0, Math.min(98, 20 + (hissNoiseFloorDb + 83.0) * 8.0)));
     
     // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音である可能性が高いため
     // LPFの過剰カットを防ぐため、Hiss Reducerの適用度を少し抑える安全スケーラー（最小減衰幅を0.70に緩和して感度を維持）
@@ -2447,18 +2448,18 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   let finalDeesserAmount = suggestedDeesserAmount;
 
   if (detectedGenre === 'edm' || detectedGenre === 'hiphop') {
-    finalHissAmount = Math.min(10, finalHissAmount); // EDM/Hiphop等の電子音楽では高域のピコピコ感・抜けを保護するため最大10%
-    finalDeesserAmount = Math.min(20, finalDeesserAmount); // シンセアタック保護のため最大20%
+    finalHissAmount = Math.min(25, finalHissAmount); // 最大25%に拡張（電子音楽の抜けを保護しつつノイズを吸い取る）
+    finalDeesserAmount = Math.min(25, finalDeesserAmount); // 最大25%に拡張
   } else if (detectedGenre === 'rock' || detectedGenre === 'metal') {
-    finalHissAmount = Math.min(15, finalHissAmount); // ロックギターの壁やシンバルアタックを殺さないよう最大15%
-    finalDeesserAmount = Math.min(30, finalDeesserAmount); // 最大30%
+    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
+    finalDeesserAmount = Math.min(35, finalDeesserAmount); // 最大35%に拡張
   } else if (detectedGenre === 'jazz' || detectedGenre === 'acoustic' || detectedGenre === 'classic') {
-    finalHissAmount = Math.min(15, finalHissAmount); // ジャズドラムのブラシやシンバルレガートの空気感を保護するため最大15%
-    finalDeesserAmount = Math.min(25, finalDeesserAmount); // 最大25%
+    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
+    finalDeesserAmount = Math.min(30, finalDeesserAmount); // 最大30%に拡張
   } else {
     // pops, lofi 等
-    finalHissAmount = Math.min(35, finalHissAmount); // 生録音等のヒスノイズ除去は最大35%
-    finalDeesserAmount = Math.min(60, finalDeesserAmount); // ボーカルのサ行トゲ除去は最大60%（-2.7dB）
+    finalHissAmount = Math.min(60, finalHissAmount); // 最大60%に拡張（高域ヒスを最大-4.8dBまで低減）
+    finalDeesserAmount = Math.min(70, finalDeesserAmount); // 最大70%に拡張（サ行トゲを最大-3.1dBまで低減）
   }
 
   // AI Dynamic Q-value calculation based on the correction gains
