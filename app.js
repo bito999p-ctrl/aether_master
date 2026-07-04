@@ -204,13 +204,13 @@ export const GENRE_PRESETS = {
   },
   pops: {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10, satLpfFreq: 4500,
-    eqLowGain: 1.5, eqLowFreq: 100, eqLowQ: 0.70,
-    eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
-    eqMidGain: -0.5, eqMidFreq: 1000, eqMidQ: 1.0,
-    eqMidHighGain: 0.9, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
-    eqHighGain: 1.0, eqHighFreq: 12000, eqHighQ: 0.65,
+    eqLowGain: 1.2, eqLowFreq: 80, eqLowQ: 0.70,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 1.2, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
+    eqHighGain: 0.4, eqHighFreq: 14000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
-    stereoWidth: 1.22, limiterBoost: 3.5, sideHighPassFreq: 110
+    stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rnb: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 6000,
@@ -223,12 +223,12 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.25, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rock: {
-    satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12, satLpfFreq: 4500,
-    eqLowGain: 2.0, eqLowFreq: 90, eqLowQ: 0.65,
-    eqLowMidGain: 0.8, eqLowMidFreq: 220, eqLowMidQ: 0.60,
+    satEnabled: true, satType: 'tape', satDrive: 18, satMix: 12, satLpfFreq: 10000,
+    eqLowGain: 1.0, eqLowFreq: 80, eqLowQ: 0.65,
+    eqLowMidGain: 0.6, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 1.0,
     eqMidHighGain: 0.8, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
-    eqHighGain: 0.6, eqHighFreq: 8000, eqHighQ: 0.60,
+    eqHighGain: 0.5, eqHighFreq: 12000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
   },
@@ -244,11 +244,11 @@ export const GENRE_PRESETS = {
   },
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20, satLpfFreq: 16000,
-    eqLowGain: 1.8, eqLowFreq: 90, eqLowQ: 0.85,
-    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.85,
+    eqLowMidGain: -0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
-    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
-    eqHighGain: 1.0, eqHighFreq: 11000, eqHighQ: 0.70,
+    eqMidHighGain: 1.2, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
+    eqHighGain: 1.0, eqHighFreq: 14000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
     stereoWidth: 1.30, limiterBoost: 4.5, sideHighPassFreq: 150
   },
@@ -313,14 +313,14 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.30, limiterBoost: 1.5, sideHighPassFreq: 90
   },
   jazz: {
-    satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8, satLpfFreq: 4500,
-    eqLowGain: 1.2, eqLowFreq: 110, eqLowQ: 0.60,
-    eqLowMidGain: 1.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
-    eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
-    eqMidHighGain: 0.2, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
-    eqHighGain: 0.4, eqHighFreq: 10000, eqHighQ: 0.60,
-    compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.06, compRelease: 0.25,
-    stereoWidth: 1.20, limiterBoost: 2.2, sideHighPassFreq: 90
+    satEnabled: true, satType: 'tube', satDrive: 6, satMix: 5, satLpfFreq: 12000,
+    eqLowGain: 0.8, eqLowFreq: 80, eqLowQ: 0.60,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
+    eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.6, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
+    eqHighGain: 0.4, eqHighFreq: 14000, eqHighQ: 0.60,
+    compEnabled: true, compThreshold: -7.5, compRatio: 1.20, compAttack: 0.06, compRelease: 0.25,
+    stereoWidth: 1.15, limiterBoost: 2.2, sideHighPassFreq: 90
   },
   acoustic: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8, satLpfFreq: 4500,
@@ -607,7 +607,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
   sibilanceNotch.frequency.setValueAtTime(parameters.sibilanceDynamicFreq || 9000, context.currentTime);
-  sibilanceNotch.Q.setValueAtTime(2.2, context.currentTime); // musical Q for smooth sibilance band attenuation
+  sibilanceNotch.Q.setValueAtTime(4.5, context.currentTime); // surgical Q for precise sibilance band attenuation
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
   const sibilanceNotchDynamicGain = context.createGain();
@@ -2175,32 +2175,28 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     sibilanceDynamicFreq = rawSibilancePeaks[0].freq;
   }
 
+  // 決定木型ジャンル自動検出 (2パス実効解析による周波数バランス比率分類)
   let detectedGenre = 'pops';
-  if (actualLowMidRatio > 3.2 && actualHighMidRatio > 0.16 && crestFactorDb < 12.8) {
-    detectedGenre = 'edm';
-  } else if (actualLowMidRatio > 3.1 && actualHighMidRatio <= 0.16 && crestFactorDb < 12.8) {
-    detectedGenre = 'hiphop';
-  } else if (actualLowMidRatio >= 1.6 && actualLowMidRatio <= 3.3 && crestFactorDb < 15.5) {
-    if (crestFactorDb >= 12.8) {
-      if (actualLowMidRatio >= 2.4 && actualLowMidRatio <= 3.1 && avgCorrelation > 0.75 && actualHighMidRatio < 0.12) {
-        detectedGenre = 'jazz';
-      } else if (actualLowMidRatio < 2.4 && avgCorrelation > 0.75 && actualHighMidRatio < 0.12) {
-        detectedGenre = 'acoustic';
-      } else {
-        detectedGenre = (actualHighMidRatio > 0.14) ? 'metal' : 'rock';
-      }
+  if (actualLowMidRatio > 3.2) {
+    // 重低音が強烈な電子音楽・クラブ系
+    if (actualHighMidRatio > 0.09 || actualPresenceRatio > 0.38) {
+      detectedGenre = 'edm';
     } else {
-      if (actualHighMidRatio >= 0.11) {
-        detectedGenre = (actualHighMidRatio > 0.14) ? 'metal' : 'rock';
-      } else {
-        detectedGenre = 'pops';
-      }
+      detectedGenre = 'hiphop';
     }
-  } else if (crestFactorDb >= 13.0) {
-    if (actualLowMidRatio < 2.2 && actualHighMidRatio < 0.12) {
+  } else if (actualPresenceRatio > 0.42) {
+    // 中高域（1.5kHz-5kHzのギター壁・ボーカル）が際立つ激しい音楽
+    if (actualHighMidRatio > 0.12 || actualLowMidRatio > 3.0) {
+      detectedGenre = 'metal';
+    } else {
+      detectedGenre = 'rock';
+    }
+  } else if (crestFactorDb >= 12.8) {
+    // ダイナミックレンジが広く圧縮感のない音楽
+    if (actualLowMidRatio >= 2.2 && actualLowMidRatio <= 3.0) {
+      detectedGenre = 'jazz';
+    } else if (actualLowMidRatio < 2.2 && actualHighMidRatio < 0.03) {
       detectedGenre = 'classic';
-    } else if (actualHighMidRatio > 0.18 && actualLowMidRatio < 2.8) {
-      detectedGenre = 'ambient';
     } else {
       detectedGenre = 'acoustic';
     }
@@ -2467,6 +2463,25 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     suggestedDeesserAmount = Math.round(Math.max(35, Math.min(80, 35 + (maxScore - 1.15) * 60)));
   }
 
+  // ノイズクリーナー（Hiss Reducer ＆ De-esser）のジャンル別安全保護リミッター
+  let finalHissAmount = sugHissAmount;
+  let finalDeesserAmount = suggestedDeesserAmount;
+
+  if (detectedGenre === 'edm' || detectedGenre === 'hiphop') {
+    finalHissAmount = Math.min(10, finalHissAmount); // EDM/Hiphop等の電子音楽では高域のピコピコ感・抜けを保護するため最大10%
+    finalDeesserAmount = Math.min(20, finalDeesserAmount); // シンセアタック保護のため最大20%
+  } else if (detectedGenre === 'rock' || detectedGenre === 'metal') {
+    finalHissAmount = Math.min(15, finalHissAmount); // ロックギターの壁やシンバルアタックを殺さないよう最大15%
+    finalDeesserAmount = Math.min(30, finalDeesserAmount); // 最大30%
+  } else if (detectedGenre === 'jazz' || detectedGenre === 'acoustic' || detectedGenre === 'classic') {
+    finalHissAmount = Math.min(15, finalHissAmount); // ジャズドラムのブラシやシンバルレガートの空気感を保護するため最大15%
+    finalDeesserAmount = Math.min(25, finalDeesserAmount); // 最大25%
+  } else {
+    // pops, lofi 等
+    finalHissAmount = Math.min(35, finalHissAmount); // 生録音等のヒスノイズ除去は最大35%
+    finalDeesserAmount = Math.min(60, finalDeesserAmount); // ボーカルのサ行トゲ除去は最大60%（-2.7dB）
+  }
+
   // AI Dynamic Q-value calculation based on the correction gains
   let finalEqLowQ = basePreset.eqLowQ || 0.70;
   const absLowGain = Math.abs(finalEqLowGain);
@@ -2534,10 +2549,16 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       sideHighPassFreq: finalSideHPF,
       limiterBoost: finalLimiterBoost,
       rumbleCutEnabled: sugRumbleCut,
-      hissReductionAmount: sugHissAmount,
+      hissReductionAmount: finalHissAmount,
       sibilanceDynamicFreq: sibilanceDynamicFreq,
-      deesserAmount: suggestedDeesserAmount
-    }
+      deesserAmount: finalDeesserAmount
+    },
+    // 中間解析値のデバッグ用出力
+    crestFactorDb: crestFactorDb,
+    actualLowMidRatio: actualLowMidRatio,
+    actualHighMidRatio: actualHighMidRatio,
+    actualPresenceRatio: actualPresenceRatio,
+    avgCorrelation: avgCorrelation
   };
 }
 
