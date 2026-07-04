@@ -477,12 +477,12 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dynamic Hiss Filter (VCF High Shelf)
   const hissFilter = context.createBiquadFilter();
   hissFilter.type = 'highshelf';
-  hissFilter.frequency.setValueAtTime(10000.0, context.currentTime); // Center at 10kHz where hiss noise lives
+  hissFilter.frequency.setValueAtTime(8000.0, context.currentTime); // Center at 8kHz where unpleasant hiss lives
   hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
-  // ベースゲインはマイナスの値（減衰）。100%のとき最大-8.0dBカット
-  const baseGain = -8.0 * (hissAmount / 100.0);
+  // ベースゲインはマイナスの値（減衰）。100%のとき最大-20.0dBカットしてノイズを完全に消し去る
+  const baseGain = -20.0 * (hissAmount / 100.0);
   hissFilter.gain.setValueAtTime(baseGain, context.currentTime);
 
   // Sidechain Envelope Follower for Hiss Filter
@@ -1651,8 +1651,8 @@ function updateNoiseCutNodes() {
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
     const hissAmount = params.hissReductionAmount || 0;
-    // ベースゲインはマイナスの値（減衰）
-    const baseGain = -8.0 * (hissAmount / 100.0);
+    // ベースゲインはマイナスの値（減衰）。最大-20.0dBカット
+    const baseGain = -20.0 * (hissAmount / 100.0);
     activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
     
     // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
@@ -2120,13 +2120,13 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
         let targetQ = 10.0;
         
         if (isMidRange) {
-          // Mid range (vocals, "ka-n" resonance): apply gentle notch (-1.0dB to -2.8dB max) to avoid hollow vocals
-          cutDb = -Math.min(2.8, 1.0 + (ratio - thresholdMultiplier) * 5.0);
-          targetQ = 10.0; // musical Q for voice resonance removal
+          // Mid range (vocals, "ka-n" resonance): apply narrow notch (-1.5dB to -6.0dB max) to avoid hollow vocals
+          cutDb = -Math.min(6.0, 1.5 + (ratio - thresholdMultiplier) * 8.0);
+          targetQ = 15.0; // surgical Q for voice resonance removal
         } else {
-          // High range (whistles, sibilance): apply surgical notch (-1.5dB to -4.5dB max)
-          cutDb = -Math.min(4.5, 1.5 + (ratio - thresholdMultiplier) * 7.0);
-          targetQ = 15.0; // very narrow Q for high frequency whistle notch
+          // High range (whistles, sibilance): apply surgical notch (-3.0dB to -18.0dB max) to completely eliminate unpleasant high squeals
+          cutDb = -Math.min(18.0, 3.0 + (ratio - thresholdMultiplier) * 20.0);
+          targetQ = 30.0; // ultra narrow Q for zero side-effects on music
         }
 
         rawResonancePeaks.push({
@@ -2458,18 +2458,18 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   let finalDeesserAmount = suggestedDeesserAmount;
 
   if (detectedGenre === 'edm' || detectedGenre === 'hiphop') {
-    finalHissAmount = Math.min(25, finalHissAmount); // 最大25%に拡張（電子音楽の抜けを保護しつつノイズを吸い取る）
-    finalDeesserAmount = Math.min(25, finalDeesserAmount); // 最大25%に拡張
+    finalHissAmount = Math.min(50, finalHissAmount); // 最大50%に緩和（超高音ヒスを最大-10.0dBまで低減）
+    finalDeesserAmount = Math.min(50, finalDeesserAmount); // 最大50%に拡張
   } else if (detectedGenre === 'rock' || detectedGenre === 'metal') {
-    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
-    finalDeesserAmount = Math.min(35, finalDeesserAmount); // 最大35%に拡張
+    finalHissAmount = Math.min(70, finalHissAmount); // 最大70%に緩和（激しいヒスに対して最大-14.0dBまで低減）
+    finalDeesserAmount = Math.min(70, finalDeesserAmount); // 最大70%に拡張
   } else if (detectedGenre === 'jazz' || detectedGenre === 'acoustic' || detectedGenre === 'classic') {
-    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
-    finalDeesserAmount = Math.min(30, finalDeesserAmount); // 最大30%に拡張
+    finalHissAmount = Math.min(65, finalHissAmount); // 最大65%に緩和（最大-13.0dBまで低減）
+    finalDeesserAmount = Math.min(60, finalDeesserAmount); // 最大60%に拡張
   } else {
     // pops, lofi 等
-    finalHissAmount = Math.min(60, finalHissAmount); // 最大60%に拡張（高域ヒスを最大-4.8dBまで低減）
-    finalDeesserAmount = Math.min(70, finalDeesserAmount); // 最大70%に拡張（サ行トゲを最大-3.1dBまで低減）
+    finalHissAmount = Math.min(85, finalHissAmount); // 最大85%に緩和（最大-17.0dBまで低減）
+    finalDeesserAmount = Math.min(85, finalDeesserAmount); // 最大85%に拡張
   }
 
   // AI Dynamic Q-value calculation based on the correction gains
