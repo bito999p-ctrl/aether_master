@@ -3231,6 +3231,8 @@ function resetMasterSettings() {
   } else {
     document.getElementById('ai-report').style.display = 'none';
   }
+  
+  logToUI(`[Reset State] EQ High Freq = ${params.eqHighFreq} Hz, EQ High Gain = ${params.eqHighGain.toFixed(1)} dB, De-esser = ${params.deesserAmount}%, Corrective Notches Active = ${params.correctiveNotches.filter(n => n.enabled).length}`, "info");
 }
 
 // ==========================================================================
@@ -3364,6 +3366,8 @@ function runAiAnalysis(showLog = true) {
       updateLimiterGainNode();
       updateCeilingNode();
       updateCorrectiveEqNodes();
+      
+      logToUI(`[AI State] EQ High Freq = ${params.eqHighFreq} Hz, EQ High Gain = ${params.eqHighGain.toFixed(1)} dB, De-esser = ${params.deesserAmount}%, Corrective Notches Active = ${params.correctiveNotches.filter(n => n.enabled).length}`, "success");
       
       // AI詳細レポートカード表示の更新
       document.getElementById('ai-crest-factor').innerText = `${result.crestFactor.toFixed(1)} dB`;
