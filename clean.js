@@ -2072,11 +2072,6 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   let eqHighGain = Math.max(-5.0, Math.min(0.8, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+0.8dBに制限
 
-  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを禁止し、安全のために少なくとも-1.5dB以下の減衰量にクランプ
-  if (sibilanceDynamicFreq > 0) {
-    eqHighGain = Math.min(-1.5, eqHighGain);
-  }
-
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
   let baseBoost = 4.0;
@@ -2209,22 +2204,29 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   const airToBrillianceRatio = airEnergy / (brillianceEnergy + 1e-6);
 
-  let suggestedEqHighFreq = basePreset.eqHighFreq;
-
-  if (actualHighMidRatio < 0.10) {
-    // High-mids are extremely dull overall -> Pull down the shelf to boost from 8.0kHz
-    suggestedEqHighFreq = 8000;
-  } else if (airToBrillianceRatio < 0.16) {
-    // Air drops off sharply compared to mid-highs -> Target the transition around 9.5kHz
-    suggestedEqHighFreq = 9500;
-  } else if (airToBrillianceRatio > 0.32) {
-    // Air is already present, but could use air-band finish -> Target 12kHz
-    suggestedEqHighFreq = 12000;
-  } else {
-    // Normal balanced spectrum -> Target standard 10kHz or preset default
-    suggestedEqHighFreq = Math.round((basePreset.eqHighFreq || 10000) / 500) * 500;
+  // Calculate the high-frequency spectral center of gravity (centroid) of the song (from 6000Hz to 16000Hz)
+  const binStart6k = Math.floor((6000 * fftSize) / sampleRate);
+  const binEnd16k = Math.floor((16000 * fftSize) / sampleRate);
+  let totalHighEnergy = 0;
+  for (let j = binStart6k; j <= binEnd16k; j++) {
+    totalHighEnergy += avgSpectrum[j];
   }
-
+  
+  let targetBin = binStart6k;
+  if (totalHighEnergy > 0) {
+    let cumulativeEnergy = 0;
+    for (let j = binStart6k; j <= binEnd16k; j++) {
+      cumulativeEnergy += avgSpectrum[j];
+      if (cumulativeEnergy >= totalHighEnergy * 0.48) { // 48% cumulative energy centroid
+        targetBin = j;
+        break;
+      }
+    }
+  }
+  
+  let suggestedEqHighFreq = (targetBin * sampleRate) / fftSize;
+  // Round to nearest 250Hz for professional step increments
+  suggestedEqHighFreq = Math.round(suggestedEqHighFreq / 250) * 250;
   // Clamp within safe high shelf ranges (7,500Hz to 13,000Hz)
   suggestedEqHighFreq = Math.max(7500, Math.min(13000, suggestedEqHighFreq));
 
