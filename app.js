@@ -2257,9 +2257,16 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const targetPresence = target.presence || 0.42;
   const presenceDiffDb = 20 * Math.log10(actualPresenceRatio / targetPresence);
 
+  // クラシックやアコースティックなどの生楽器主体のダイナミックな楽曲は、
+  // アレンジャーや録音エンジニアが意図的に調整した繊細な帯域バランスを破壊しないよう、
+  // AIによる自動イコライジング（補正値）の適用強度を25%以下に大幅に抑制（スケールダウン）します。
+  // また、クレストファクター（強弱差）が大きい楽曲全体も適用度を50%に抑え、不要な歪みやビビリ音の発生を未然に防止します。
+  const isGentleGenre = (detectedGenre === 'classic' || detectedGenre === 'acoustic' || basePresetKey === 'classic' || basePresetKey === 'acoustic');
+  const spectralCorrectionScale = isGentleGenre ? 0.25 : (crestFactorDb > 12.0 ? 0.50 : 1.0);
+
   // 1. LOW EQ (低域補正: 80Hz/100Hz/120Hz)
   // ターゲットからのズレを100%反転して補正値とします（最大+4.0dB〜-4.0dB）
-  const eqLowAdjustment = -lowDiffDb;
+  const eqLowAdjustment = -lowDiffDb * spectralCorrectionScale;
   const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 10) / 10));
 
   let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
@@ -2273,17 +2280,17 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
 
   // 2. LOW-MID EQ (中低域補正: 200Hz)
   // 低域全体の過不足に対して50%の割合で追従し、ふくよかさ・スッキリ感を調整します（最大+2.0dB〜-2.0dB）
-  const eqLowMidAdjustment = -lowDiffDb * 0.5;
+  const eqLowMidAdjustment = -lowDiffDb * 0.5 * spectralCorrectionScale;
   const eqLowMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment) * 10) / 10));
 
-// 3. MID EQ (中域補正: 1000Hz)
+  // 3. MID EQ (中域補正: 1000Hz)
   // 箱鳴りやラジオ感を防ぐため、追従感度を 0.5 → 0.75 に高め、カットバイアスも -0.8 → -1.5dB へ強めてすっきりさせます
-  const eqMidAdjustment = -presenceDiffDb * 0.75 - 1.5; 
+  const eqMidAdjustment = (-presenceDiffDb * 0.75 - 1.5) * spectralCorrectionScale; 
   const eqMidGain = Math.max(-4.5, Math.min(0.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 10) / 10));
 
   // 4. MID-HIGH EQ (中高域・プレゼンス補正: 4800Hz)
   // キンキンしたラジオ感を防ぐため、追従感度を 0.9 → 0.45 に半減させます（最大ブーストも +3.0 → +1.5dB に制限）
-  const eqMidHighAdjustment = -presenceDiffDb * 0.45;
+  const eqMidHighAdjustment = -presenceDiffDb * 0.45 * spectralCorrectionScale;
   const eqMidHighGain = Math.max(-2.5, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
 
   // 5. HIGH EQ (高域・エアバンド補正: 14000Hz)
@@ -2365,8 +2372,20 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     limiterBoost = Math.max(baselineLimiterBoost - 1.0, limiterBoost - bassOverloadPenalty);
   }
 
-  // どんなに静かな音源でも上限+10.0dB、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
-  limiterBoost = Math.max(1.0, Math.min(10.0, Math.round(limiterBoost * 10) / 10));
+  // 温和なアコースティック・クラシック系ジャンルでは、リミッターによる強烈な圧縮歪みやビビリ音を防ぎ、
+  // 原音の広いダイナミクスを保護するために、マキシマイザーブースト（limiterBoost）の最大上限値を控えめに制限します。
+  let maxAllowedLimiterBoost = 10.0;
+  if (detectedGenre === 'classic' || basePresetKey === 'classic') {
+    maxAllowedLimiterBoost = 3.5;
+  } else if (detectedGenre === 'acoustic' || basePresetKey === 'acoustic') {
+    maxAllowedLimiterBoost = 4.5;
+  } else if (detectedGenre === 'jazz' || detectedGenre === 'ambient' || detectedGenre === 'podcast' ||
+             basePresetKey === 'jazz' || basePresetKey === 'ambient' || basePresetKey === 'podcast') {
+    maxAllowedLimiterBoost = 5.5;
+  }
+
+  // どんなに静かな音源でも上限+10.0dB（温和なジャンルでは個別の最大上限）、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
+  limiterBoost = Math.max(1.0, Math.min(maxAllowedLimiterBoost, Math.round(limiterBoost * 10) / 10));
 
   // GUI表示用のラウドネス説明テキストの構築
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
@@ -2387,7 +2406,7 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   }
   
   // 補正係数を 1.0 -> 1.25 に高め、高域の明瞭度（空気感・クリアさ）をしっかりと引き出します
-  const eqHighAdjustment = -highDiffDb * 1.25;
+  const eqHighAdjustment = -highDiffDb * 1.25 * spectralCorrectionScale;
   
   const isElectronicGenre = (detectedGenre === 'edm' || detectedGenre === 'hardcore' || detectedGenre === 'metal' ||
                              genreKey === 'edm' || genreKey === 'hardcore' || genreKey === 'metal');
