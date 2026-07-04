@@ -207,47 +207,47 @@ export const GENRE_PRESETS = {
     eqLowGain: 1.2, eqLowFreq: 80, eqLowQ: 0.70,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
-    eqMidHighGain: 1.2, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
+    eqMidHighGain: 2.2, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: 0.4, eqHighFreq: 14000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
     stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rnb: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 10000,
-    eqLowGain: 2.2, eqLowFreq: 75, eqLowQ: 0.80,
-    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqLowGain: 1.2, eqLowFreq: 75, eqLowQ: 0.80,
+    eqLowMidGain: -0.6, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
-    eqMidHighGain: 0.0, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
+    eqMidHighGain: 1.2, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: 0.8, eqHighFreq: 10000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
-    stereoWidth: 1.25, limiterBoost: 3.5, sideHighPassFreq: 110
+    stereoWidth: 1.25, limiterBoost: 3.2, sideHighPassFreq: 110
   },
   rock: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 12, satLpfFreq: 12000,
     eqLowGain: 1.0, eqLowFreq: 80, eqLowQ: 0.65,
     eqLowMidGain: 0.6, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 1.0,
-    eqMidHighGain: 0.8, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
+    eqMidHighGain: 1.8, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: 0.5, eqHighFreq: 12000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
   },
   metal: {
     satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14, satLpfFreq: 12000,
-    eqLowGain: 2.2, eqLowFreq: 85, eqLowQ: 0.60,
-    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqLowGain: 1.0, eqLowFreq: 70, eqLowQ: 0.80,
+    eqLowMidGain: -1.2, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.5, eqMidFreq: 1000, eqMidQ: 0.8,
-    eqMidHighGain: 0.0, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
+    eqMidHighGain: 1.5, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: 1.2, eqHighFreq: 8500, eqHighQ: 0.75,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
-    stereoWidth: 1.28, limiterBoost: 4.5, sideHighPassFreq: 120
+    stereoWidth: 1.28, limiterBoost: 3.8, sideHighPassFreq: 120
   },
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20, satLpfFreq: 16000,
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.85,
     eqLowMidGain: -0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
-    eqMidHighGain: 1.2, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
+    eqMidHighGain: 2.5, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 14000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
     stereoWidth: 1.30, limiterBoost: 4.5, sideHighPassFreq: 150
@@ -255,17 +255,17 @@ export const GENRE_PRESETS = {
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14, satLpfFreq: 12000,
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.90,
-    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqLowMidGain: -0.5, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
-    eqMidHighGain: 0.0, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
+    eqMidHighGain: 1.2, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: 0.5, eqHighFreq: 10000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
-    stereoWidth: 1.20, limiterBoost: 4.2, sideHighPassFreq: 150
+    stereoWidth: 1.20, limiterBoost: 3.6, sideHighPassFreq: 150
   },
   lofi: {
     satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30, satLpfFreq: 16000,
-    eqLowGain: 3.5, eqLowFreq: 150, eqLowQ: 0.55,
-    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqLowGain: 2.0, eqLowFreq: 100, eqLowQ: 0.70,
+    eqLowMidGain: -0.5, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1200, eqMidQ: 1.0,
     eqMidHighGain: 0.0, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: -4.5, eqHighFreq: 7000, eqHighQ: 0.50,
@@ -274,13 +274,13 @@ export const GENRE_PRESETS = {
   },
   hardcore: {
     satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22, satLpfFreq: 16000,
-    eqLowGain: 3.0, eqLowFreq: 80, eqLowQ: 0.80,
-    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqLowGain: 1.5, eqLowFreq: 80, eqLowQ: 0.80,
+    eqLowMidGain: -0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
-    eqMidHighGain: 0.0, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
+    eqMidHighGain: 1.5, eqMidHighFreq: 4800, eqMidHighQ: 1.0,
     eqHighGain: 1.5, eqHighFreq: 12000, eqHighQ: 0.80,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
-    stereoWidth: 1.38, limiterBoost: 5.0, sideHighPassFreq: 150
+    stereoWidth: 1.38, limiterBoost: 4.2, sideHighPassFreq: 150
   },
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 12000,
@@ -2290,9 +2290,10 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const eqMidGain = Math.max(-4.5, Math.min(0.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 10) / 10));
 
   // 4. MID-HIGH EQ (中高域・プレゼンス補正: 4800Hz)
-  // キンキンしたラジオ感を防ぐため、追従感度を 0.9 → 0.45 に半減させます（最大ブーストも +3.0 → +1.5dB に制限）
-  const eqMidHighAdjustment = -presenceDiffDb * 0.45 * spectralCorrectionScale;
-  const eqMidHighGain = Math.max(-2.5, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
+  // ユーザーの「抜け感・存在感を引き出したい」という要望に合わせ、最大ブースト上限を +4.0dB へ引き上げ、
+  // 感度も 0.45 ➔ 0.85 に高めて積極的に持ち上げます。ただし、元々うるさい曲は適切にカットします。
+  const eqMidHighAdjustment = -presenceDiffDb * 0.85 * spectralCorrectionScale;
+  const eqMidHighGain = Math.max(-3.0, Math.min(4.0, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
 
   // 5. HIGH EQ (高域・エアバンド補正: 14000Hz)
   // ターゲットからのズレを100%反転して直接補正。曇った音源は明るく、うるさい音源は暖かく整えます（最大+3.5dB〜-4.5dB）
