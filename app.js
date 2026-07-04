@@ -1950,8 +1950,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   let sugHissAmount = 0;
   if (hissNoiseFloorDb > -78.0) { // しきい値を-73dBから-78dBに下げて検出感度を向上
-    // -78dB で 0%、-50dB付近で最大 95% になるよう調整（4.5倍スケールでダイナミックに変化）
-    const rawHiss = Math.round(Math.max(0, Math.min(95, (hissNoiseFloorDb + 78.0) * 4.5)));
+    // ノイズフロアに応じて20%〜98%の間でより強力に適用されるようスケール調整
+    const rawHiss = Math.round(Math.max(0, Math.min(98, 20 + (hissNoiseFloorDb + 78.0) * 5.0)));
     
     // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音である可能性が高いため
     // LPFの過剰カットを防ぐため、Hiss Reducerの適用度を少し抑える安全スケーラー（最小減衰幅を0.70に緩和して感度を維持）
@@ -2250,11 +2250,10 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   
   finalLimiterBoost = Math.round(finalLimiterBoost * 10) / 10;
 
-  // 動的なディエッサー強度の算出
-  let suggestedDeesserAmount = 40; // デフォルトで基本有効（40%）
+  let suggestedDeesserAmount = 50; // デフォルトで基本有効（50%）
   if (sibilanceDynamicFreq > 0 && rawSibilancePeaks.length > 0) {
     const maxScore = rawSibilancePeaks[0].score;
-    suggestedDeesserAmount = Math.round(Math.min(85, Math.max(40, 40 + (maxScore - 1.15) * 60)));
+    suggestedDeesserAmount = Math.round(Math.min(98, Math.max(50, 50 + (maxScore - 1.15) * 80)));
   }
 
   return {
