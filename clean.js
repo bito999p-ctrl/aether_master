@@ -115,6 +115,7 @@ const params = {
   satType: 'tube',
   satDrive: 15,
   satMix: 30,
+  satLpfFreq: 4500,
   
   // EQ
   eqLowGain: 1.0,
@@ -192,7 +193,7 @@ function getCombinedParams() {
 // Genre Presets Configuration
 export const GENRE_PRESETS = {
   auto: {
-    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10,
+    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 4500,
     eqLowGain: 0.0, eqLowFreq: 90, eqLowQ: 0.70,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -202,7 +203,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   pops: {
-    satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10,
+    satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10, satLpfFreq: 4500,
     eqLowGain: 1.5, eqLowFreq: 100, eqLowQ: 0.70,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.5, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -212,7 +213,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.22, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rnb: {
-    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12,
+    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 6000,
     eqLowGain: 2.2, eqLowFreq: 75, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -222,7 +223,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.25, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rock: {
-    satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12,
+    satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12, satLpfFreq: 4500,
     eqLowGain: 2.0, eqLowFreq: 90, eqLowQ: 0.65,
     eqLowMidGain: 0.8, eqLowMidFreq: 220, eqLowMidQ: 0.60,
     eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 1.0,
@@ -232,17 +233,17 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
   },
   metal: {
-    satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14,
+    satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14, satLpfFreq: 10000,
     eqLowGain: 2.2, eqLowFreq: 85, eqLowQ: 0.60,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
-    eqMidGain: -1.5, eqMidFreq: 400, eqMidQ: 0.8,
+    eqMidGain: -1.5, eqMidFreq: 1000, eqMidQ: 0.8,
     eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.2, eqHighFreq: 8500, eqHighQ: 0.75,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
     stereoWidth: 1.28, limiterBoost: 4.5, sideHighPassFreq: 120
   },
   edm: {
-    satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20,
+    satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20, satLpfFreq: 16000,
     eqLowGain: 1.8, eqLowFreq: 90, eqLowQ: 0.85,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
@@ -252,7 +253,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.30, limiterBoost: 4.5, sideHighPassFreq: 150
   },
   hiphop: {
-    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14,
+    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14, satLpfFreq: 8000,
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.90,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
@@ -262,7 +263,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.20, limiterBoost: 4.2, sideHighPassFreq: 150
   },
   lofi: {
-    satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30,
+    satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30, satLpfFreq: 16000,
     eqLowGain: 3.5, eqLowFreq: 150, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1200, eqMidQ: 1.0,
@@ -272,7 +273,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 0.92, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   hardcore: {
-    satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22,
+    satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22, satLpfFreq: 16000,
     eqLowGain: 3.0, eqLowFreq: 80, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
@@ -282,7 +283,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.38, limiterBoost: 5.0, sideHighPassFreq: 150
   },
   ambient: {
-    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6,
+    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 8000,
     eqLowGain: 2.0, eqLowFreq: 80, eqLowQ: 0.50,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
@@ -292,7 +293,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.55, limiterBoost: 2.0, sideHighPassFreq: 90
   },
   podcast: {
-    satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5,
+    satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5, satLpfFreq: 4000,
     eqLowGain: -2.0, eqLowFreq: 120, eqLowQ: 0.80,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 1.0,
@@ -302,7 +303,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.00, limiterBoost: 2.5, sideHighPassFreq: 150
   },
   classic: {
-    satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0,
+    satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0, satLpfFreq: 6000,
     eqLowGain: 0.5, eqLowFreq: 100, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
@@ -312,7 +313,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.30, limiterBoost: 1.5, sideHighPassFreq: 90
   },
   jazz: {
-    satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8,
+    satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8, satLpfFreq: 4500,
     eqLowGain: 1.2, eqLowFreq: 110, eqLowQ: 0.60,
     eqLowMidGain: 1.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
@@ -322,7 +323,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.20, limiterBoost: 2.2, sideHighPassFreq: 90
   },
   acoustic: {
-    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8,
+    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8, satLpfFreq: 4500,
     eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.60,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
@@ -537,10 +538,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   hissFilter.connect(satHpf);
   satHpf.connect(waveShaper); // Feed highpassed signal to waveshaper to keep low end clean
   
-  // Create saturator LPF to prevent high-frequency distortion glare (above 4.5kHz)
   const satLpf = context.createBiquadFilter();
   satLpf.type = 'lowpass';
-  satLpf.frequency.setValueAtTime(4500.0, context.currentTime);
+  satLpf.frequency.setValueAtTime(parameters.satLpfFreq || 4500.0, context.currentTime);
   satLpf.Q.setValueAtTime(0.5, context.currentTime);
   
   waveShaper.connect(satLpf);
@@ -800,6 +800,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     hissEnvelopeGain,
     satDryGain,
     satWetGain,
+    satLpf,
     waveShaper,
     eqLow,
     eqLowMid,
@@ -952,6 +953,7 @@ function startPlayback() {
   activeNodes.inputGain = chain.inputGain;
   activeNodes.satDryGain = chain.satDryGain;
   activeNodes.satWetGain = chain.satWetGain;
+  activeNodes.satLpf = chain.satLpf;
   activeNodes.waveShaper = chain.waveShaper;
   activeNodes.eqLow = chain.eqLow;
   activeNodes.eqLowMid = chain.eqLowMid;
@@ -1679,6 +1681,9 @@ function updateSaturatorNode() {
       activeNodes.satDryGain.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.01);
       activeNodes.satWetGain.gain.setTargetAtTime(0.0, audioContext.currentTime, 0.01);
     }
+    if (activeNodes.satLpf) {
+      activeNodes.satLpf.frequency.setTargetAtTime(p.satLpfFreq || 4500.0, audioContext.currentTime, 0.01);
+    }
   }
 }
 
@@ -2227,13 +2232,18 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.5);
   }
 
-  // J-pop/rock等の楽曲感とデジタル歪み（音の硬さ）防止のため、高域EQの最大ブースト量を+0.4dBに抑制
-  let eqHighGain = Math.max(-5.0, Math.min(0.4, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
+  // J-pop/rock等のボーカル曲や通常の曲では、デジタル歪み（音の硬さ）防止のため高域EQの最大ブースト量を+0.4dBに抑制
+  // ただしEDM、Metal、Hardcore等の電子音楽・激しいジャンルでは、ピコピコしたシンセ音の輝きやアタック感を損なわないよう、最大+1.2dBまでのブーストを許容
+  const isElectronicGenre = (detectedGenre === 'edm' || detectedGenre === 'hardcore' || detectedGenre === 'metal' ||
+                             genreKey === 'edm' || genreKey === 'hardcore' || genreKey === 'metal');
+  const maxHighBoost = isElectronicGenre ? 1.2 : 0.4;
+  let eqHighGain = Math.max(-5.0, Math.min(maxHighBoost, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
 
-  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを安全のために最大+0.4dBにクランプ
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを安全のためにクランプ
   // （クロスオーバーが10,500Hz以上に引き上げられたため、サ行のキンキン感を刺激せずに超高域の抜け・空気感のみを追加できます）
   if (sibilanceDynamicFreq > 0) {
-    eqHighGain = Math.min(0.4, eqHighGain);
+    const sibilanceClampLimit = isElectronicGenre ? 0.8 : 0.4;
+    eqHighGain = Math.min(sibilanceClampLimit, eqHighGain);
   }
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
@@ -2446,6 +2456,7 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       satType: basePreset.satType,
       satDrive: satDrive,
       satMix: satMix,
+      satLpfFreq: basePreset.satLpfFreq || 4500,
       eqLowGain: finalEqLowGain,
       eqLowFreq: suggestedEqLowFreq,
       eqLowQ: finalEqLowQ,
@@ -2493,6 +2504,7 @@ function loadGenrePreset(genreKey) {
   params.satType = src.satType;
   params.satDrive = src.satDrive;
   params.satMix = src.satMix;
+  params.satLpfFreq = src.satLpfFreq || 4500;
   
   params.eqLowGain = src.eqLowGain;
   params.eqLowFreq = src.eqLowFreq;
@@ -3533,6 +3545,7 @@ function runAiAnalysis(showLog = true) {
       params.satType = sug.satType;
       params.satDrive = sug.satDrive;
       params.satMix = sug.satMix;
+      params.satLpfFreq = sug.satLpfFreq || 4500;
       params.eqLowGain = sug.eqLowGain;
       params.eqLowFreq = sug.eqLowFreq;
       params.eqLowQ = sug.eqLowQ || 0.70;
