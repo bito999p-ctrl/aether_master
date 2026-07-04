@@ -196,7 +196,28 @@
 
     <div class="timeline">
       
-      <!-- v3.25.0 -->
+      <!-- v4.3.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v4.3.0</span>
+          <span class="version-date">2026.07.04</span>
+          <span class="version-title">「J-Pop/Rock 楽曲感（中低音の温かみ ＆ 抜け）」特化マスタリングエンジンへの大刷新 ＆ ログコピー機能</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">機能</span><strong>「LOW-MID EQ（200Hz）」と「MID-HIGH PEAK EQ（3kHz）」の追加（5バンドEQ化）</strong>：中低域に心地よい豊かさを与える200Hzバンドと、ボーカルを近く引き出す3kHzバンドを追加。痛い「カーン」という1kHzの金属感を抑えるため、MID PEAKを1000Hzに統一しました。</li>
+          <li><span class="badge-change">改善</span><strong>サチュレーター内LPF（4.5kHz）の追加による高域倍音歪みの除去</strong>：飽和ウェット回路に4.5kHzのローパスを組み込み、高域アタックがサチュレーションで毛羽立つ（デジタル的な硬さになる）のを防止。中低域だけに温かいアナロググール（glue）を与えます。</li>
+          <li><span class="badge-change">改善</span><strong>コンプレッサーのソフトニー化（18dB）による滑らかな接着効果</strong>：しきい値を越える際のトランジションをなだらかにし、音の接着感を高めます。</li>
+          <li><span class="badge-change">改善</span><strong>AI AUTOのインテリジェント化（低域/高域/中高域の自動判定）</strong>：
+            <ul>
+              <li><strong>低域シェルフ周波数の動的選定</strong>：低音過多なら120Hzでカット、不足なら80Hzで深く持ち上げるよう自動判定。</li>
+              <li><strong>高域シェルフのエアバンドシフト</strong>：クロスオーバー周波数を10,500Hz以上に逃がし、サ行の共鳴があっても安全に極上の空気感（Air）をブースト可能に。</li>
+              <li><strong>ボーカル距離（3kHz）の無段階追従</strong>：デッドゾーンを廃止し、プレゼンスの過不足に完全リニアで追従して存在感を補正。</li>
+            </ul>
+          </li>
+          <li><span class="badge-add">機能</span><strong>診断ログの「自動折り返し」および「COPY LOG（コピー）」ボタンの搭載</strong>：ログがはみ出して横スクロールバーが出る問題を解消し、ワンクリックで全履歴をテキストコピーできるボタンを追加しました。</li>
+        </ul>
+      </div>
+
       <!-- v4.2.0 -->
       <div class="timeline-item major">
         <div class="version-header">

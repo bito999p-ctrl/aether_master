@@ -121,7 +121,6 @@
       </section>
     </div>
 
-
       <main class="dashboard-grid">
         <section class="panel meter-panel">
         <div class="panel-header">
@@ -331,7 +330,7 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 3-BAND EQ <span class="help-icon" data-tooltip="「低音」「中音」「高音」の3つの帯域の音量を調整し、音がこもっている、またはキンキンする場合に直感的に直せます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 4-BAND EQ <span class="help-icon" data-tooltip="低音、中低音、中音、高音の4つの帯域の音量を調整し、暖かみや太さを出しつつキンキン感などを除去します。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="eq-band">
           <div class="eq-band-header">
@@ -356,6 +355,27 @@
         </div>
         <div class="eq-band">
           <div class="eq-band-header">
+            <span class="band-name">LOW-MID PEAK</span>
+            <span class="value-readout" id="eq-low-mid-val">0.0 dB</span>
+          </div>
+          <div class="eq-row">
+            <input type="range" id="eq-low-mid-gain" min="-12" max="12" step="0.5" value="0.0">
+            <div class="freq-input-group">
+              <input type="number" id="eq-low-mid-freq" min="150" max="350" value="200">
+              <span class="unit">Hz</span>
+            </div>
+          </div>
+          <div class="eq-row" style="margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
+              <span class="band-name" style="font-size: 0.65rem;">LOW-MID Q</span>
+              <span class="help-icon" data-tooltip="ローミッド（中低域）のQ値です。ボーカルの温かみやベースのふくよかさを調整する帯域の幅を設定します。"><i class="fa-regular fa-circle-question"></i></span>
+            </div>
+            <input type="range" id="eq-low-mid-q" min="0.3" max="1.5" step="0.05" value="0.60">
+            <span class="value-readout" id="eq-low-mid-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">0.60</span>
+          </div>
+        </div>
+        <div class="eq-band">
+          <div class="eq-band-header">
             <span class="band-name">MID PEAK</span>
             <span class="value-readout" id="eq-mid-val">-0.5 dB</span>
           </div>
@@ -373,6 +393,27 @@
             </div>
             <input type="range" id="eq-mid-q" min="0.3" max="5.0" step="0.1" value="1.0">
             <span class="value-readout" id="eq-mid-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">1.0</span>
+          </div>
+        </div>
+        <div class="eq-band">
+          <div class="eq-band-header">
+            <span class="band-name">MID-HIGH PEAK</span>
+            <span class="value-readout" id="eq-mid-high-val">0.0 dB</span>
+          </div>
+          <div class="eq-row">
+            <input type="range" id="eq-mid-high-gain" min="-12" max="12" step="0.5" value="0.0">
+            <div class="freq-input-group">
+              <input type="number" id="eq-mid-high-freq" min="2000" max="5000" value="3000">
+              <span class="unit">Hz</span>
+            </div>
+          </div>
+          <div class="eq-row" style="margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
+              <span class="band-name" style="font-size: 0.65rem;">MID-HIGH Q</span>
+              <span class="help-icon" data-tooltip="ミッドハイ（中高域）のQ値です。ボーカルの抜けや存在感（距離感）を調節します。"><i class="fa-regular fa-circle-question"></i></span>
+            </div>
+            <input type="range" id="eq-mid-high-q" min="0.3" max="3.0" step="0.1" value="1.0">
+            <span class="value-readout" id="eq-mid-high-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">1.0</span>
           </div>
         </div>
         <div class="eq-band">
@@ -569,9 +610,12 @@
       <section class="panel console-panel full-width">
         <div class="panel-header">
           <h2 class="panel-title"><i class="fa-solid fa-terminal"></i> SYSTEM DIAGNOSTIC LOG <span class="help-icon" data-tooltip="AIが曲のどこを検知して、どう補正したかの「思考プロセス」をリアルタイムで表示する診断モニターです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <button id="btn-clear-log" class="tab-btn">CLEAR LOG</button>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-copy-log" class="tab-btn" style="display: flex; align-items: center; gap: 4px;"><i class="fa-regular fa-copy"></i> COPY LOG</button>
+            <button id="btn-clear-log" class="tab-btn">CLEAR LOG</button>
+          </div>
         </div>
-        <div class="console-log-content" id="debug-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8;">
+        <div class="console-log-content" id="debug-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8; word-wrap: break-word; word-break: break-all; white-space: pre-wrap;">
           <div class="log-line info" style="color: #00f2fe;">[SYSTEM] AetherMaster Diagnostic Console Initialized. Ready.</div>
         </div>
       </section>
@@ -634,6 +678,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=4.1.0"></script>
+  <script type="module" src="app.js?v=4.3.0"></script>
 </body>
 </html>

@@ -120,9 +120,15 @@ const params = {
   eqLowGain: 1.0,
   eqLowFreq: 120,
   eqLowQ: 0.70,
+  eqLowMidGain: 0.0,
+  eqLowMidFreq: 200,
+  eqLowMidQ: 0.60,
   eqMidGain: -0.5,
   eqMidFreq: 1000,
   eqMidQ: 1.0,
+  eqMidHighGain: 0.0,
+  eqMidHighFreq: 3000,
+  eqMidHighQ: 1.0,
   eqHighGain: 1.5,
   eqHighFreq: 10000,
   eqHighQ: 0.70,
@@ -188,7 +194,9 @@ export const GENRE_PRESETS = {
   auto: {
     satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10,
     eqLowGain: 0.0, eqLowFreq: 90, eqLowQ: 0.70,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.0, eqHighFreq: 9000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
     stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
@@ -196,7 +204,9 @@ export const GENRE_PRESETS = {
   pops: {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10,
     eqLowGain: 1.5, eqLowFreq: 100, eqLowQ: 0.70,
-    eqMidGain: 0.6, eqMidFreq: 1800, eqMidQ: 1.0,
+    eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
+    eqMidGain: -0.5, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.9, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 12000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
     stereoWidth: 1.22, limiterBoost: 3.5, sideHighPassFreq: 110
@@ -204,7 +214,9 @@ export const GENRE_PRESETS = {
   rnb: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12,
     eqLowGain: 2.2, eqLowFreq: 75, eqLowQ: 0.80,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.8, eqHighFreq: 10000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
     stereoWidth: 1.25, limiterBoost: 3.5, sideHighPassFreq: 110
@@ -212,7 +224,9 @@ export const GENRE_PRESETS = {
   rock: {
     satEnabled: true, satType: 'tape', satDrive: 22, satMix: 12,
     eqLowGain: 2.0, eqLowFreq: 90, eqLowQ: 0.65,
-    eqMidGain: 0.8, eqMidFreq: 2800, eqMidQ: 1.2,
+    eqLowMidGain: 0.8, eqLowMidFreq: 220, eqLowMidQ: 0.60,
+    eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 1.0,
+    eqMidHighGain: 0.8, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.6, eqHighFreq: 8000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
     stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
@@ -220,7 +234,9 @@ export const GENRE_PRESETS = {
   metal: {
     satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14,
     eqLowGain: 2.2, eqLowFreq: 85, eqLowQ: 0.60,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.5, eqMidFreq: 400, eqMidQ: 0.8,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.2, eqHighFreq: 8500, eqHighQ: 0.75,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
     stereoWidth: 1.28, limiterBoost: 4.5, sideHighPassFreq: 120
@@ -228,7 +244,9 @@ export const GENRE_PRESETS = {
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20,
     eqLowGain: 1.8, eqLowFreq: 90, eqLowQ: 0.85,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.0, eqHighFreq: 11000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
     stereoWidth: 1.30, limiterBoost: 4.5, sideHighPassFreq: 150
@@ -236,7 +254,9 @@ export const GENRE_PRESETS = {
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14,
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.90,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.5, eqHighFreq: 10000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
     stereoWidth: 1.20, limiterBoost: 4.2, sideHighPassFreq: 150
@@ -244,7 +264,9 @@ export const GENRE_PRESETS = {
   lofi: {
     satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30,
     eqLowGain: 3.5, eqLowFreq: 150, eqLowQ: 0.55,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1200, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: -4.5, eqHighFreq: 7000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.5, compAttack: 0.06, compRelease: 0.30,
     stereoWidth: 0.92, limiterBoost: 2.8, sideHighPassFreq: 110
@@ -252,7 +274,9 @@ export const GENRE_PRESETS = {
   hardcore: {
     satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22,
     eqLowGain: 3.0, eqLowFreq: 80, eqLowQ: 0.80,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.5, eqHighFreq: 12000, eqHighQ: 0.80,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
     stereoWidth: 1.38, limiterBoost: 5.0, sideHighPassFreq: 150
@@ -260,7 +284,9 @@ export const GENRE_PRESETS = {
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6,
     eqLowGain: 2.0, eqLowFreq: 80, eqLowQ: 0.50,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 1.8, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -6.0, compRatio: 1.2, compAttack: 0.12, compRelease: 0.40,
     stereoWidth: 1.55, limiterBoost: 2.0, sideHighPassFreq: 90
@@ -268,7 +294,9 @@ export const GENRE_PRESETS = {
   podcast: {
     satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5,
     eqLowGain: -2.0, eqLowFreq: 120, eqLowQ: 0.80,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 1.0,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.2, eqHighFreq: 8000, eqHighQ: 0.70,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.3, compAttack: 0.02, compRelease: 0.15,
     stereoWidth: 1.00, limiterBoost: 2.5, sideHighPassFreq: 150
@@ -276,7 +304,9 @@ export const GENRE_PRESETS = {
   classic: {
     satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0,
     eqLowGain: 0.5, eqLowFreq: 100, eqLowQ: 0.55,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.7,
+    eqMidHighGain: 0.0, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.0, eqHighFreq: 10000, eqHighQ: 0.55,
     compEnabled: true, compThreshold: -4.0, compRatio: 1.15, compAttack: 0.15, compRelease: 0.50,
     stereoWidth: 1.30, limiterBoost: 1.5, sideHighPassFreq: 90
@@ -284,7 +314,9 @@ export const GENRE_PRESETS = {
   jazz: {
     satEnabled: true, satType: 'tube', satDrive: 10, satMix: 8,
     eqLowGain: 1.2, eqLowFreq: 110, eqLowQ: 0.60,
+    eqLowMidGain: 1.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.2, eqMidFreq: 1500, eqMidQ: 1.0,
+    eqMidHighGain: 0.2, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.4, eqHighFreq: 10000, eqHighQ: 0.60,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.06, compRelease: 0.25,
     stereoWidth: 1.20, limiterBoost: 2.2, sideHighPassFreq: 90
@@ -292,7 +324,9 @@ export const GENRE_PRESETS = {
   acoustic: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8,
     eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.60,
+    eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.60,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 1.0,
+    eqMidHighGain: 0.3, eqMidHighFreq: 3000, eqMidHighQ: 1.0,
     eqHighGain: 0.8, eqHighFreq: 11000, eqHighQ: 0.65,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
     stereoWidth: 1.25, limiterBoost: 2.5, sideHighPassFreq: 90
@@ -502,7 +536,15 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   hissFilter.connect(satDryGain);
   hissFilter.connect(satHpf);
   satHpf.connect(waveShaper); // Feed highpassed signal to waveshaper to keep low end clean
-  waveShaper.connect(satWetGain);
+  
+  // Create saturator LPF to prevent high-frequency distortion glare (above 4.5kHz)
+  const satLpf = context.createBiquadFilter();
+  satLpf.type = 'lowpass';
+  satLpf.frequency.setValueAtTime(4500.0, context.currentTime);
+  satLpf.Q.setValueAtTime(0.5, context.currentTime);
+  
+  waveShaper.connect(satLpf);
+  satLpf.connect(satWetGain);
 
   // Hook up sidechain envelope follower path (splits from rumbleFilter output)
   rumbleFilter.connect(sidechainHpf);
@@ -523,6 +565,13 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqLow.frequency.setValueAtTime(parameters.eqLowFreq, context.currentTime);
   eqLow.gain.setValueAtTime(parameters.eqLowGain, context.currentTime);
   eqLow.Q.setValueAtTime(parameters.eqLowQ || 0.70, context.currentTime);
+  
+  // Dedicated Low-Mid Peaking Filter for Warmth & Vocal Body (200Hz)
+  const eqLowMid = context.createBiquadFilter();
+  eqLowMid.type = 'peaking';
+  eqLowMid.frequency.setValueAtTime(parameters.eqLowMidFreq || 200.0, context.currentTime);
+  eqLowMid.gain.setValueAtTime(parameters.eqLowMidGain || 0.0, context.currentTime);
+  eqLowMid.Q.setValueAtTime(parameters.eqLowMidQ || 0.60, context.currentTime);
 
   // Dedicated Peaking Filter for Kick Punch (v3.30+)
   const kickPeaking = context.createBiquadFilter();
@@ -538,6 +587,13 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqMid.Q.setValueAtTime(parameters.eqMidQ, context.currentTime);
   eqMid.frequency.setValueAtTime(parameters.eqMidFreq, context.currentTime);
   eqMid.gain.setValueAtTime(parameters.eqMidGain, context.currentTime);
+
+  // Dedicated Mid-High Peaking Filter for Vocal Presence & Distance (3000Hz)
+  const eqMidHigh = context.createBiquadFilter();
+  eqMidHigh.type = 'peaking';
+  eqMidHigh.frequency.setValueAtTime(parameters.eqMidHighFreq || 3000.0, context.currentTime);
+  eqMidHigh.gain.setValueAtTime(parameters.eqMidHighGain || 0.0, context.currentTime);
+  eqMidHigh.Q.setValueAtTime(parameters.eqMidHighQ || 1.0, context.currentTime);
 
   const eqHigh = context.createBiquadFilter();
   eqHigh.type = 'highshelf';
@@ -612,9 +668,11 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqCorrective8.gain.setValueAtTime(parameters.correctiveNotches[7].enabled ? (parameters.correctiveNotches[7].gain * setupHissFactor) : 0.0, context.currentTime);
 
   satSumNode.connect(eqLow);
-  eqLow.connect(kickPeaking);
+  eqLow.connect(eqLowMid);
+  eqLowMid.connect(kickPeaking);
   kickPeaking.connect(eqMid);
-  eqMid.connect(eqHigh);
+  eqMid.connect(eqMidHigh);
+  eqMidHigh.connect(eqHigh);
   eqHigh.connect(sibilanceNotch);
   sibilanceNotch.connect(eqCorrective1);
   eqCorrective1.connect(eqCorrective2);
@@ -627,7 +685,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   // 4. Glue Compressor
   const compressor = context.createDynamicsCompressor();
-  compressor.knee.setValueAtTime(6.0, context.currentTime); // Soft knee
+  compressor.knee.setValueAtTime(18.0, context.currentTime); // analog-style soft knee (18dB transition)
 
   if (parameters.compEnabled) {
     compressor.threshold.setValueAtTime(parameters.compThreshold, context.currentTime);
@@ -744,8 +802,10 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     satWetGain,
     waveShaper,
     eqLow,
+    eqLowMid,
     kickPeaking,
     eqMid,
+    eqMidHigh,
     eqHigh,
     sibilanceNotch,
     sibilanceNotchDynamicGain,
@@ -894,8 +954,10 @@ function startPlayback() {
   activeNodes.satWetGain = chain.satWetGain;
   activeNodes.waveShaper = chain.waveShaper;
   activeNodes.eqLow = chain.eqLow;
+  activeNodes.eqLowMid = chain.eqLowMid;
   activeNodes.kickPeaking = chain.kickPeaking;
   activeNodes.eqMid = chain.eqMid;
+  activeNodes.eqMidHigh = chain.eqMidHigh;
   activeNodes.eqHigh = chain.eqHigh;
   activeNodes.sibilanceNotch = chain.sibilanceNotch;
   activeNodes.sibilanceNotchDynamicGain = chain.sibilanceNotchDynamicGain;
@@ -1629,6 +1691,11 @@ function updateEqNodes() {
     activeNodes.eqLow.gain.setTargetAtTime(p.eqLowGain, audioContext.currentTime, 0.01);
     activeNodes.eqLow.Q.setTargetAtTime(p.eqLowQ || 0.70, audioContext.currentTime, 0.01);
   }
+  if (activeNodes.eqLowMid) {
+    activeNodes.eqLowMid.frequency.setTargetAtTime(p.eqLowMidFreq || 200, audioContext.currentTime, 0.01);
+    activeNodes.eqLowMid.gain.setTargetAtTime(p.eqLowMidGain || 0.0, audioContext.currentTime, 0.01);
+    activeNodes.eqLowMid.Q.setTargetAtTime(p.eqLowMidQ || 0.60, audioContext.currentTime, 0.01);
+  }
   if (activeNodes.kickPeaking) {
     activeNodes.kickPeaking.gain.setTargetAtTime(p.kickPeakingGain, audioContext.currentTime, 0.01);
   }
@@ -1636,6 +1703,11 @@ function updateEqNodes() {
     activeNodes.eqMid.frequency.setTargetAtTime(p.eqMidFreq, audioContext.currentTime, 0.01);
     activeNodes.eqMid.gain.setTargetAtTime(p.eqMidGain, audioContext.currentTime, 0.01);
     activeNodes.eqMid.Q.setTargetAtTime(p.eqMidQ, audioContext.currentTime, 0.01);
+  }
+  if (activeNodes.eqMidHigh) {
+    activeNodes.eqMidHigh.frequency.setTargetAtTime(p.eqMidHighFreq || 3000, audioContext.currentTime, 0.01);
+    activeNodes.eqMidHigh.gain.setTargetAtTime(p.eqMidHighGain || 0.0, audioContext.currentTime, 0.01);
+    activeNodes.eqMidHigh.Q.setTargetAtTime(p.eqMidHighQ || 1.0, audioContext.currentTime, 0.01);
   }
   if (activeNodes.eqHigh) {
     activeNodes.eqHigh.frequency.setTargetAtTime(p.eqHighFreq, audioContext.currentTime, 0.01);
@@ -1962,8 +2034,64 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     sugHissAmount = Math.round(rawHiss * quietnessScale);
   }
 
-  // 8連サージカルノッチフィルターはバイパスしますが、サ行のキンキン音（sibilance）を検知して高域EQのブーストを安全クランプするためにスキャンを実行します
+  // 歌の音域のカーン域共鳴音（1000Hz-4000Hz）および高域の鋭いピーク（4000Hz-12000Hz）をマルチスキャンして自動補正ノッチを構築
   const filteredPeaks = [];
+  const scanMinBin = Math.floor((1000 * fftSize) / sampleRate);
+  const scanMaxBin = Math.min(fftSize / 2 - 1, Math.floor((12000 * fftSize) / sampleRate));
+  const rawResonancePeaks = [];
+
+  for (let j = scanMinBin; j < scanMaxBin; j++) {
+    const val = avgSpectrum[j];
+    const peakFreq = Math.round((j * sampleRate) / fftSize);
+    
+    if (val > avgSpectrum[j - 1] && val > avgSpectrum[j + 1]) {
+      const localBins = [
+        avgSpectrum[j - 4], avgSpectrum[j - 3], avgSpectrum[j - 2],
+        avgSpectrum[j + 2], avgSpectrum[j + 3], avgSpectrum[j + 4]
+      ];
+      const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
+      const ratio = val / (localFloor + 1e-9);
+
+      // Mid range (1kHz-4kHz) vs High range (4kHz-12kHz) detection thresholds
+      const isMidRange = (peakFreq >= 1000 && peakFreq < 4000);
+      const thresholdMultiplier = isMidRange ? 1.25 : 1.15; // Mid is slightly more robust, high is sensitive
+      
+      if (ratio > thresholdMultiplier) {
+        let cutDb = 0;
+        let targetQ = 10.0;
+        
+        if (isMidRange) {
+          // Mid range (vocals, "ka-n" resonance): apply gentle notch (-1.0dB to -2.8dB max) to avoid hollow vocals
+          cutDb = -Math.min(2.8, 1.0 + (ratio - thresholdMultiplier) * 5.0);
+          targetQ = 10.0; // musical Q for voice resonance removal
+        } else {
+          // High range (whistles, sibilance): apply surgical notch (-1.5dB to -4.5dB max)
+          cutDb = -Math.min(4.5, 1.5 + (ratio - thresholdMultiplier) * 7.0);
+          targetQ = 15.0; // very narrow Q for high frequency whistle notch
+        }
+
+        rawResonancePeaks.push({
+          freq: peakFreq,
+          cut: Math.round(cutDb * 10) / 10,
+          q: targetQ,
+          score: ratio,
+          isBroad: isMidRange
+        });
+      }
+    }
+  }
+
+  // Sort peaks by prominence score descending
+  rawResonancePeaks.sort((a, b) => b.score - a.score);
+
+  // Select top 8 peaks that are at least 350Hz apart to avoid clustering
+  for (const peak of rawResonancePeaks) {
+    if (filteredPeaks.length >= 8) break;
+    const tooClose = filteredPeaks.some(p => Math.abs(p.freq - peak.freq) < 350);
+    if (!tooClose) {
+      filteredPeaks.push(peak);
+    }
+  }
   let sibilanceDynamicFreq = 0;
   
   const sibilanceMinBin = Math.floor((8000 * fftSize) / sampleRate);
@@ -2054,13 +2182,43 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   // 最大ブースト許容値を +3.0dB から +4.5dB に引き上げ、薄い音源でもプロ水準の豊かな低音を再現可能に
   const eqLowGain = Math.max(-5.0, Math.min(4.5, Math.round((basePreset.eqLowGain + eqLowAdjustment) * 2) / 2));
 
-  let eqMidAdjustment = 0;
-  if (presenceDiffDb > 0.5) {
-    eqMidAdjustment = -Math.min(1.8, presenceDiffDb * 0.5); // 派手すぎる場合は中域を抑えてマイルドに（最大-1.8dB）
-  } else if (presenceDiffDb < -0.5) {
-    eqMidAdjustment = Math.min(1.2, -presenceDiffDb * 0.45); // こもっている場合はマイルドに補強（最大+1.2dB）
+  let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
+  if (lowDiffDb > 1.0) {
+    // 低音過剰（モコモコ）な音源：低域シェルフ周波数を高めの120Hzに設定し、不要な重低音をすっきりカット
+    suggestedEqLowFreq = 120;
+  } else if (lowDiffDb < -1.0) {
+    // 低音不足な音源：低域シェルフ周波数を低めの80Hzに下げ、超低域の土台だけをしっかりとブースト
+    suggestedEqLowFreq = 80;
+  } else {
+    suggestedEqLowFreq = 100;
   }
-  const eqMidGain = Math.max(-4.0, Math.min(1.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2)); // 中音域が強くなりすぎないよう最大値を+1.0dBにクランプ
+
+  let eqLowMidAdjustment = 0;
+  if (lowDiffDb > 0.5) {
+    // 低音に対してローミッド（中低域）が引っ込んでいる（スカスカしている）場合、温かみを付加するため最大+1.5dBの範囲でローミッドを補正ブースト
+    eqLowMidAdjustment = Math.min(1.5, (lowDiffDb - 0.5) * 0.5);
+  } else if (lowDiffDb < -0.5) {
+    // すでに十分にローミッドが豊かすぎる場合、少しすっきりさせるため最大-1.0dBカット
+    eqLowMidAdjustment = -Math.min(1.0, (-lowDiffDb - 0.5) * 0.4);
+  }
+  const eqLowMidGain = Math.max(-2.0, Math.min(1.5, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment) * 10) / 10));
+
+  let eqMidAdjustment = 0;
+  if (presenceDiffDb > 0.3) {
+    // 中音域（1kHz）の箱鳴りや圧迫感を防ぐため、基準より少しでも中域が膨らんでいる場合は積極的にカット（最大-2.5dB）
+    eqMidAdjustment = -Math.min(2.5, (presenceDiffDb - 0.3) * 0.8);
+  } else if (presenceDiffDb < -0.5) {
+    // 中域が凹んでいる場合でも、ボーカルの痛い響きやリミッターによる音圧過多（圧の強さ）を防ぐため、1kHzのブーストは最大でも+0.2dBに極めて小さく抑制
+    eqMidAdjustment = Math.min(0.2, (-presenceDiffDb - 0.5) * 0.2);
+  }
+  // 最大値を 0.0dB にクランプし、AIが1kHz付近を過剰にブーストするのを根本的に禁止します（痛い圧迫感を完全に防止）
+  const eqMidGain = Math.max(-4.0, Math.min(0.0, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 2) / 2));
+
+  // デッドゾーンを廃止し、中高域（プレゼンス域）の過不足に対して無段階・高感度でリニアに追従する設計に変更
+  // プレゼンス過多なら減衰、不足（ボーカルの遠さ）なら最大+1.5dBの範囲でアクティブに持ち上げて存在感を補正
+  let eqMidHighAdjustment = -presenceDiffDb * 0.8;
+  eqMidHighAdjustment = Math.max(-1.5, Math.min(1.5, eqMidHighAdjustment));
+  const eqMidHighGain = Math.max(-3.0, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
 
   let eqHighAdjustment = 0;
   if (highDiffDb > 0.0) { // 音源が既にターゲットより明るい場合は、高域EQを抑制・カット方向に動的調整（デッドゾーンを排除してキンキン音を防止）
@@ -2069,11 +2227,13 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     eqHighAdjustment = Math.min(1.5, -highDiffDb * 0.5);
   }
 
-  let eqHighGain = Math.max(-5.0, Math.min(0.8, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+0.8dBに制限
+  // J-pop/rock等の楽曲感とデジタル歪み（音の硬さ）防止のため、高域EQの最大ブースト量を+0.4dBに抑制
+  let eqHighGain = Math.max(-5.0, Math.min(0.4, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2));
 
-  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを制限し、安全のために最大でも+0.2dBにクランプ
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを安全のために最大+0.4dBにクランプ
+  // （クロスオーバーが10,500Hz以上に引き上げられたため、サ行のキンキン感を刺激せずに超高域の抜け・空気感のみを追加できます）
   if (sibilanceDynamicFreq > 0) {
-    eqHighGain = Math.min(0.2, eqHighGain);
+    eqHighGain = Math.min(0.4, eqHighGain);
   }
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
@@ -2155,8 +2315,8 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     limiterBoost = Math.max(2.0, limiterBoost - bassOverloadPenalty);
   }
 
-  // 0.0〜8.0dB の範囲に制限し（耳を保護するため最大値を8.0dBに抑制）、小数点第一位に丸める
-  limiterBoost = Math.max(0.0, Math.min(8.0, Math.round(limiterBoost * 10) / 10));
+  // J-pop/rock等の楽曲感とデジタル歪み（音の硬さ）防止のため、自動ブースト上限を5.5dBに制限
+  limiterBoost = Math.max(0.0, Math.min(5.5, Math.round(limiterBoost * 10) / 10));
 
   // ステレオ幅の補正 (位相相関に基づいた連続的スケーリング)
   let stereoWidth = basePreset.stereoWidth;
@@ -2208,24 +2368,12 @@ function analyzeAudioResonances(buffer, userPresetKey) {
 
   const airToBrillianceRatio = airEnergy / (brillianceEnergy + 1e-6);
 
-  let suggestedEqHighFreq = basePreset.eqHighFreq;
-
-  if (actualHighMidRatio < 0.10) {
-    // High-mids are extremely dull overall -> Pull down the shelf to boost from 8.0kHz
-    suggestedEqHighFreq = 8000;
-  } else if (airToBrillianceRatio < 0.16) {
-    // Air drops off sharply compared to mid-highs -> Target the transition around 9.5kHz
-    suggestedEqHighFreq = 9500;
-  } else if (airToBrillianceRatio > 0.32) {
-    // Air is already present, but could use air-band finish -> Target 12kHz
-    suggestedEqHighFreq = 12000;
-  } else {
-    // Normal balanced spectrum -> Target standard 10kHz or preset default
-    suggestedEqHighFreq = Math.round((basePreset.eqHighFreq || 10000) / 500) * 500;
-  }
-
-  // Clamp within safe high shelf ranges (7,500Hz to 13,000Hz)
-  suggestedEqHighFreq = Math.max(7500, Math.min(13000, suggestedEqHighFreq));
+  // Calculate the high-frequency crossover frequency dynamically based on the treble roll-off slope (airToBrillianceRatio)
+  // ボーカルのサ行や高域のきつい金属音（6kHz〜9kHz）をブーストするのを防ぐため、クロスオーバー下限周波数を10,500Hzに引き上げ（10.5kHz〜14kHzのエアバンド域のみを処理）
+  const normalizedRatio = Math.max(0.08, Math.min(0.38, airToBrillianceRatio));
+  let suggestedEqHighFreq = 10500 + ((normalizedRatio - 0.08) / 0.30) * 3500;
+  suggestedEqHighFreq = Math.round(suggestedEqHighFreq / 250) * 250;
+  suggestedEqHighFreq = Math.max(10500, Math.min(14000, suggestedEqHighFreq));
 
   // 4. Stereo Bass phase cancellation safeguard (ビビリ音・歪み防止)
   let finalEqLowGain = eqLowGain;
@@ -2256,6 +2404,29 @@ function analyzeAudioResonances(buffer, userPresetKey) {
     suggestedDeesserAmount = Math.round(Math.min(98, Math.max(50, 50 + (maxScore - 1.15) * 80)));
   }
 
+  // AI Dynamic Q-value calculation based on the correction gains
+  let finalEqLowQ = basePreset.eqLowQ || 0.70;
+  const absLowGain = Math.abs(finalEqLowGain);
+  if (absLowGain > 2.0) {
+    // Narrow the Q slightly for deep boosts/cuts to avoid bloating adjacent low-mids (up to 0.85)
+    finalEqLowQ = Math.min(0.85, 0.70 + (absLowGain - 2.0) * 0.05);
+  } else if (absLowGain < 1.0) {
+    // Widen the Q for transparent minor corrections (down to 0.55)
+    finalEqLowQ = Math.max(0.55, 0.70 - (1.0 - absLowGain) * 0.15);
+  }
+  finalEqLowQ = Math.round(finalEqLowQ * 100) / 100;
+
+  let finalEqHighQ = basePreset.eqHighQ || 0.70;
+  const absHighGain = Math.abs(eqHighGain);
+  if (absHighGain > 1.2) {
+    // Narrow the Q slightly for deep boosts/cuts to protect critical vocal presence frequencies (up to 0.80)
+    finalEqHighQ = Math.min(0.80, 0.70 + (absHighGain - 1.2) * 0.05);
+  } else if (absHighGain < 0.6) {
+    // Widen the Q for broad, airy high-end shine (down to 0.55)
+    finalEqHighQ = Math.max(0.55, 0.70 - (0.6 - absHighGain) * 0.25);
+  }
+  finalEqHighQ = Math.round(finalEqHighQ * 100) / 100;
+
   return {
     detected: filteredPeaks.length > 0,
     notches: filteredPeaks,
@@ -2276,12 +2447,20 @@ function analyzeAudioResonances(buffer, userPresetKey) {
       satDrive: satDrive,
       satMix: satMix,
       eqLowGain: finalEqLowGain,
-      eqLowFreq: basePreset.eqLowFreq,
+      eqLowFreq: suggestedEqLowFreq,
+      eqLowQ: finalEqLowQ,
+      eqLowMidGain: eqLowMidGain,
+      eqLowMidFreq: basePreset.eqLowMidFreq || 200,
+      eqLowMidQ: basePreset.eqLowMidQ || 0.60,
       eqMidGain: eqMidGain,
       eqMidFreq: basePreset.eqMidFreq,
       eqMidQ: basePreset.eqMidQ || 1.0,
+      eqMidHighGain: eqMidHighGain,
+      eqMidHighFreq: basePreset.eqMidHighFreq || 3000,
+      eqMidHighQ: basePreset.eqMidHighQ || 1.0,
       eqHighGain: eqHighGain,
       eqHighFreq: suggestedEqHighFreq,
+      eqHighQ: finalEqHighQ,
       compEnabled: basePreset.compEnabled,
       compThreshold: compThreshold,
       compRatio: compRatio,
@@ -2317,11 +2496,19 @@ function loadGenrePreset(genreKey) {
   
   params.eqLowGain = src.eqLowGain;
   params.eqLowFreq = src.eqLowFreq;
+  params.eqLowQ = src.eqLowQ || 0.70;
+  params.eqLowMidGain = src.eqLowMidGain || 0.0;
+  params.eqLowMidFreq = src.eqLowMidFreq || 200;
+  params.eqLowMidQ = src.eqLowMidQ || 0.60;
   params.eqMidGain = src.eqMidGain;
   params.eqMidFreq = src.eqMidFreq;
   params.eqMidQ = src.eqMidQ || 1.0;
+  params.eqMidHighGain = src.eqMidHighGain || 0.0;
+  params.eqMidHighFreq = src.eqMidHighFreq || 3000;
+  params.eqMidHighQ = src.eqMidHighQ || 1.0;
   params.eqHighGain = src.eqHighGain;
   params.eqHighFreq = src.eqHighFreq;
+  params.eqHighQ = src.eqHighQ || 0.70;
   
   params.compEnabled = src.compEnabled;
   params.compThreshold = src.compThreshold;
@@ -2602,7 +2789,6 @@ function updateGuiControls() {
   document.getElementById('sat-mix-slider').value = params.satMix;
   document.getElementById('sat-mix-val').innerText = `${params.satMix}%`;
   
-  // EQ
   document.getElementById('eq-low-gain').value = params.eqLowGain;
   document.getElementById('eq-low-freq').value = params.eqLowFreq;
   document.getElementById('eq-low-val').innerText = `${params.eqLowGain >= 0 ? '+' : ''}${params.eqLowGain.toFixed(1)} dB`;
@@ -2611,11 +2797,33 @@ function updateGuiControls() {
   const eqLowQVal = document.getElementById('eq-low-q-val');
   if (eqLowQVal) eqLowQVal.innerText = (params.eqLowQ || 0.70).toFixed(2);
   
+  const eqLowMidGainInput = document.getElementById('eq-low-mid-gain');
+  if (eqLowMidGainInput) eqLowMidGainInput.value = params.eqLowMidGain || 0.0;
+  const eqLowMidFreqInput = document.getElementById('eq-low-mid-freq');
+  if (eqLowMidFreqInput) eqLowMidFreqInput.value = params.eqLowMidFreq || 200;
+  const eqLowMidVal = document.getElementById('eq-low-mid-val');
+  if (eqLowMidVal) eqLowMidVal.innerText = `${params.eqLowMidGain >= 0 ? '+' : ''}${params.eqLowMidGain.toFixed(1)} dB`;
+  const eqLowMidQInput = document.getElementById('eq-low-mid-q');
+  if (eqLowMidQInput) eqLowMidQInput.value = params.eqLowMidQ || 0.60;
+  const eqLowMidQVal = document.getElementById('eq-low-mid-q-val');
+  if (eqLowMidQVal) eqLowMidQVal.innerText = (params.eqLowMidQ || 0.60).toFixed(2);
+  
   document.getElementById('eq-mid-gain').value = params.eqMidGain;
   document.getElementById('eq-mid-freq').value = params.eqMidFreq;
   document.getElementById('eq-mid-val').innerText = `${params.eqMidGain >= 0 ? '+' : ''}${params.eqMidGain.toFixed(1)} dB`;
   document.getElementById('eq-mid-q').value = params.eqMidQ;
   document.getElementById('eq-mid-q-val').innerText = params.eqMidQ.toFixed(1);
+  
+  const eqMidHighGainInput = document.getElementById('eq-mid-high-gain');
+  if (eqMidHighGainInput) eqMidHighGainInput.value = params.eqMidHighGain || 0.0;
+  const eqMidHighFreqInput = document.getElementById('eq-mid-high-freq');
+  if (eqMidHighFreqInput) eqMidHighFreqInput.value = params.eqMidHighFreq || 3000;
+  const eqMidHighVal = document.getElementById('eq-mid-high-val');
+  if (eqMidHighVal) eqMidHighVal.innerText = `${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB`;
+  const eqMidHighQInput = document.getElementById('eq-mid-high-q');
+  if (eqMidHighQInput) eqMidHighQInput.value = params.eqMidHighQ || 1.0;
+  const eqMidHighQVal = document.getElementById('eq-mid-high-q-val');
+  if (eqMidHighQVal) eqMidHighQVal.innerText = (params.eqMidHighQ || 1.0).toFixed(2);
   
   document.getElementById('eq-high-gain').value = params.eqHighGain;
   document.getElementById('eq-high-freq').value = params.eqHighFreq;
@@ -2779,6 +2987,48 @@ function registerGuiEvents() {
     updateEqNodes();
   });
 
+  const eqLowQSlider = document.getElementById('eq-low-q');
+  if (eqLowQSlider) {
+    eqLowQSlider.addEventListener('input', (e) => {
+      params.eqLowQ = parseFloat(e.target.value);
+      const eqLowQVal = document.getElementById('eq-low-q-val');
+      if (eqLowQVal) eqLowQVal.innerText = params.eqLowQ.toFixed(2);
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+
+  // EQ Low-Mid
+  const eqLowMidGainSlider = document.getElementById('eq-low-mid-gain');
+  if (eqLowMidGainSlider) {
+    eqLowMidGainSlider.addEventListener('input', (e) => {
+      params.eqLowMidGain = parseFloat(e.target.value);
+      const eqLowMidVal = document.getElementById('eq-low-mid-val');
+      if (eqLowMidVal) eqLowMidVal.innerText = `${params.eqLowMidGain >= 0 ? '+' : ''}${params.eqLowMidGain.toFixed(1)} dB`;
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+  const eqLowMidFreqInput = document.getElementById('eq-low-mid-freq');
+  if (eqLowMidFreqInput) {
+    eqLowMidFreqInput.addEventListener('change', (e) => {
+      params.eqLowMidFreq = Math.max(150, Math.min(350, parseInt(e.target.value)));
+      e.target.value = params.eqLowMidFreq;
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+  const eqLowMidQSlider = document.getElementById('eq-low-mid-q');
+  if (eqLowMidQSlider) {
+    eqLowMidQSlider.addEventListener('input', (e) => {
+      params.eqLowMidQ = parseFloat(e.target.value);
+      const eqLowMidQVal = document.getElementById('eq-low-mid-q-val');
+      if (eqLowMidQVal) eqLowMidQVal.innerText = params.eqLowMidQ.toFixed(2);
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+
   // EQ Mid
   document.getElementById('eq-mid-gain').addEventListener('input', (e) => {
     params.eqMidGain = parseFloat(e.target.value);
@@ -2800,6 +3050,37 @@ function registerGuiEvents() {
     updateEqNodes();
   });
 
+  // EQ Mid-High
+  const eqMidHighGainSlider = document.getElementById('eq-mid-high-gain');
+  if (eqMidHighGainSlider) {
+    eqMidHighGainSlider.addEventListener('input', (e) => {
+      params.eqMidHighGain = parseFloat(e.target.value);
+      const eqMidHighVal = document.getElementById('eq-mid-high-val');
+      if (eqMidHighVal) eqMidHighVal.innerText = `${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB`;
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+  const eqMidHighFreqInput = document.getElementById('eq-mid-high-freq');
+  if (eqMidHighFreqInput) {
+    eqMidHighFreqInput.addEventListener('change', (e) => {
+      params.eqMidHighFreq = Math.max(2000, Math.min(5000, parseInt(e.target.value)));
+      e.target.value = params.eqMidHighFreq;
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+  const eqMidHighQSlider = document.getElementById('eq-mid-high-q');
+  if (eqMidHighQSlider) {
+    eqMidHighQSlider.addEventListener('input', (e) => {
+      params.eqMidHighQ = parseFloat(e.target.value);
+      const eqMidHighQVal = document.getElementById('eq-mid-high-q-val');
+      if (eqMidHighQVal) eqMidHighQVal.innerText = params.eqMidHighQ.toFixed(2);
+      selectCustomPreset();
+      updateEqNodes();
+    });
+  }
+
   // EQ High
   document.getElementById('eq-high-gain').addEventListener('input', (e) => {
     params.eqHighGain = parseFloat(e.target.value);
@@ -2813,17 +3094,6 @@ function registerGuiEvents() {
     selectCustomPreset();
     updateEqNodes();
   });
-
-  const eqLowQSlider = document.getElementById('eq-low-q');
-  if (eqLowQSlider) {
-    eqLowQSlider.addEventListener('input', (e) => {
-      params.eqLowQ = parseFloat(e.target.value);
-      const eqLowQVal = document.getElementById('eq-low-q-val');
-      if (eqLowQVal) eqLowQVal.innerText = params.eqLowQ.toFixed(2);
-      selectCustomPreset();
-      updateEqNodes();
-    });
-  }
 
   const eqHighQSlider = document.getElementById('eq-high-q');
   if (eqHighQSlider) {
@@ -3164,6 +3434,8 @@ function resetMasterSettings() {
   } else {
     document.getElementById('ai-report').style.display = 'none';
   }
+  
+  logToUI(`[Reset State JSON] ${JSON.stringify({ ...params, correctiveNotches: params.correctiveNotches.filter(n => n.enabled) })}`, "info");
 }
 
 // ==========================================================================
@@ -3264,9 +3536,15 @@ function runAiAnalysis(showLog = true) {
       params.eqLowGain = sug.eqLowGain;
       params.eqLowFreq = sug.eqLowFreq;
       params.eqLowQ = sug.eqLowQ || 0.70;
+      params.eqLowMidGain = sug.eqLowMidGain || 0.0;
+      params.eqLowMidFreq = sug.eqLowMidFreq || 200;
+      params.eqLowMidQ = sug.eqLowMidQ || 0.60;
       params.eqMidGain = sug.eqMidGain;
       params.eqMidFreq = sug.eqMidFreq;
       params.eqMidQ = sug.eqMidQ || 1.0;
+      params.eqMidHighGain = sug.eqMidHighGain || 0.0;
+      params.eqMidHighFreq = sug.eqMidHighFreq || 3000;
+      params.eqMidHighQ = sug.eqMidHighQ || 1.0;
       params.eqHighGain = sug.eqHighGain;
       params.eqHighFreq = sug.eqHighFreq;
       params.eqHighQ = sug.eqHighQ || 0.70;
@@ -3297,6 +3575,8 @@ function runAiAnalysis(showLog = true) {
       updateLimiterGainNode();
       updateCeilingNode();
       updateCorrectiveEqNodes();
+      
+      logToUI(`[AI State JSON] ${JSON.stringify({ ...params, correctiveNotches: params.correctiveNotches.filter(n => n.enabled) })}`, "success");
       
       // AI詳細レポートカード表示の更新
       document.getElementById('ai-crest-factor').innerText = `${result.crestFactor.toFixed(1)} dB`;
@@ -3350,6 +3630,18 @@ function runAiAnalysis(showLog = true) {
         <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
           <span>EQ LOW:</span>
           <span style="color: #00f2fe; font-weight: 600;">${sug.eqLowGain >= 0 ? '+' : ''}${sug.eqLowGain.toFixed(1)} dB</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span>EQ LOW-MID:</span>
+          <span style="color: #00f2fe; font-weight: 600;">${sug.eqLowMidGain >= 0 ? '+' : ''}${sug.eqLowMidGain.toFixed(1)} dB</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span>EQ MID:</span>
+          <span style="color: #00f2fe; font-weight: 600;">${sug.eqMidGain >= 0 ? '+' : ''}${sug.eqMidGain.toFixed(1)} dB</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span>EQ MID-HIGH:</span>
+          <span style="color: #00f2fe; font-weight: 600;">${sug.eqMidHighGain >= 0 ? '+' : ''}${sug.eqMidHighGain.toFixed(1)} dB</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
           <span>EQ HIGH:</span>
@@ -3476,6 +3768,53 @@ function initializeApp() {
       const logContainer = document.getElementById('debug-log');
       if (logContainer) {
         logContainer.innerHTML = '<div class="log-line info" style="color: #00f2fe;">[SYSTEM] Log cleared.</div>';
+      }
+    });
+  }
+  
+  // Copy log button
+  const copyLogBtn = document.getElementById('btn-copy-log');
+  if (copyLogBtn) {
+    copyLogBtn.addEventListener('click', () => {
+      const logContainer = document.getElementById('debug-log');
+      if (logContainer) {
+        const logLines = Array.from(logContainer.querySelectorAll('.log-line'))
+          .map(el => el.innerText)
+          .join('\n');
+          
+        navigator.clipboard.writeText(logLines)
+          .then(() => {
+            const originalText = copyLogBtn.innerHTML;
+            copyLogBtn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED!';
+            copyLogBtn.style.color = '#00f2fe';
+            setTimeout(() => {
+              copyLogBtn.innerHTML = originalText;
+              copyLogBtn.style.color = '';
+            }, 1500);
+          })
+          .catch(err => {
+            console.error('Failed to copy log:', err);
+            try {
+              const textarea = document.createElement('textarea');
+              textarea.value = logLines;
+              textarea.style.position = 'fixed';
+              textarea.style.opacity = '0';
+              document.body.appendChild(textarea);
+              textarea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textarea);
+              const originalText = copyLogBtn.innerHTML;
+              copyLogBtn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED!';
+              copyLogBtn.style.color = '#00f2fe';
+              setTimeout(() => {
+                copyLogBtn.innerHTML = originalText;
+                copyLogBtn.style.color = '';
+              }, 1500);
+            } catch (fallbackErr) {
+              console.error('Fallback copy failed:', fallbackErr);
+              alert('ログのコピーに失敗しました。');
+            }
+          });
       }
     });
   }
