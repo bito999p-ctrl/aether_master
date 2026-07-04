@@ -555,7 +555,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   const sibilanceNotchDynamicGain = context.createGain();
   // Decoupled from hissAmount: active if deesserAmount > 0
   const deesserAmt = parameters.deesserAmount || 0;
-  const initDynamicCut = -12.0 * (deesserAmt / 100.0);
+  const initDynamicCut = -14.0 * (deesserAmt / 100.0);
   sibilanceNotchDynamicGain.gain.setValueAtTime(initDynamicCut, context.currentTime);
   envelopeSmoother.connect(sibilanceNotchDynamicGain);
   sibilanceNotchDynamicGain.connect(sibilanceNotch.gain);
@@ -1596,7 +1596,7 @@ function updateNoiseCutNodes() {
     // Decoupled from hissAmount: active if deesserAmount > 0
     if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
       const amount = params.deesserAmount || 0;
-      const dynamicCut = -12.0 * (amount / 100.0);
+      const dynamicCut = -14.0 * (amount / 100.0);
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.sibilanceDynamicFreq || 9000, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
@@ -2126,6 +2126,11 @@ function analyzeAudioResonances(buffer, userPresetKey) {
   }
 
   let eqHighGain = Math.max(-5.0, Math.min(0.8, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 2) / 2)); // キンキンしすぎないよう最大ブースト量を+0.8dBに制限
+
+  // キンキン共鳴音 (sibilanceDynamicFreq > 0) が検知されている場合、高域EQのブーストを制限し、安全のために最大でも+0.2dBにクランプ
+  if (sibilanceDynamicFreq > 0) {
+    eqHighGain = Math.min(0.2, eqHighGain);
+  }
 
   // 現在選択されているラウドネス・ターゲットの取得と基準ブースト値の設定
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
