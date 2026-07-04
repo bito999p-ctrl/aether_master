@@ -517,7 +517,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // High-pass filter for Saturator Wet path to prevent low-end intermodulation mud (ボワボワ)
   const satHpf = context.createBiquadFilter();
   satHpf.type = 'highpass';
-  satHpf.frequency.setValueAtTime(150.0, context.currentTime); // Cut sub-bass/bass saturation
+  satHpf.frequency.setValueAtTime(220.0, context.currentTime); // Cut sub-bass/bass saturation below 220Hz
   satHpf.Q.setValueAtTime(0.707, context.currentTime);
 
   waveShaper.curve = generateSaturatorCurve(parameters.satType, parameters.satDrive);
@@ -771,10 +771,21 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // 7. Brickwall Limiter
   const limiter = context.createDynamicsCompressor();
   limiter.threshold.setValueAtTime(-1.0, context.currentTime); // -1.0dB に引き上げて過剰な圧縮圧と高域トランジェントの潰れを低減（ダイナミクスを保護）
-  limiter.knee.setValueAtTime(4.0, context.currentTime);      // 4.0dB に広げてよりなだらかで滑らかな制限動作へ
-  limiter.ratio.setValueAtTime(20.0, context.currentTime);    // 変わらずブリックウォール比率
-  limiter.attack.setValueAtTime(0.0015, context.currentTime); // 1.5ms に設定して、低音サイクルの波形歪み（ビビり音）を完全に防止
-  limiter.release.setValueAtTime(0.12, context.currentTime);  // 120ms に拡張し、高域の微細な歪みやポンピング（音の硬さ）を防止
+  
+  // 温和なジャンルでの低音サイクルの波形歪み（ビビり音）を完全に防止するため、リミッター時定数を動的設定
+  const genreSelect = typeof document !== 'undefined' ? document.getElementById('preset-select') : null;
+  const genreKey = genreSelect ? genreSelect.value : 'auto';
+  const isGentle = (genreKey === 'classic' || genreKey === 'jazz' || genreKey === 'ambient' || genreKey === 'acoustic' || genreKey === 'podcast' ||
+                    (genreKey === 'auto' && (aiDetectedGenre === 'classic' || aiDetectedGenre === 'jazz' || aiDetectedGenre === 'ambient' || aiDetectedGenre === 'acoustic' || aiDetectedGenre === 'podcast')));
+  
+  const initialAttack = isGentle ? 0.005 : 0.0015; // 温和な曲には5msアタックで超低域波形を保護、モダンな曲には1.5ms
+  const initialRelease = isGentle ? 0.25 : 0.12;  // 温和な曲には250msリリースで歪み防止、モダンな曲には音圧重視の120ms
+  const initialKnee = isGentle ? 12.0 : 4.0;      // 温和な曲には12dBソフト膝で極めて自然な制限、モダンな曲には4dB
+
+  limiter.knee.setValueAtTime(initialKnee, context.currentTime);
+  limiter.ratio.setValueAtTime(20.0, context.currentTime);
+  limiter.attack.setValueAtTime(initialAttack, context.currentTime);
+  limiter.release.setValueAtTime(initialRelease, context.currentTime);
 
   // 7b. Safety Soft Clipper (WaveShaper Node)
   const safetyClipper = context.createWaveShaper();
@@ -1784,6 +1795,22 @@ function updateLimiterGainNode() {
     const p = getCombinedParams();
     const gainVal = Math.pow(10, p.limiterBoost / 20);
     activeNodes.limiterGain.gain.setTargetAtTime(gainVal, audioContext.currentTime, 0.01);
+    
+    // プリセット切替時やAI解析時にもリミッターの時定数を動的に再調整して中低域のビビリ歪みを防止
+    if (activeNodes.limiter) {
+      const genreSelect = typeof document !== 'undefined' ? document.getElementById('preset-select') : null;
+      const genreKey = genreSelect ? genreSelect.value : 'auto';
+      const isGentle = (genreKey === 'classic' || genreKey === 'jazz' || genreKey === 'ambient' || genreKey === 'acoustic' || genreKey === 'podcast' ||
+                        (genreKey === 'auto' && (aiDetectedGenre === 'classic' || aiDetectedGenre === 'jazz' || aiDetectedGenre === 'ambient' || aiDetectedGenre === 'acoustic' || aiDetectedGenre === 'podcast')));
+      
+      const targetAttack = isGentle ? 0.005 : 0.0015; // 5ms attack to protect low cycles; 1.5ms for modern loud tracks
+      const targetRelease = isGentle ? 0.25 : 0.12;  // 250ms release for clean low end; 120ms for modern loud tracks
+      const targetKnee = isGentle ? 12.0 : 4.0;      // 12dB soft knee for transparent limiting; 4dB knee for modern loud tracks
+      
+      activeNodes.limiter.attack.setTargetAtTime(targetAttack, audioContext.currentTime, 0.02);
+      activeNodes.limiter.release.setTargetAtTime(targetRelease, audioContext.currentTime, 0.02);
+      activeNodes.limiter.knee.setTargetAtTime(targetKnee, audioContext.currentTime, 0.02);
+    }
   }
 }
 
