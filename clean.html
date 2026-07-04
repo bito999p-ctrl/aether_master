@@ -330,7 +330,7 @@
 
       <section class="panel control-panel">
         <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 3-BAND EQ <span class="help-icon" data-tooltip="「低音」「中音」「高音」の3つの帯域の音量を調整し、音がこもっている、またはキンキンする場合に直感的に直せます。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 4-BAND EQ <span class="help-icon" data-tooltip="低音、中低音、中音、高音の4つの帯域の音量を調整し、暖かみや太さを出しつつキンキン感などを除去します。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="eq-band">
           <div class="eq-band-header">
@@ -351,6 +351,27 @@
             </div>
             <input type="range" id="eq-low-q" min="0.3" max="2.0" step="0.05" value="0.70">
             <span class="value-readout" id="eq-low-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">0.70</span>
+          </div>
+        </div>
+        <div class="eq-band">
+          <div class="eq-band-header">
+            <span class="band-name">LOW-MID PEAK</span>
+            <span class="value-readout" id="eq-low-mid-val">0.0 dB</span>
+          </div>
+          <div class="eq-row">
+            <input type="range" id="eq-low-mid-gain" min="-12" max="12" step="0.5" value="0.0">
+            <div class="freq-input-group">
+              <input type="number" id="eq-low-mid-freq" min="150" max="350" value="200">
+              <span class="unit">Hz</span>
+            </div>
+          </div>
+          <div class="eq-row" style="margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
+              <span class="band-name" style="font-size: 0.65rem;">LOW-MID Q</span>
+              <span class="help-icon" data-tooltip="ローミッド（中低域）のQ値です。ボーカルの温かみやベースのふくよかさを調整する帯域の幅を設定します。"><i class="fa-regular fa-circle-question"></i></span>
+            </div>
+            <input type="range" id="eq-low-mid-q" min="0.3" max="1.5" step="0.05" value="0.60">
+            <span class="value-readout" id="eq-low-mid-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">0.60</span>
           </div>
         </div>
         <div class="eq-band">
