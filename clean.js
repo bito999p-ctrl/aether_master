@@ -474,15 +474,16 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 80.0 : 18.0, context.currentTime); // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
   rumbleFilter.Q.setValueAtTime(0.707, context.currentTime);
 
-  // Dynamic Hiss Filter (VCF Lowpass)
+  // Dynamic Hiss Filter (VCF High Shelf)
   const hissFilter = context.createBiquadFilter();
-  hissFilter.type = 'lowpass';
+  hissFilter.type = 'highshelf';
+  hissFilter.frequency.setValueAtTime(10000.0, context.currentTime); // Center at 10kHz where hiss noise lives
+  hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
-  // ヒスノイズ除去のベース周波数を引き上げ、ボーカルや楽器の明瞭度を保ちます（100%適用時でも13,000Hz以下に落とさない）
-  const baseFreq = 20000.0 - (7000.0 * (hissAmount / 100.0));
-  hissFilter.frequency.setValueAtTime(baseFreq, context.currentTime);
-  hissFilter.Q.setValueAtTime(0.5, context.currentTime); // Gentle slope
+  // ベースゲインはマイナスの値（減衰）。100%のとき最大-8.0dBカット
+  const baseGain = -8.0 * (hissAmount / 100.0);
+  hissFilter.gain.setValueAtTime(baseGain, context.currentTime);
 
   // Sidechain Envelope Follower for Hiss Filter
   const sidechainHpf = context.createBiquadFilter();
@@ -503,9 +504,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   envelopeSmoother.Q.setValueAtTime(0.707, context.currentTime);
 
   const hissEnvelopeGain = context.createGain();
-  // 楽曲演奏時にはフィルターの遮断周波数を20kHz近くまで全開にするため、天井周波数を引き上げます
-  const ceilFreq = 20000.0 - (500.0 * (hissAmount / 100.0));
-  const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
+  // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
+  const maxEnvGain = -baseGain;
   hissEnvelopeGain.gain.setValueAtTime(maxEnvGain, context.currentTime);
 
   // 2. Parallel Saturator Stage
@@ -555,8 +555,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   rectifier.connect(envelopeSmoother);
   envelopeSmoother.connect(hissEnvelopeGain);
   
-  // Connect envelope gain modulator to hissFilter frequency AudioParam
-  hissEnvelopeGain.connect(hissFilter.frequency);
+  // Connect envelope gain modulator to hissFilter gain AudioParam (opens up high shelf when music is loud)
+  hissEnvelopeGain.connect(hissFilter.gain);
 
   satDryGain.connect(satSumNode);
   satWetGain.connect(satSumNode);
@@ -1651,11 +1651,12 @@ function updateNoiseCutNodes() {
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
     const hissAmount = params.hissReductionAmount || 0;
-    const baseFreq = 20000.0 - (7000.0 * (hissAmount / 100.0));
-    activeNodes.hissFilter.frequency.setTargetAtTime(baseFreq, audioContext.currentTime, 0.02);
+    // ベースゲインはマイナスの値（減衰）
+    const baseGain = -8.0 * (hissAmount / 100.0);
+    activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
     
-    const ceilFreq = 20000.0 - (500.0 * (hissAmount / 100.0));
-    const maxEnvGain = Math.max(0, ceilFreq - baseFreq);
+    // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
+    const maxEnvGain = -baseGain;
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
 
     // Decoupled from hissAmount: active if deesserAmount > 0
