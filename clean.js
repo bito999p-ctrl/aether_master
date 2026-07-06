@@ -3100,6 +3100,11 @@ function updateGuiControls() {
     hissFreqSliderEl.value = params.hissReductionFreq || 9000;
     document.getElementById('hiss-freq-val').innerText = `${(params.hissReductionFreq || 9000).toLocaleString()} Hz`;
   }
+  const hissMaxFreqSliderEl = document.getElementById('hiss-max-freq-slider');
+  if (hissMaxFreqSliderEl) {
+    hissMaxFreqSliderEl.value = params.hissReductionMaxFreq || 16000;
+    document.getElementById('hiss-max-freq-val').innerText = `${(params.hissReductionMaxFreq || 16000).toLocaleString()} Hz`;
+  }
   const deesserSliderEl = document.getElementById('deesser-slider');
   if (deesserSliderEl) {
     deesserSliderEl.value = params.deesserAmount;
@@ -3118,6 +3123,11 @@ function updateGuiControls() {
   if (deesserFreqSliderEl) {
     deesserFreqSliderEl.value = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
     document.getElementById('deesser-freq-val').innerText = `${(params.deesserFreq || params.sibilanceDynamicFreq || 7500).toLocaleString()} Hz`;
+  }
+  const deesserMaxFreqSliderEl = document.getElementById('deesser-max-freq-slider');
+  if (deesserMaxFreqSliderEl) {
+    deesserMaxFreqSliderEl.value = params.deesserMaxFreq || 9500;
+    document.getElementById('deesser-max-freq-val').innerText = `${(params.deesserMaxFreq || 9500).toLocaleString()} Hz`;
   }
 }
 
@@ -3180,6 +3190,13 @@ function registerGuiEvents() {
     updateNoiseCutNodes();
   });
 
+  document.getElementById('hiss-max-freq-slider').addEventListener('input', (e) => {
+    params.hissReductionMaxFreq = parseInt(e.target.value);
+    document.getElementById('hiss-max-freq-val').innerText = `${params.hissReductionMaxFreq.toLocaleString()} Hz`;
+    selectCustomPreset();
+    updateNoiseCutNodes();
+  });
+
   document.getElementById('hiss-limit-slider').addEventListener('input', (e) => {
     params.hissReductionMaxCut = parseFloat(e.target.value);
     document.getElementById('hiss-limit-val').innerText = `${params.hissReductionMaxCut.toFixed(1)} dB`;
@@ -3190,6 +3207,13 @@ function registerGuiEvents() {
   document.getElementById('deesser-freq-slider').addEventListener('input', (e) => {
     params.deesserFreq = parseInt(e.target.value);
     document.getElementById('deesser-freq-val').innerText = `${params.deesserFreq.toLocaleString()} Hz`;
+    selectCustomPreset();
+    updateNoiseCutNodes();
+  });
+
+  document.getElementById('deesser-max-freq-slider').addEventListener('input', (e) => {
+    params.deesserMaxFreq = parseInt(e.target.value);
+    document.getElementById('deesser-max-freq-val').innerText = `${params.deesserMaxFreq.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
