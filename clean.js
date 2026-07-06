@@ -2775,15 +2775,15 @@ function loadGenrePreset(genreKey) {
     if (genreBadge) {
       genreBadge.innerText = genreKey.toUpperCase();
     }
-    
-    // Set limiter boost based on loudness target selection or preset
-    const loudnessSelect = document.getElementById('loudness-select');
-    const loudnessKey = loudnessSelect ? loudnessSelect.value : 'genre';
-    if (loudnessKey === 'genre') {
-      params.limiterBoost = src.limiterBoost; // This is the dynamically calculated boost matching target loudness, capped for classic/acoustic
-    } else if (LOUDNESS_TARGETS[loudnessKey] && LOUDNESS_TARGETS[loudnessKey].boost !== null) {
-      params.limiterBoost = LOUDNESS_TARGETS[loudnessKey].boost;
-    }
+  }
+
+  // Set limiter boost based on loudness target selection or preset (applies to both auto and other presets)
+  const loudnessSelect = document.getElementById('loudness-select');
+  const loudnessKey = loudnessSelect ? loudnessSelect.value : 'genre';
+  if (loudnessKey === 'genre') {
+    params.limiterBoost = src.limiterBoost; // This is the dynamically calculated boost matching target loudness, capped for classic/acoustic
+  } else if (LOUDNESS_TARGETS[loudnessKey] && LOUDNESS_TARGETS[loudnessKey].boost !== null) {
+    params.limiterBoost = LOUDNESS_TARGETS[loudnessKey].boost;
   }
 
   // AI Corrective Notches and AI report panel are preserved during preset switching to allow interactive comparison
@@ -3074,25 +3074,6 @@ function updateGuiControls() {
   // Limiter Gain Boost
   document.getElementById('limiter-gain').value = params.limiterBoost;
   document.getElementById('limiter-gain-val').innerText = `+${params.limiterBoost.toFixed(1)} dB`;
-
-  // Update Loudness Select dropdown if it mismatches
-  const loudnessSelect = document.getElementById('loudness-select');
-  if (loudnessSelect) {
-    const curVal = loudnessSelect.value;
-    if (curVal === 'genre') {
-      const genreSelect = document.getElementById('preset-select');
-      const genreKey = genreSelect ? genreSelect.value : 'auto';
-      const p = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
-      if (Math.abs(params.limiterBoost - p.limiterBoost) > 0.05) {
-        loudnessSelect.value = 'custom';
-      }
-    } else if (curVal !== 'custom') {
-      const target = LOUDNESS_TARGETS[curVal];
-      if (!target || Math.abs(params.limiterBoost - target.boost) > 0.05) {
-        loudnessSelect.value = 'custom';
-      }
-    }
-  }
 
   // Noise Cleaner
   const rumbleCutEl = document.getElementById('rumble-cut-enable');
