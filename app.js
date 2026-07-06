@@ -151,7 +151,9 @@ const params = {
   // Noise Cleaner
   rumbleCutEnabled: false,
   hissReductionAmount: 0, // 0 to 100%
+  hissReductionFreq: 9000, // 4000 to 12000 Hz
   deesserAmount: 0,
+  deesserFreq: 7500, // 5000 to 10000 Hz
   sibilanceDynamicFreq: 0 // Detected sibilance frequency (0 if none)
 };
 
@@ -477,7 +479,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dynamic Hiss Filter (VCF High Shelf)
   const hissFilter = context.createBiquadFilter();
   hissFilter.type = 'highshelf';
-  hissFilter.frequency.setValueAtTime(9000.0, context.currentTime); // Set to 9kHz to capture more hiss without muffling vocal clarity
+  hissFilter.frequency.setValueAtTime(parameters.hissReductionFreq || 9000.0, context.currentTime); // Dynamic hiss cutoff frequency
   hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
@@ -606,7 +608,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dedicated Dynamic Sibilance Notch (9000Hz De-esser)
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
-  sibilanceNotch.frequency.setValueAtTime(parameters.sibilanceDynamicFreq || 9000, context.currentTime);
+  sibilanceNotch.frequency.setValueAtTime(parameters.deesserFreq || parameters.sibilanceDynamicFreq || 7500, context.currentTime);
   sibilanceNotch.Q.setValueAtTime(4.5, context.currentTime); // surgical Q for precise sibilance band attenuation
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
@@ -1665,6 +1667,7 @@ function updateNoiseCutNodes() {
     // ベースゲインはマイナスの値（減衰）
     const baseGain = -16.0 * (hissAmount / 100.0);
     activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
+    activeNodes.hissFilter.frequency.setTargetAtTime(params.hissReductionFreq || 9000.0, audioContext.currentTime, 0.02);
     
     // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
     const maxEnvGain = -baseGain;
@@ -1675,7 +1678,7 @@ function updateNoiseCutNodes() {
       const amount = params.deesserAmount || 0;
       // シャリシャリ（サ行等のシビランス）を強力に吸い取るため、最大減衰量を-15.0dBまで拡張して除去力を向上
       const dynamicCut = -15.0 * (amount / 100.0);
-      activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.sibilanceDynamicFreq || 9000, audioContext.currentTime, 0.02);
+      activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.deesserFreq || params.sibilanceDynamicFreq || 7500, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
   }
@@ -2602,8 +2605,10 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       limiterBoost: finalLimiterBoost,
       rumbleCutEnabled: sugRumbleCut,
       hissReductionAmount: finalHissAmount,
+      hissReductionFreq: 9000,
       sibilanceDynamicFreq: sibilanceDynamicFreq,
-      deesserAmount: finalDeesserAmount
+      deesserAmount: finalDeesserAmount,
+      deesserFreq: sibilanceDynamicFreq > 0 ? sibilanceDynamicFreq : 7500
     },
     // 中間解析値のデバッグ用出力
     crestFactorDb: crestFactorDb,
@@ -2662,9 +2667,11 @@ function loadGenrePreset(genreKey) {
     params.inputGainDb = aiSuggestedParams.inputGainDb;
     params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
     params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
+    params.hissReductionFreq = aiSuggestedParams.hissReductionFreq || 9000;
     params.limiterBoost = aiSuggestedParams.limiterBoost;
     params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
     params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
+    params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
     // Set UI badge to show detected genre
     const genreBadge = document.getElementById('ai-detected-genre-badge');
     if (genreBadge && aiDetectedGenre) {
@@ -2678,13 +2685,17 @@ function loadGenrePreset(genreKey) {
     if (aiSuggestedParams !== null) {
       params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
       params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
+      params.hissReductionFreq = aiSuggestedParams.hissReductionFreq || 9000;
       params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
       params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
+      params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
+      params.hissReductionFreq = 9000;
       params.sibilanceDynamicFreq = 0;
       params.deesserAmount = 0;
+      params.deesserFreq = 7500;
     }
     
     // Reset UI badge back to AUTO if loading normal auto template or another preset
@@ -3025,6 +3036,11 @@ function updateGuiControls() {
   if (hissValEl) {
     hissValEl.innerText = params.hissReductionAmount > 0 ? `${params.hissReductionAmount}%` : 'OFF';
   }
+  const hissFreqSliderEl = document.getElementById('hiss-freq-slider');
+  if (hissFreqSliderEl) {
+    hissFreqSliderEl.value = params.hissReductionFreq || 9000;
+    document.getElementById('hiss-freq-val').innerText = `${(params.hissReductionFreq || 9000).toLocaleString()} Hz`;
+  }
   const deesserSliderEl = document.getElementById('deesser-slider');
   if (deesserSliderEl) {
     deesserSliderEl.value = params.deesserAmount;
@@ -3032,6 +3048,11 @@ function updateGuiControls() {
   const deesserValEl = document.getElementById('deesser-val');
   if (deesserValEl) {
     deesserValEl.innerText = params.deesserAmount > 0 ? `${params.deesserAmount}%` : 'OFF';
+  }
+  const deesserFreqSliderEl = document.getElementById('deesser-freq-slider');
+  if (deesserFreqSliderEl) {
+    deesserFreqSliderEl.value = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
+    document.getElementById('deesser-freq-val').innerText = `${(params.deesserFreq || params.sibilanceDynamicFreq || 7500).toLocaleString()} Hz`;
   }
 }
 
@@ -3085,6 +3106,20 @@ function registerGuiEvents() {
     updateNoiseCutNodes();
     updateCorrectiveEqNodes();
     updateEqNodes();
+  });
+
+  document.getElementById('hiss-freq-slider').addEventListener('input', (e) => {
+    params.hissReductionFreq = parseInt(e.target.value);
+    document.getElementById('hiss-freq-val').innerText = `${params.hissReductionFreq.toLocaleString()} Hz`;
+    selectCustomPreset();
+    updateNoiseCutNodes();
+  });
+
+  document.getElementById('deesser-freq-slider').addEventListener('input', (e) => {
+    params.deesserFreq = parseInt(e.target.value);
+    document.getElementById('deesser-freq-val').innerText = `${params.deesserFreq.toLocaleString()} Hz`;
+    selectCustomPreset();
+    updateNoiseCutNodes();
   });
 
   // Saturator

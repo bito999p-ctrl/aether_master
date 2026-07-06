@@ -301,10 +301,20 @@
           <input type="range" id="hiss-reducer-slider" min="0" max="100" step="1" value="0">
           <span class="value-readout" id="hiss-reducer-val">OFF</span>
         </div>
-        <div class="control-row">
+        <div class="control-row secondary-control" id="hiss-freq-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 4px; margin-top: -6px; opacity: 0.85;">
+          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Target Freq</span>
+          <input type="range" id="hiss-freq-slider" min="4000" max="12000" step="100" value="9000" style="height: 4px;">
+          <span class="value-readout" id="hiss-freq-val" style="min-width: 65px; text-align: right;">9,000 Hz</span>
+        </div>
+        <div class="control-row" style="margin-top: 8px;">
           <span class="control-label">DE-ESSER <span class="help-icon" data-tooltip="スライダーを右に動かすと、ボーカルの「サ、シ、ス、セ、ソ」に含まれる耳に刺さるキンキンした歯擦音（シビランス）を自動検知して抑えます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="deesser-slider" min="0" max="100" step="1" value="0">
           <span class="value-readout" id="deesser-val">OFF</span>
+        </div>
+        <div class="control-row secondary-control" id="deesser-freq-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 4px; margin-top: -6px; opacity: 0.85;">
+          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Target Freq</span>
+          <input type="range" id="deesser-freq-slider" min="5000" max="10000" step="100" value="7500" style="height: 4px;">
+          <span class="value-readout" id="deesser-freq-val" style="min-width: 65px; text-align: right;">7,500 Hz</span>
         </div>
       </section>
 
@@ -688,6 +698,6 @@
     </div>
   </div>
 
-  <script type="module" src="clean.js?v=4.5.0"></script>
+  <script type="module" src="clean.js?v=4.6.4"></script>
 </body>
 </html>
