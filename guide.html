@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=3.26.0">
+  <link rel="stylesheet" href="styles.css?v=5.0.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -483,10 +483,20 @@
       </details>
 
       <details>
-        <summary>Q4. ノイズクリーナーを使ったら、音がこもって（暗くなって）しまったら？</summary>
+        <summary>Q4. Hiss Reducer や De-esser を使用した際、ボーカルの抜け感（空気感や明瞭さ）をさらに引き上げ、音がこもるのを防ぐための調整のコツ（Tips）はありますか？</summary>
         <div class="faq-content">
-          <p>A. <strong>「HISS REDUCER」スライダーの値を下げてください。</strong></p>
-          <p>AetherMasterのHISS REDUCERは、音が曇りにくいように13,000Hz以上の超高域のサー音のみをマイルドに吸い取る高精度設計になっていますが、スライダーを100%近くまで上げすぎると、音源によっては高域のクリアさ（空気感）が減少したように聞こえる場合があります。ノイズがあまり気にならないクリーンな音源では、OFFまたは 10%〜30% 程度の低い値に設定することをおすすめします。</p>
+          <p>A. <strong>はい、新設された周波数範囲スライダーと以下の調整のコツ（Tips）を組み合わせることで、ノイズを除去しつつ極上の抜け感を維持できます。</strong></p>
+          <p>AetherMaster v5.0.0 は超高音域（Air帯域）を動的に保護するダブルシェルフ機構を備えていますが、素材の持ち味を100%引き出すためには以下のマニュアル微調整が非常に効果的です。</p>
+          <ol>
+            <li><strong>HISS REDUCERの「Start Freq（開始周波数）」を 10,000Hz 〜 12,000Hz に引き上げる</strong>:
+              ノイズ除去の開始点を高く設定することで、ボーカルの子音や息づかい（ブレス成分など）の重要な高域成分をフィルターの減衰から完全に逃がすことができます。これにより、高音のきらびやかさと抜け感を一切損なうことなく、その上にある耳障りなサー音だけをマイルドに除去できます。</li>
+            <li><strong>HISS REDUCERの「End Freq（終了周波数）」を 18,000Hz 〜 20,000Hz に引き上げる</strong>:
+              終了周波数を高めに指定することで、超高音（Air帯域）の保護フィルター（hissAirFilter）が働く帯域を拡張し、空気の抜けるようなシルキーな質感を綺麗に残します。</li>
+            <li><strong>DE-ESSERの「Start Freq（開始周波数）」を 7,500Hz 〜 8,500Hz 以上に高く設定する</strong>:
+              サ行のトゲ（刺さる擦れ音）を抑えるディエッサーの開始周波数を高く設定することで、ボーカル本来のふくよかな響きを削りすぎず、最も耳に痛い超高域のピークだけをピンポイントで鋭くノッチ（減衰）処理します。</li>
+            <li><strong>「vocalPresence (ボーカル存在感)」スパイスをONにする</strong>:
+              画面下部のスパイスオプションをONにすると、ボーカルの存在感を高めるための特化型EQ・倍音付加回路が並列でアクティブになり、他のパートに埋もれずにきれいに手前に抜けてくるようになります。</li>
+          </ol>
         </div>
       </details>
 

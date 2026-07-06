@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=3.26.0">
+  <link rel="stylesheet" href="styles.css?v=5.0.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -196,6 +196,22 @@
 
     <div class="timeline">
       
+      <!-- v5.0.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v5.0.0</span>
+          <span class="version-date">2026.07.06</span>
+          <span class="version-title">【メジャーアップデート】個別ジャンルプリセットの動的最適化 ＆ 新次元ノイズクリーナー「2-Band Double-Shelf」構造の導入</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">新機能</span><strong>すべての個別ジャンルプリセットにおける「ダイナミック・プリセット（動的最適化）」の実装</strong>：静的な固定テンプレート方式を完全に廃止し、読み込まれた楽曲の音響プロファイル（周波数バランス等）をリアルタイムに解析のうえ、各ジャンルが目指すターゲット特性に合わせてEQやダイナミクスを動的に再計算・自動適合するインテリジェントなプリセットシステムへ刷新。</li>
+          <li><span class="badge-add">新機能</span><strong>AIノイズクリーナー（Hiss Reducer）の「2-Band Double-Shelf」構造</strong>：ノイズ除去を強く適用しても超高音域（Air/空気感）が曇らない超高域保護アーキテクチャ。9kHz以上のヒス帯域を減衰させるローレベル・ハイシェルフと、16kHz以上のAir帯域を完全に復元・保護するハイレベル・ハイシェルフを直列に繋ぎ、動的サイドチェーンエンベロープで高精度に相互リンク制御します。</li>
+          <li><span class="badge-add">新機能</span><strong>De-esserのインテリジェントなQ値（帯域幅）自動計算</strong>：コントロールパネルに `Start Freq` と `End Freq` のダブルスライダーを新設。指定された周波数範囲から、幾何平均中心周波数と最適なQ値をWeb Audio API内でリアルタイムに動的算出し、耳障りな周波数だけをピンポイントで鋭くノッチ処理します。</li>
+          <li><span class="badge-change">改善</span><strong>ANALYZED SONIC PROFILE の完全動的同期アナライザー</strong>：プリセット（AUTO, METAL, POPSなど）やラウド目標を切り替えた際、現在のターゲットを基準とした音源の特性偏差（Bass/Treble Deviation）や実際に適用されているマスタリングパラメータ（DYNAMIC AUTO-ADJUSTMENTS APPLIED）が瞬時に再計算され、画面上に完全動的同期して描画されるようにアップデート。</li>
+          <li><span class="badge-fix">修正</span><strong>ラウドネス目標切り替え時の安定化</strong>：AI AUTOモードにおいて、ラウド目標（genre, streaming, club, loud, pure）を変更した際、意図した規定の目標ブーストに正しく追従し、セレクトボックスの状態が勝手に `custom` や `genre` にリセットされないよう同期ロジックを最適化。</li>
+        </ul>
+      </div>
+
       <!-- v4.3.4 -->
       <div class="timeline-item major">
         <div class="version-header">

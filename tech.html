@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=3.26.0">
+  <link rel="stylesheet" href="styles.css?v=5.0.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/bitomusic/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -236,12 +236,12 @@
           </tr>
           <tr>
             <td><strong>2. Noise Cleaner (Rumble & Hiss)</strong></td>
-            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 2, <span class="tag-cyan">WaveShaperNode</span> (整流器), <span class="tag-cyan">GainNode</span> (変調量)</td>
+            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 3, <span class="tag-cyan">WaveShaperNode</span> (整流器), <span class="tag-cyan">GainNode</span> (変調量)</td>
             <td>
               定常的な背景雑音を除去するノイズクリーニング段。
               <ul>
                 <li><strong>Rumble Cut (HPF)</strong>：80Hz以下の超低域空調ノイズや電源ハム音を急峻に物理遮断。</li>
-                <li><strong>Hiss Reducer (動的VCF)</strong>：2,000Hz以上の高域エネルギーを監視するサイドチェーン検知器（HPF＋絶対値整流器＋10Hz平滑フィルター）がメインライン of LPFカットオフ周波数をダイナミックに変調（0%〜100%可変）。AIのデフォルト推奨最大値である <strong>`80%` 設定時に最低カットオフを `7,000Hz`</strong>、最大 `100%` 設定時には `3,750Hz` まで拡張制限することで、高音に混ざる金属音や耳障りなノイズ（8kHz〜10kHz付近）を自動で外科的に遮断しつつ、演奏音がある瞬間は20kHzまで瞬時に全開にして超高域ノイズのみを自然に消去します。</li>
+                <li><strong>Hiss Reducer (2-Band Double-Shelf)</strong>：ヒス除去による超高音域（Air帯域/空気感）の「曇り」を防止するダブル・ハイシェルフ保護構造。開始周波数（Start Freq：4k〜12kHz）以上の高音域を減衰させるハイシェルフフィルター（hissFilter, 最大-16.0dB）と、上限周波数（End Freq：6k〜20kHz）以上の空気感を復元するための逆相補強ハイシェルフフィルター（hissAirFilter）を直列に接続。演奏中はサイドチェーンエンベロープ（HPF＋絶対値整流器＋10Hz平滑フィルター）によって両フィルターの特性を動的にフラット（0dB）に戻し、無音時にはヒスを強力カットしながらも16kHz以上の抜け感を完全に保護します。</li>
               </ul>
             </td>
           </tr>
@@ -259,7 +259,7 @@
             <td><strong>5. AI Sibilance Notch (De-esser)</strong></td>
             <td><span class="tag-cyan">BiquadFilterNode</span> (Peaking, dynamic cut)</td>
             <td>
-              AI が検出した高音域のキンキンしたシビランス周波数（<strong>8.0kHz〜11.0kHz</strong>）をピンポイントで動的に低減する音圧感応型のディエッサー（Q=5.0）。フロントエンドに <strong>DE-ESSER スライダー（0%〜100%）</strong>を追加し、手動で減衰量を微調整可能に。AI自動解析時には最適な値（40%〜85%）を自動で初期設定します。ボーカルのサ行成分が強く出た瞬間のみ、最大 <strong>`-12.0dB`</strong> まで動的に減衰します。
+              ボーカルの「サ、シ、ス、セ、ソ」などの歯擦音（シビランス）を動的に除去するインテリジェント・ディエッサー。`Start Freq` (4k〜10kHz) と `End Freq` (5k〜16kHz) のスライダーで設定された周波数範囲から、幾何平均中心周波数 \(f_c = \sqrt{f_{start} \cdot f_{end}}\) および帯域幅（Q値）\(Q = \frac{f_c}{f_{end} - f_{start}}\) をリアルタイムに自動算出して Web Audio API 内の Peaking フィルターに割り当てます。ボーカルのキンキンしたトゲを狙い撃ちで急峻にノッチ処理（最大-15.0dB）し、オケの他の高域成分やボーカル本来の艶を削ることなくクリアに出力します。
             </td>
           </tr>
           <tr>
