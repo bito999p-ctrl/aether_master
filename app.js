@@ -153,9 +153,11 @@ const params = {
   hissReductionAmount: 0, // 0 to 100%
   hissReductionMaxCut: -16.0, // -24.0 to -6.0 dB
   hissReductionFreq: 9000, // 4000 to 12000 Hz
+  hissReductionMaxFreq: 16000, // 6000 to 20000 Hz
   deesserAmount: 0,
   deesserMaxCut: -15.0, // -24.0 to -6.0 dB
   deesserFreq: 7500, // 5000 to 10000 Hz
+  deesserMaxFreq: 9500, // 5000 to 16000 Hz
   sibilanceDynamicFreq: 0 // Detected sibilance frequency (0 if none)
 };
 
@@ -478,7 +480,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 90.0 : 18.0, context.currentTime); // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
   rumbleFilter.Q.setValueAtTime(0.707, context.currentTime);
 
-  // Dynamic Hiss Filter (VCF High Shelf)
+  // Dynamic Hiss Filter (VCF High Shelf - Lower bound)
   const hissFilter = context.createBiquadFilter();
   hissFilter.type = 'highshelf';
   hissFilter.frequency.setValueAtTime(parameters.hissReductionFreq || 9000.0, context.currentTime); // Dynamic hiss cutoff frequency
@@ -489,6 +491,14 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // ベースゲインはマイナスの値（減衰）。スライダー設定値（0-100%）に上限値を掛け合わせて音量を決定
   const baseGain = maxCut * (hissAmount / 100.0);
   hissFilter.gain.setValueAtTime(baseGain, context.currentTime);
+
+  // Dynamic Hiss Air Filter (VCF High Shelf - Upper bound to preserve air band)
+  const hissAirFilter = context.createBiquadFilter();
+  hissAirFilter.type = 'highshelf';
+  hissAirFilter.frequency.setValueAtTime(parameters.hissReductionMaxFreq || 16000.0, context.currentTime); // Dynamic hiss max cutoff frequency
+  hissAirFilter.Q.setValueAtTime(0.707, context.currentTime);
+  // 相殺ゲインはプラスの値。ベースゲインの逆符号を設定することで上限周波数以上の帯域をフラットに戻す
+  hissAirFilter.gain.setValueAtTime(-baseGain, context.currentTime);
 
   // Sidechain Envelope Follower for Hiss Filter
   const sidechainHpf = context.createBiquadFilter();
@@ -512,6 +522,10 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
   const maxEnvGain = -baseGain;
   hissEnvelopeGain.gain.setValueAtTime(maxEnvGain, context.currentTime);
+
+  const hissAirEnvelopeGain = context.createGain();
+  // 上限周波数の正の相殺ゲインを打ち消すため、負のゲインを封入
+  hissAirEnvelopeGain.gain.setValueAtTime(-maxEnvGain, context.currentTime);
 
   // 2. Parallel Saturator Stage
   const satDryGain = context.createGain();
@@ -540,9 +554,10 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Hook up main signal path
   inputGainNode.connect(rumbleFilter);
   rumbleFilter.connect(hissFilter);
+  hissFilter.connect(hissAirFilter);
   
-  hissFilter.connect(satDryGain);
-  hissFilter.connect(satHpf);
+  hissAirFilter.connect(satDryGain);
+  hissAirFilter.connect(satHpf);
   satHpf.connect(waveShaper); // Feed highpassed signal to waveshaper to keep low end clean
   
   const satLpf = context.createBiquadFilter();
@@ -559,9 +574,11 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   sidechainGainNode.connect(rectifier);
   rectifier.connect(envelopeSmoother);
   envelopeSmoother.connect(hissEnvelopeGain);
+  envelopeSmoother.connect(hissAirEnvelopeGain);
   
-  // Connect envelope gain modulator to hissFilter gain AudioParam (opens up high shelf when music is loud)
+  // Connect envelope gain modulator to hissFilter & hissAirFilter gain AudioParams
   hissEnvelopeGain.connect(hissFilter.gain);
+  hissAirEnvelopeGain.connect(hissAirFilter.gain);
 
   satDryGain.connect(satSumNode);
   satWetGain.connect(satSumNode);
@@ -611,8 +628,13 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dedicated Dynamic Sibilance Notch (9000Hz De-esser)
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
-  sibilanceNotch.frequency.setValueAtTime(parameters.deesserFreq || parameters.sibilanceDynamicFreq || 7500, context.currentTime);
-  sibilanceNotch.Q.setValueAtTime(4.5, context.currentTime); // surgical Q for precise sibilance band attenuation
+  const fStart = parameters.deesserFreq || parameters.sibilanceDynamicFreq || 7500;
+  const fEnd = parameters.deesserMaxFreq || 9500;
+  const fEndValid = fEnd > fStart ? fEnd : fStart + 1000;
+  const deesserCenterFreq = Math.sqrt(fStart * fEndValid);
+  const deesserQ = deesserCenterFreq / (fEndValid - fStart);
+  sibilanceNotch.frequency.setValueAtTime(deesserCenterFreq, context.currentTime);
+  sibilanceNotch.Q.setValueAtTime(deesserQ, context.currentTime); // dynamically calculated Q based on frequency band span
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
 
   const sibilanceNotchDynamicGain = context.createGain();
@@ -816,7 +838,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     inputGain: inputGainNode,
     rumbleFilter,
     hissFilter,
+    hissAirFilter,
     hissEnvelopeGain,
+    hissAirEnvelopeGain,
     satDryGain,
     satWetGain,
     satLpf,
@@ -1663,7 +1687,8 @@ function updateCeilingNode() {
 
 function updateNoiseCutNodes() {
   invalidatePeakCache();
-  if (activeNodes.rumbleFilter && activeNodes.hissFilter && activeNodes.hissEnvelopeGain) {
+  if (activeNodes.rumbleFilter && activeNodes.hissFilter && activeNodes.hissAirFilter &&
+      activeNodes.hissEnvelopeGain && activeNodes.hissAirEnvelopeGain) {
     const targetRumbleFreq = params.rumbleCutEnabled ? 90.0 : 18.0; // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
@@ -1674,9 +1699,15 @@ function updateNoiseCutNodes() {
     activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
     activeNodes.hissFilter.frequency.setTargetAtTime(params.hissReductionFreq || 9000.0, audioContext.currentTime, 0.02);
     
+    // Hiss Air Filter (相殺ゲインはプラスの値、ベースゲインの逆符号)
+    activeNodes.hissAirFilter.gain.setTargetAtTime(-baseGain, audioContext.currentTime, 0.02);
+    activeNodes.hissAirFilter.frequency.setTargetAtTime(params.hissReductionMaxFreq || 16000.0, audioContext.currentTime, 0.02);
+    
     // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
     const maxEnvGain = -baseGain;
     activeNodes.hissEnvelopeGain.gain.setTargetAtTime(maxEnvGain, audioContext.currentTime, 0.02);
+    // 上限周波数の正の相殺ゲインを打ち消すため、負のゲインを封入
+    activeNodes.hissAirEnvelopeGain.gain.setTargetAtTime(-maxEnvGain, audioContext.currentTime, 0.02);
 
     // Decoupled from hissAmount: active if deesserAmount > 0
     if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
@@ -1684,7 +1715,15 @@ function updateNoiseCutNodes() {
       const deesserMax = params.deesserMaxCut !== undefined ? params.deesserMaxCut : -15.0;
       // シャリシャリ（サ行等のシビランス）を強力に吸い取るため、最大減衰量を調整可能にして除去力を向上
       const dynamicCut = deesserMax * (amount / 100.0);
-      activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.deesserFreq || params.sibilanceDynamicFreq || 7500, audioContext.currentTime, 0.02);
+      
+      const fStart = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
+      const fEnd = params.deesserMaxFreq || 9500;
+      const fEndValid = fEnd > fStart ? fEnd : fStart + 1000;
+      const deesserCenterFreq = Math.sqrt(fStart * fEndValid);
+      const deesserQ = deesserCenterFreq / (fEndValid - fStart);
+      
+      activeNodes.sibilanceNotch.frequency.setTargetAtTime(deesserCenterFreq, audioContext.currentTime, 0.02);
+      activeNodes.sibilanceNotch.Q.setTargetAtTime(deesserQ, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
   }
