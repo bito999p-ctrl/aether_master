@@ -164,6 +164,7 @@ const params = {
 // Audio Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
 let aiSuggestedParams = null;
 let aiDetectedGenre = null;
+let lastAnalysisResult = null;
 
 // Audio Spices State Configuration
 const spices = {
@@ -3145,6 +3146,98 @@ function updateGuiControls() {
     deesserMaxFreqSliderEl.value = params.deesserMaxFreq || 9500;
     document.getElementById('deesser-max-freq-val').innerText = `${(params.deesserMaxFreq || 9500).toLocaleString()} Hz`;
   }
+
+  // AIレポートカードのアナライザー表示と適用パラメータ一覧をリアルタイムに同期・更新
+  if (lastAnalysisResult) {
+    updateAiReportCard();
+  }
+}
+
+// AI SMART ASSISTANCEの解析詳細レポートを動的に再計算・描画する関数
+function updateAiReportCard() {
+  if (!lastAnalysisResult) return;
+  
+  const genreSelect = document.getElementById('preset-select');
+  const genreKey = genreSelect ? genreSelect.value : 'auto';
+  const basePresetKey = (genreKey === 'auto') ? lastAnalysisResult.detectedGenre : genreKey;
+  const target = GENRE_TARGETS[basePresetKey] || GENRE_TARGETS.auto;
+
+  // 選択されたプリセットのターゲット周波数特性に合わせて偏差(Deviation)を動的再計算
+  const bassDiff = 20 * Math.log10(lastAnalysisResult.actualLowMidRatio / target.low);
+  const trebleDiff = 20 * Math.log10(lastAnalysisResult.actualHighMidRatio / target.high);
+
+  // 1. 各音響特性ステータスのテキスト表示更新
+  const crestEl = document.getElementById('ai-crest-factor');
+  if (crestEl) crestEl.innerText = `${lastAnalysisResult.crestFactor.toFixed(1)} dB`;
+  const crestDescEl = document.getElementById('ai-crest-desc');
+  if (crestDescEl) crestDescEl.innerText = lastAnalysisResult.crestDesc;
+  
+  const stereoEl = document.getElementById('ai-stereo-corr');
+  if (stereoEl) stereoEl.innerText = `${lastAnalysisResult.correlation >= 0 ? '+' : ''}${lastAnalysisResult.correlation.toFixed(2)}`;
+  const stereoDescEl = document.getElementById('ai-stereo-desc');
+  if (stereoDescEl) stereoDescEl.innerText = lastAnalysisResult.correlationDesc;
+  
+  const bassSign = bassDiff >= 0 ? '+' : '';
+  const bassEl = document.getElementById('ai-bass-energy');
+  if (bassEl) bassEl.innerText = `${bassSign}${bassDiff.toFixed(1)} dB`;
+  const bassDescEl = document.getElementById('ai-bass-desc');
+  if (bassDescEl) bassDescEl.innerText = bassDiff > 0.8 ? "Heavy Bass" : bassDiff < -0.8 ? "Weak Bass" : "Balanced Bass";
+  
+  const trebleSign = trebleDiff >= 0 ? '+' : '';
+  const trebleEl = document.getElementById('ai-treble-energy');
+  if (trebleEl) trebleEl.innerText = `${trebleSign}${trebleDiff.toFixed(1)} dB`;
+  const trebleDescEl = document.getElementById('ai-treble-desc');
+  if (trebleDescEl) trebleDescEl.innerText = trebleDiff > 0.8 ? "Bright / Sibilant" : trebleDiff < -0.8 ? "Warm / Dull" : "Balanced Highs";
+
+  // 2. 現在エンジンに適用中の実マスタリングパラメータリストを同期表示
+  const adjContainer = document.getElementById('ai-adjustments-list');
+  if (adjContainer) {
+    adjContainer.innerHTML = `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>INPUT GAIN:</span>
+        <span style="color: #00f2fe; font-weight: 600;">${params.inputGainDb >= 0 ? '+' : ''}${params.inputGainDb.toFixed(1)} dB</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>EQ LOW:</span>
+        <span style="color: #00f2fe; font-weight: 600;">${params.eqLowGain >= 0 ? '+' : ''}${params.eqLowGain.toFixed(1)} dB</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>EQ LOW-MID:</span>
+        <span style="color: #00f2fe; font-weight: 600;">${params.eqLowMidGain >= 0 ? '+' : ''}${params.eqLowMidGain.toFixed(1)} dB</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>EQ MID:</span>
+        <span style="color: #00f2fe; font-weight: 600;">${params.eqMidGain >= 0 ? '+' : ''}${params.eqMidGain.toFixed(1)} dB</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>EQ MID-HIGH:</span>
+        <span style="color: #00f2fe; font-weight: 600;">${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>EQ HIGH:</span>
+        <span style="color: #00f2fe; font-weight: 600;">${params.eqHighGain >= 0 ? '+' : ''}${params.eqHighGain.toFixed(1)} dB</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>COMPRESSOR:</span>
+        <span style="color: #00f2fe; font-weight: 600;">Thresh: ${params.compThreshold.toFixed(1)} dB / Ratio: ${params.compRatio.toFixed(1)}:1</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>STEREO WIDTH:</span>
+        <span style="color: #00f2fe; font-weight: 600;">${Math.round(params.stereoWidth * 100)}%</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <span>MAXIMIZER LIMITER:</span>
+        <span style="color: #00f2fe; font-weight: 600;">Boost: +${params.limiterBoost.toFixed(1)} dB</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px;">
+        <span>NOISE CLEANER:</span>
+        <span style="color: #00f2fe; font-weight: 600;">Rumble: ${params.rumbleCutEnabled ? 'CUT' : 'OFF'} / Hiss: ${params.hissReductionAmount > 0 ? params.hissReductionAmount + '%' : 'OFF'}</span>
+      </div>
+      <div style="text-align: right; font-size: 0.58rem; color: var(--text-muted); margin-top: -2px; padding: 0 4px 4px 0;">
+        (Base: ${lastAnalysisResult.baseLoudnessDesc})
+      </div>
+    `;
+  }
 }
 
 function updatePlayButtonUI(playing) {
@@ -3585,6 +3678,7 @@ function loadAudioFile(file) {
   // 新しい楽曲ファイルが読み込まれた際、前回の楽曲のAI解析値が漏洩・干渉するのを防ぐため初期化する
   aiSuggestedParams = null;
   aiDetectedGenre = null;
+  lastAnalysisResult = null;
 
   document.getElementById('status-text').innerText = 'LOADING AUDIO FILE...';
   document.getElementById('status-indicator').className = 'status-indicator processing';
@@ -3692,6 +3786,7 @@ function resetMasterSettings() {
   // Clear stored AI suggested parameters
   aiSuggestedParams = null;
   aiDetectedGenre = null;
+  lastAnalysisResult = null;
   
   invalidatePeakCache();
   logToUI("Resetting mastering parameters to AI Auto...", "info");
@@ -3756,6 +3851,7 @@ function runAiAnalysis(showLog = true) {
   setTimeout(async () => {
     try {
       const result = analyzeAudioResonances(audioBuffer);
+      lastAnalysisResult = result;
       
       // AIノッチフィルターの設定適用
       params.correctiveNotches.forEach((n, idx) => {
@@ -3882,20 +3978,6 @@ function runAiAnalysis(showLog = true) {
       
       logToUI(`[AI State JSON] ${JSON.stringify({ ...params, correctiveNotches: params.correctiveNotches.filter(n => n.enabled) })}`, "success");
       
-      // AI詳細レポートカード表示の更新
-      document.getElementById('ai-crest-factor').innerText = `${result.crestFactor.toFixed(1)} dB`;
-      document.getElementById('ai-crest-desc').innerText = result.crestDesc;
-      document.getElementById('ai-stereo-corr').innerText = `${result.correlation >= 0 ? '+' : ''}${result.correlation.toFixed(2)}`;
-      document.getElementById('ai-stereo-desc').innerText = result.correlationDesc;
-      
-      const bassSign = result.bassDiff >= 0 ? '+' : '';
-      document.getElementById('ai-bass-energy').innerText = `${bassSign}${result.bassDiff.toFixed(1)} dB`;
-      document.getElementById('ai-bass-desc').innerText = result.bassDiff > 0.8 ? "Heavy Bass" : result.bassDiff < -0.8 ? "Weak Bass" : "Balanced Bass";
-      
-      const trebleSign = result.trebleDiff >= 0 ? '+' : '';
-      document.getElementById('ai-treble-energy').innerText = `${trebleSign}${result.trebleDiff.toFixed(1)} dB`;
-      document.getElementById('ai-treble-desc').innerText = result.trebleDiff > 0.8 ? "Bright / Sibilant" : result.trebleDiff < -0.8 ? "Warm / Dull" : "Balanced Highs";
-      
       // ノッチフィルター検出リストのHTML生成
       const notchListContainer = document.getElementById('ai-notches-list');
       if (notchListContainer) {
@@ -3924,56 +4006,9 @@ function runAiAnalysis(showLog = true) {
         }
       }
       
-      // 自動調整内容サマリーのHTML生成
-      const adjContainer = document.getElementById('ai-adjustments-list');
-      adjContainer.innerHTML = `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>INPUT GAIN:</span>
-          <span style="color: #00f2fe; font-weight: 600;">${sug.inputGainDb >= 0 ? '+' : ''}${sug.inputGainDb.toFixed(1)} dB (Auto Gain)</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>EQ LOW:</span>
-          <span style="color: #00f2fe; font-weight: 600;">${sug.eqLowGain >= 0 ? '+' : ''}${sug.eqLowGain.toFixed(1)} dB</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>EQ LOW-MID:</span>
-          <span style="color: #00f2fe; font-weight: 600;">${sug.eqLowMidGain >= 0 ? '+' : ''}${sug.eqLowMidGain.toFixed(1)} dB</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>EQ MID:</span>
-          <span style="color: #00f2fe; font-weight: 600;">${sug.eqMidGain >= 0 ? '+' : ''}${sug.eqMidGain.toFixed(1)} dB</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>EQ MID-HIGH:</span>
-          <span style="color: #00f2fe; font-weight: 600;">${sug.eqMidHighGain >= 0 ? '+' : ''}${sug.eqMidHighGain.toFixed(1)} dB</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>EQ HIGH:</span>
-          <span style="color: #00f2fe; font-weight: 600;">${sug.eqHighGain >= 0 ? '+' : ''}${sug.eqHighGain.toFixed(1)} dB</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>COMPRESSOR:</span>
-          <span style="color: #00f2fe; font-weight: 600;">Thresh: ${sug.compThreshold.toFixed(1)} dB / Ratio: ${sug.compRatio.toFixed(1)}:1</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>STEREO WIDTH:</span>
-          <span style="color: #00f2fe; font-weight: 600;">${Math.round(sug.stereoWidth * 100)}%</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-          <span>MAXIMIZER LIMITER:</span>
-          <span style="color: #00f2fe; font-weight: 600;">Boost: +${sug.limiterBoost.toFixed(1)} dB</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px;">
-          <span>NOISE CLEANER:</span>
-          <span style="color: #00f2fe; font-weight: 600;">Rumble: ${sug.rumbleCutEnabled ? 'CUT' : 'OFF'} / Hiss: ${sug.hissReductionAmount > 0 ? sug.hissReductionAmount + '%' : 'OFF'}</span>
-        </div>
-        <div style="text-align: right; font-size: 0.58rem; color: var(--text-muted); margin-top: -2px; padding: 0 4px 4px 0;">
-          (Base: ${result.baseLoudnessDesc})
-        </div>
-      `;
-      
-      // レポート表示のフェードイン
+      // レポート表示のフェードインと動的値の反映
       document.getElementById('ai-report').style.display = 'block';
+      updateAiReportCard();
       
       if (showLog) {
         logToUI("[AI Assistant] Optimization completed successfully. Audio nodes updated.", "info");

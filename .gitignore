@@ -6,3 +6,6 @@ wavサンプル/
 # Scratch & Test Scripts
 check_*.js
 simulate_scroll.js
+# Node.js
+node_modules/
+package-lock.json
