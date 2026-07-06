@@ -1024,7 +1024,9 @@ function startPlayback() {
   activeNodes.ceilingGain = chain.ceilingGain;
   activeNodes.rumbleFilter = chain.rumbleFilter;
   activeNodes.hissFilter = chain.hissFilter;
+  activeNodes.hissAirFilter = chain.hissAirFilter;
   activeNodes.hissEnvelopeGain = chain.hissEnvelopeGain;
+  activeNodes.hissAirEnvelopeGain = chain.hissAirEnvelopeGain;
 
   // 4. Hook up Input monitoring (right after inputGain)
   chain.inputGain.connect(inputSplitter);
