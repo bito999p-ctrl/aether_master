@@ -477,12 +477,12 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dynamic Hiss Filter (VCF High Shelf)
   const hissFilter = context.createBiquadFilter();
   hissFilter.type = 'highshelf';
-  hissFilter.frequency.setValueAtTime(10000.0, context.currentTime); // Center at 10kHz where hiss noise lives
+  hissFilter.frequency.setValueAtTime(7000.0, context.currentTime); // Lowered from 10kHz to 7kHz to cut the core of audible hiss noise
   hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
-  // ベースゲインはマイナスの値（減衰）。100%のとき最大-16.0dBカットして強力に消音
-  const baseGain = -16.0 * (hissAmount / 100.0);
+  // ベースゲインはマイナスの値（減衰）。100%のとき最大-24.0dBカットして強力に消音
+  const baseGain = -24.0 * (hissAmount / 100.0);
   hissFilter.gain.setValueAtTime(baseGain, context.currentTime);
 
   // Sidechain Envelope Follower for Hiss Filter
@@ -1663,7 +1663,7 @@ function updateNoiseCutNodes() {
     
     const hissAmount = params.hissReductionAmount || 0;
     // ベースゲインはマイナスの値（減衰）
-    const baseGain = -16.0 * (hissAmount / 100.0);
+    const baseGain = -24.0 * (hissAmount / 100.0);
     activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
     
     // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
