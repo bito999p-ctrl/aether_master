@@ -301,7 +301,12 @@
           <input type="range" id="hiss-reducer-slider" min="0" max="100" step="1" value="0">
           <span class="value-readout" id="hiss-reducer-val">OFF</span>
         </div>
-        <div class="control-row secondary-control" id="hiss-freq-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 4px; margin-top: -6px; opacity: 0.85;">
+        <div class="control-row secondary-control" id="hiss-limit-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 2px; margin-top: -6px; opacity: 0.85;">
+          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-compress"></i> Max Limit</span>
+          <input type="range" id="hiss-limit-slider" min="-24.0" max="-6.0" step="0.5" value="-16.0" style="height: 4px;">
+          <span class="value-readout" id="hiss-limit-val" style="min-width: 65px; text-align: right;">-16.0 dB</span>
+        </div>
+        <div class="control-row secondary-control" id="hiss-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 4px; opacity: 0.85;">
           <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Target Freq</span>
           <input type="range" id="hiss-freq-slider" min="4000" max="12000" step="100" value="9000" style="height: 4px;">
           <span class="value-readout" id="hiss-freq-val" style="min-width: 65px; text-align: right;">9,000 Hz</span>
@@ -311,7 +316,12 @@
           <input type="range" id="deesser-slider" min="0" max="100" step="1" value="0">
           <span class="value-readout" id="deesser-val">OFF</span>
         </div>
-        <div class="control-row secondary-control" id="deesser-freq-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 4px; margin-top: -6px; opacity: 0.85;">
+        <div class="control-row secondary-control" id="deesser-limit-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 2px; margin-top: -6px; opacity: 0.85;">
+          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-compress"></i> Max Limit</span>
+          <input type="range" id="deesser-limit-slider" min="-24.0" max="-6.0" step="0.5" value="-15.0" style="height: 4px;">
+          <span class="value-readout" id="deesser-limit-val" style="min-width: 65px; text-align: right;">-15.0 dB</span>
+        </div>
+        <div class="control-row secondary-control" id="deesser-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 4px; opacity: 0.85;">
           <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Target Freq</span>
           <input type="range" id="deesser-freq-slider" min="5000" max="10000" step="100" value="7500" style="height: 4px;">
           <span class="value-readout" id="deesser-freq-val" style="min-width: 65px; text-align: right;">7,500 Hz</span>
@@ -698,6 +708,6 @@
     </div>
   </div>
 
-  <script type="module" src="clean.js?v=4.6.4"></script>
+  <script type="module" src="clean.js?v=4.6.5"></script>
 </body>
 </html>

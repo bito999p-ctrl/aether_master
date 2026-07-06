@@ -151,8 +151,10 @@ const params = {
   // Noise Cleaner
   rumbleCutEnabled: false,
   hissReductionAmount: 0, // 0 to 100%
+  hissReductionMaxCut: -16.0, // -24.0 to -6.0 dB
   hissReductionFreq: 9000, // 4000 to 12000 Hz
   deesserAmount: 0,
+  deesserMaxCut: -15.0, // -24.0 to -6.0 dB
   deesserFreq: 7500, // 5000 to 10000 Hz
   sibilanceDynamicFreq: 0 // Detected sibilance frequency (0 if none)
 };
@@ -483,8 +485,9 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
-  // ベースゲインはマイナスの値（減衰）。100%のとき最大-16.0dBカットして強力に消音
-  const baseGain = -16.0 * (hissAmount / 100.0);
+  const maxCut = parameters.hissReductionMaxCut !== undefined ? parameters.hissReductionMaxCut : -16.0;
+  // ベースゲインはマイナスの値（減衰）。スライダー設定値（0-100%）に上限値を掛け合わせて音量を決定
+  const baseGain = maxCut * (hissAmount / 100.0);
   hissFilter.gain.setValueAtTime(baseGain, context.currentTime);
 
   // Sidechain Envelope Follower for Hiss Filter
@@ -615,7 +618,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   const sibilanceNotchDynamicGain = context.createGain();
   // Decoupled from hissAmount: active if deesserAmount > 0
   const deesserAmt = parameters.deesserAmount || 0;
-  const initDynamicCut = -15.0 * (deesserAmt / 100.0);
+  const deesserMax = parameters.deesserMaxCut !== undefined ? parameters.deesserMaxCut : -15.0;
+  const initDynamicCut = deesserMax * (deesserAmt / 100.0);
   sibilanceNotchDynamicGain.gain.setValueAtTime(initDynamicCut, context.currentTime);
   envelopeSmoother.connect(sibilanceNotchDynamicGain);
   sibilanceNotchDynamicGain.connect(sibilanceNotch.gain);
@@ -1664,8 +1668,9 @@ function updateNoiseCutNodes() {
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
     const hissAmount = params.hissReductionAmount || 0;
+    const maxCut = params.hissReductionMaxCut !== undefined ? params.hissReductionMaxCut : -16.0;
     // ベースゲインはマイナスの値（減衰）
-    const baseGain = -16.0 * (hissAmount / 100.0);
+    const baseGain = maxCut * (hissAmount / 100.0);
     activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
     activeNodes.hissFilter.frequency.setTargetAtTime(params.hissReductionFreq || 9000.0, audioContext.currentTime, 0.02);
     
@@ -1676,8 +1681,9 @@ function updateNoiseCutNodes() {
     // Decoupled from hissAmount: active if deesserAmount > 0
     if (activeNodes.sibilanceNotch && activeNodes.sibilanceNotchDynamicGain) {
       const amount = params.deesserAmount || 0;
-      // シャリシャリ（サ行等のシビランス）を強力に吸い取るため、最大減衰量を-15.0dBまで拡張して除去力を向上
-      const dynamicCut = -15.0 * (amount / 100.0);
+      const deesserMax = params.deesserMaxCut !== undefined ? params.deesserMaxCut : -15.0;
+      // シャリシャリ（サ行等のシビランス）を強力に吸い取るため、最大減衰量を調整可能にして除去力を向上
+      const dynamicCut = deesserMax * (amount / 100.0);
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(params.deesserFreq || params.sibilanceDynamicFreq || 7500, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotchDynamicGain.gain.setTargetAtTime(dynamicCut, audioContext.currentTime, 0.02);
     }
@@ -2605,9 +2611,11 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       limiterBoost: finalLimiterBoost,
       rumbleCutEnabled: sugRumbleCut,
       hissReductionAmount: finalHissAmount,
+      hissReductionMaxCut: -16.0,
       hissReductionFreq: 9000,
       sibilanceDynamicFreq: sibilanceDynamicFreq,
       deesserAmount: finalDeesserAmount,
+      deesserMaxCut: -15.0,
       deesserFreq: sibilanceDynamicFreq > 0 ? sibilanceDynamicFreq : 7500
     },
     // 中間解析値のデバッグ用出力
@@ -2667,10 +2675,12 @@ function loadGenrePreset(genreKey) {
     params.inputGainDb = aiSuggestedParams.inputGainDb;
     params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
     params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
+    params.hissReductionMaxCut = aiSuggestedParams.hissReductionMaxCut !== undefined ? aiSuggestedParams.hissReductionMaxCut : -16.0;
     params.hissReductionFreq = aiSuggestedParams.hissReductionFreq || 9000;
     params.limiterBoost = aiSuggestedParams.limiterBoost;
     params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
     params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
+    params.deesserMaxCut = aiSuggestedParams.deesserMaxCut !== undefined ? aiSuggestedParams.deesserMaxCut : -15.0;
     params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
     // Set UI badge to show detected genre
     const genreBadge = document.getElementById('ai-detected-genre-badge');
@@ -2685,16 +2695,20 @@ function loadGenrePreset(genreKey) {
     if (aiSuggestedParams !== null) {
       params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
       params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
+      params.hissReductionMaxCut = aiSuggestedParams.hissReductionMaxCut !== undefined ? aiSuggestedParams.hissReductionMaxCut : -16.0;
       params.hissReductionFreq = aiSuggestedParams.hissReductionFreq || 9000;
       params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
       params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
+      params.deesserMaxCut = aiSuggestedParams.deesserMaxCut !== undefined ? aiSuggestedParams.deesserMaxCut : -15.0;
       params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
+      params.hissReductionMaxCut = -16.0;
       params.hissReductionFreq = 9000;
       params.sibilanceDynamicFreq = 0;
       params.deesserAmount = 0;
+      params.deesserMaxCut = -15.0;
       params.deesserFreq = 7500;
     }
     
@@ -3036,6 +3050,12 @@ function updateGuiControls() {
   if (hissValEl) {
     hissValEl.innerText = params.hissReductionAmount > 0 ? `${params.hissReductionAmount}%` : 'OFF';
   }
+  const hissLimitSliderEl = document.getElementById('hiss-limit-slider');
+  if (hissLimitSliderEl) {
+    const lVal = params.hissReductionMaxCut !== undefined ? params.hissReductionMaxCut : -16.0;
+    hissLimitSliderEl.value = lVal;
+    document.getElementById('hiss-limit-val').innerText = `${lVal.toFixed(1)} dB`;
+  }
   const hissFreqSliderEl = document.getElementById('hiss-freq-slider');
   if (hissFreqSliderEl) {
     hissFreqSliderEl.value = params.hissReductionFreq || 9000;
@@ -3048,6 +3068,12 @@ function updateGuiControls() {
   const deesserValEl = document.getElementById('deesser-val');
   if (deesserValEl) {
     deesserValEl.innerText = params.deesserAmount > 0 ? `${params.deesserAmount}%` : 'OFF';
+  }
+  const deesserLimitSliderEl = document.getElementById('deesser-limit-slider');
+  if (deesserLimitSliderEl) {
+    const lVal = params.deesserMaxCut !== undefined ? params.deesserMaxCut : -15.0;
+    deesserLimitSliderEl.value = lVal;
+    document.getElementById('deesser-limit-val').innerText = `${lVal.toFixed(1)} dB`;
   }
   const deesserFreqSliderEl = document.getElementById('deesser-freq-slider');
   if (deesserFreqSliderEl) {
@@ -3115,9 +3141,23 @@ function registerGuiEvents() {
     updateNoiseCutNodes();
   });
 
+  document.getElementById('hiss-limit-slider').addEventListener('input', (e) => {
+    params.hissReductionMaxCut = parseFloat(e.target.value);
+    document.getElementById('hiss-limit-val').innerText = `${params.hissReductionMaxCut.toFixed(1)} dB`;
+    selectCustomPreset();
+    updateNoiseCutNodes();
+  });
+
   document.getElementById('deesser-freq-slider').addEventListener('input', (e) => {
     params.deesserFreq = parseInt(e.target.value);
     document.getElementById('deesser-freq-val').innerText = `${params.deesserFreq.toLocaleString()} Hz`;
+    selectCustomPreset();
+    updateNoiseCutNodes();
+  });
+
+  document.getElementById('deesser-limit-slider').addEventListener('input', (e) => {
+    params.deesserMaxCut = parseFloat(e.target.value);
+    document.getElementById('deesser-limit-val').innerText = `${params.deesserMaxCut.toFixed(1)} dB`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
