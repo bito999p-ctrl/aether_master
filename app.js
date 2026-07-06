@@ -2720,6 +2720,7 @@ function loadGenrePreset(genreKey) {
   
   params.stereoWidth = src.stereoWidth;
   params.sideHighPassFreq = src.sideHighPassFreq || 110;
+  params.ceiling = src.ceiling !== undefined ? src.ceiling : -1.0;
   params.hissReductionMaxFreq = src.hissReductionMaxFreq || 16000;
   params.deesserMaxFreq = src.deesserMaxFreq || 9500;
   
@@ -3927,41 +3928,6 @@ function runAiAnalysis(showLog = true) {
         }
       }
 
-      params.inputGainDb = sug.inputGainDb;
-      params.satEnabled = sug.satEnabled;
-      params.satType = sug.satType;
-      params.satDrive = sug.satDrive;
-      params.satMix = sug.satMix;
-      params.satLpfFreq = sug.satLpfFreq || 4500;
-      params.eqLowGain = sug.eqLowGain;
-      params.eqLowFreq = sug.eqLowFreq;
-      params.eqLowQ = sug.eqLowQ || 0.70;
-      params.eqLowMidGain = sug.eqLowMidGain || 0.0;
-      params.eqLowMidFreq = sug.eqLowMidFreq || 200;
-      params.eqLowMidQ = sug.eqLowMidQ || 0.60;
-      params.eqMidGain = sug.eqMidGain;
-      params.eqMidFreq = sug.eqMidFreq;
-      params.eqMidQ = sug.eqMidQ || 1.0;
-      params.eqMidHighGain = sug.eqMidHighGain || 0.0;
-      params.eqMidHighFreq = sug.eqMidHighFreq || 4500;
-      params.eqMidHighQ = sug.eqMidHighQ || 1.0;
-      params.eqHighGain = sug.eqHighGain;
-      params.eqHighFreq = sug.eqHighFreq;
-      params.eqHighQ = sug.eqHighQ || 0.70;
-      params.compEnabled = sug.compEnabled;
-      params.compThreshold = sug.compThreshold;
-      params.compRatio = sug.compRatio;
-      params.compAttack = sug.compAttack;
-      params.compRelease = sug.compRelease;
-      params.stereoWidth = sug.stereoWidth;
-      params.sideHighPassFreq = sug.sideHighPassFreq || 110;
-      params.limiterBoost = sug.limiterBoost;
-      params.rumbleCutEnabled = sug.rumbleCutEnabled;
-      params.hissReductionAmount = sug.hissReductionAmount;
-      params.sibilanceDynamicFreq = sug.sibilanceDynamicFreq || 0;
-      params.deesserAmount = sug.deesserAmount || 0;
-      params.ceiling = sug.ceiling !== undefined ? sug.ceiling : -1.0;
-      
       // UIスライダーコントロールの同期
       updateGuiControls();
       
