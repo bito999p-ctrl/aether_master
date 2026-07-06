@@ -477,7 +477,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dynamic Hiss Filter (VCF High Shelf)
   const hissFilter = context.createBiquadFilter();
   hissFilter.type = 'highshelf';
-  hissFilter.frequency.setValueAtTime(10000.0, context.currentTime); // Center at 10kHz where hiss noise lives
+  hissFilter.frequency.setValueAtTime(9000.0, context.currentTime); // Set to 9kHz to capture more hiss without muffling vocal clarity
   hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
