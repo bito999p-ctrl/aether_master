@@ -2266,11 +2266,22 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const isGentleGenre = (detectedGenre === 'classic' || detectedGenre === 'acoustic' || basePresetKey === 'classic' || basePresetKey === 'acoustic');
   const spectralCorrectionScale = isGentleGenre ? 0.25 : (crestFactorDb > 12.0 ? 0.50 : 1.0);
 
+  // 5. HIGH EQ (高域・エアバンド補正: 14000Hz) の先行計算（スペクトル傾斜リンク用）
+  const eqHighAdjustment = -highDiffDb * 1.25 * spectralCorrectionScale;
+  const eqHighGainTemp = Math.max(-4.5, Math.min(4.0, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 10) / 10));
+
+  // 高域をカットした際、聴感上の低域のブワつき（ぼわーん感）を防ぐため、
+  // HIGH EQの減衰量に連動してLOW/LOW-MIDを自動的かつ微量に引き締める「スペクトル・傾斜リンク補正」を適用します。
+  let tiltCompensation = 0.0;
+  if (eqHighGainTemp < 0.0) {
+    tiltCompensation = eqHighGainTemp * 0.25; // 例: -1.2dBカットのとき、-0.3dBの低音引き締め
+  }
+
   // 1. LOW EQ (低域補正: 80Hz/100Hz/120Hz)
   // ターゲットからのズレを100%反転して補正値とします（最大+4.0dB〜-4.0dB）
   const eqLowAdjustment = -lowDiffDb * spectralCorrectionScale;
-  // Spotify基準のタイトな低音に極限まで肉薄させるため、自動算出値に対してわずか -0.3dB の微調整用カットバイアスを適用します
-  const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment - 0.3) * 10) / 10));
+  // Spotify基準のタイトな低音に極限まで肉薄させるため、自動算出値に対してわずか -0.3dB の微調整用カットバイアスおよび傾斜リンク補正を適用します
+  const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment - 0.3 + tiltCompensation) * 10) / 10));
 
   let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
   if (lowDiffDb > 1.0) {
@@ -2282,9 +2293,9 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   }
 
   // 2. LOW-MID EQ (中低域補正: 200Hz)
-  // 低域全体の過不足に対して50%の割合で追従し、ふくよかさ・スッキリ感を調整します（最大+2.0dB〜-2.0dB）
+  // 低域全体の過不足に対して50%の割合で追従し、ふくよかさ・スッキリ感を調整します（最大+2.0dB〜-2.0dB）。傾斜リンク補正も加味します。
   const eqLowMidAdjustment = -lowDiffDb * 0.5 * spectralCorrectionScale;
-  const eqLowMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment) * 10) / 10));
+  const eqLowMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment + tiltCompensation) * 10) / 10));
 
   // 3. MID EQ (中域補正: 1000Hz)
   // 箱鳴りやラジオ感を防ぐため、追従感度を 0.5 → 0.75 に高め、カットバイアスも -0.8 → -1.5dB へ強めてすっきりさせます
@@ -2409,15 +2420,11 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     baseLoudnessDesc = "CUSTOM";
   }
   
-  // 補正係数を 1.0 -> 1.25 に高め、高域の明瞭度（空気感・クリアさ）をしっかりと引き出します
-  const eqHighAdjustment = -highDiffDb * 1.25 * spectralCorrectionScale;
-  
   const isElectronicGenre = (detectedGenre === 'edm' || detectedGenre === 'hardcore' || detectedGenre === 'metal' ||
                              genreKey === 'edm' || genreKey === 'hardcore' || genreKey === 'metal');
   
-  // 最大ブースト幅を+4.0dBまで拡張し、高域が曇った音源をより鮮明にできるように解放します
-  const maxHighBoost = 4.0;
-  let eqHighGain = Math.max(-4.5, Math.min(maxHighBoost, Math.round((basePreset.eqHighGain + eqHighAdjustment) * 10) / 10));
+  // 先行計算した eqHighGainTemp を本採用します
+  let eqHighGain = eqHighGainTemp;
 
   // サ行（シビランス）検知時の高域クランプを少し緩和（超高音の曇りを防ぐため、2.2dB〜2.6dBまで許容）
   if (sibilanceDynamicFreq > 0) {
