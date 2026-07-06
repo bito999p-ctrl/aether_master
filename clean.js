@@ -2718,11 +2718,13 @@ function loadGenrePreset(genreKey) {
     params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
     params.hissReductionMaxCut = aiSuggestedParams.hissReductionMaxCut !== undefined ? aiSuggestedParams.hissReductionMaxCut : -16.0;
     params.hissReductionFreq = aiSuggestedParams.hissReductionFreq || 9000;
+    params.hissReductionMaxFreq = aiSuggestedParams.hissReductionMaxFreq || 16000;
     params.limiterBoost = aiSuggestedParams.limiterBoost;
     params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
     params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
     params.deesserMaxCut = aiSuggestedParams.deesserMaxCut !== undefined ? aiSuggestedParams.deesserMaxCut : -15.0;
     params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
+    params.deesserMaxFreq = aiSuggestedParams.deesserMaxFreq || 9500;
     // Set UI badge to show detected genre
     const genreBadge = document.getElementById('ai-detected-genre-badge');
     if (genreBadge && aiDetectedGenre) {
@@ -2732,25 +2734,29 @@ function loadGenrePreset(genreKey) {
     // プリセット変更時は、AIが自動適用した入力ゲインを0.0dB(ニュートラル)に戻して各プリセットの標準音量を担保します
     params.inputGainDb = 0.0;
     
-    // 楽曲自体のノイズ状態はプリセット変更で変わらないため、AI検出済みのノイズクリーナー設定があれば継承し、なければOFFにする
+    // 楽曲自体のノイズ状態はプリセット変更で変わらないため、AI検出済みのノイズクリーナー設定があれば継承し、 Redmond などの場合はOFFにする
     if (aiSuggestedParams !== null) {
       params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
       params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
       params.hissReductionMaxCut = aiSuggestedParams.hissReductionMaxCut !== undefined ? aiSuggestedParams.hissReductionMaxCut : -16.0;
       params.hissReductionFreq = aiSuggestedParams.hissReductionFreq || 9000;
+      params.hissReductionMaxFreq = aiSuggestedParams.hissReductionMaxFreq || 16000;
       params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
       params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
       params.deesserMaxCut = aiSuggestedParams.deesserMaxCut !== undefined ? aiSuggestedParams.deesserMaxCut : -15.0;
       params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
+      params.deesserMaxFreq = aiSuggestedParams.deesserMaxFreq || 9500;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
       params.hissReductionMaxCut = -16.0;
       params.hissReductionFreq = 9000;
+      params.hissReductionMaxFreq = 16000;
       params.sibilanceDynamicFreq = 0;
       params.deesserAmount = 0;
       params.deesserMaxCut = -15.0;
       params.deesserFreq = 7500;
+      params.deesserMaxFreq = 9500;
     }
     
     // Reset UI badge back to AUTO if loading normal auto template or another preset
