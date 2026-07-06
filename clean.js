@@ -2723,14 +2723,14 @@ function loadGenrePreset(genreKey) {
   params.deesserMaxFreq = src.deesserMaxFreq || 9500;
   
   if (genreKey === 'auto') {
-    params.inputGainDb = src.inputGainDb;
-    params.rumbleCutEnabled = src.rumbleCutEnabled;
-    params.hissReductionAmount = src.hissReductionAmount;
+    params.inputGainDb = src.inputGainDb !== undefined ? src.inputGainDb : 0.0;
+    params.rumbleCutEnabled = src.rumbleCutEnabled !== undefined ? src.rumbleCutEnabled : false;
+    params.hissReductionAmount = src.hissReductionAmount !== undefined ? src.hissReductionAmount : 0;
     params.hissReductionMaxCut = src.hissReductionMaxCut !== undefined ? src.hissReductionMaxCut : -16.0;
     params.hissReductionFreq = src.hissReductionFreq || 9000;
-    params.limiterBoost = src.limiterBoost;
-    params.sibilanceDynamicFreq = src.sibilanceDynamicFreq || 0;
-    params.deesserAmount = src.deesserAmount || 0;
+    params.limiterBoost = src.limiterBoost !== undefined ? src.limiterBoost : 3.5;
+    params.sibilanceDynamicFreq = src.sibilanceDynamicFreq !== undefined ? src.sibilanceDynamicFreq : 0;
+    params.deesserAmount = src.deesserAmount !== undefined ? src.deesserAmount : 0;
     params.deesserMaxCut = src.deesserMaxCut !== undefined ? src.deesserMaxCut : -15.0;
     params.deesserFreq = src.deesserFreq || src.sibilanceDynamicFreq || 7500;
     
