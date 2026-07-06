@@ -2676,9 +2676,18 @@ function loadGenrePreset(genreKey) {
   const p = GENRE_PRESETS[genreKey];
   if (!p) return;
 
-  // 1. Copy presets into current params (or load dynamic AI suggested baseline if available and key is auto)
+  // 1. Determine source parameters (dynamic AI suggestions optimized for this preset if audio is loaded, else static template)
+  let src;
   const isAiAutoActive = (genreKey === 'auto' && aiSuggestedParams !== null);
-  const src = isAiAutoActive ? aiSuggestedParams : p;
+  if (audioBuffer && genreKey !== 'auto') {
+    // 選択されたジャンルプリセットのターゲット特性に合わせてリアルタイム動的AI解析を適用
+    const dynamicResult = analyzeAudioResonances(audioBuffer, genreKey);
+    src = dynamicResult.suggestedParams;
+  } else if (isAiAutoActive) {
+    src = aiSuggestedParams;
+  } else {
+    src = p;
+  }
 
   params.satEnabled = src.satEnabled;
   params.satType = src.satType;
@@ -2710,25 +2719,25 @@ function loadGenrePreset(genreKey) {
   
   params.stereoWidth = src.stereoWidth;
   params.sideHighPassFreq = src.sideHighPassFreq || 110;
+  params.hissReductionMaxFreq = src.hissReductionMaxFreq || 16000;
+  params.deesserMaxFreq = src.deesserMaxFreq || 9500;
   
-  // Only override input gain, noise cleaner and limiter boost if loading the AI suggested baseline
-  if (isAiAutoActive) {
-    params.inputGainDb = aiSuggestedParams.inputGainDb;
-    params.rumbleCutEnabled = aiSuggestedParams.rumbleCutEnabled;
-    params.hissReductionAmount = aiSuggestedParams.hissReductionAmount;
-    params.hissReductionMaxCut = aiSuggestedParams.hissReductionMaxCut !== undefined ? aiSuggestedParams.hissReductionMaxCut : -16.0;
-    params.hissReductionFreq = aiSuggestedParams.hissReductionFreq || 9000;
-    params.hissReductionMaxFreq = aiSuggestedParams.hissReductionMaxFreq || 16000;
-    params.limiterBoost = aiSuggestedParams.limiterBoost;
-    params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
-    params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
-    params.deesserMaxCut = aiSuggestedParams.deesserMaxCut !== undefined ? aiSuggestedParams.deesserMaxCut : -15.0;
-    params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
-    params.deesserMaxFreq = aiSuggestedParams.deesserMaxFreq || 9500;
-    // Set UI badge to show detected genre
+  if (genreKey === 'auto') {
+    params.inputGainDb = src.inputGainDb;
+    params.rumbleCutEnabled = src.rumbleCutEnabled;
+    params.hissReductionAmount = src.hissReductionAmount;
+    params.hissReductionMaxCut = src.hissReductionMaxCut !== undefined ? src.hissReductionMaxCut : -16.0;
+    params.hissReductionFreq = src.hissReductionFreq || 9000;
+    params.limiterBoost = src.limiterBoost;
+    params.sibilanceDynamicFreq = src.sibilanceDynamicFreq || 0;
+    params.deesserAmount = src.deesserAmount || 0;
+    params.deesserMaxCut = src.deesserMaxCut !== undefined ? src.deesserMaxCut : -15.0;
+    params.deesserFreq = src.deesserFreq || src.sibilanceDynamicFreq || 7500;
+    
+    // Set UI badge to show AUTO
     const genreBadge = document.getElementById('ai-detected-genre-badge');
-    if (genreBadge && aiDetectedGenre) {
-      genreBadge.innerText = aiDetectedGenre.toUpperCase();
+    if (genreBadge) {
+      genreBadge.innerText = 'AUTO';
     }
   } else {
     // プリセット変更時は、AIが自動適用した入力ゲインを0.0dB(ニュートラル)に戻して各プリセットの標準音量を担保します
@@ -2759,18 +2768,17 @@ function loadGenrePreset(genreKey) {
       params.deesserMaxFreq = 9500;
     }
     
-    // Reset UI badge back to AUTO if loading normal auto template or another preset
+    // Set UI badge back to the selected genre name
     const genreBadge = document.getElementById('ai-detected-genre-badge');
     if (genreBadge) {
-      genreBadge.innerText = genreKey === 'auto' ? 'AUTO' : genreKey.toUpperCase();
+      genreBadge.innerText = genreKey.toUpperCase();
     }
     
-    // Preserve or set limiter boost based on loudness target selection
+    // Set limiter boost based on loudness target selection or preset
     const loudnessSelect = document.getElementById('loudness-select');
     const loudnessKey = loudnessSelect ? loudnessSelect.value : 'genre';
-    
     if (loudnessKey === 'genre') {
-      params.limiterBoost = p.limiterBoost;
+      params.limiterBoost = src.limiterBoost; // This is the dynamically calculated boost matching target loudness, capped for classic/acoustic
     } else if (LOUDNESS_TARGETS[loudnessKey] && LOUDNESS_TARGETS[loudnessKey].boost !== null) {
       params.limiterBoost = LOUDNESS_TARGETS[loudnessKey].boost;
     }
@@ -3774,8 +3782,10 @@ function runAiAnalysis(showLog = true) {
       const genreSelect = document.getElementById('preset-select');
       const isAutoMode = (genreSelect && genreSelect.value === 'auto');
       
+      // AUTOモードかどうかにかかわらず、常に解析された自動パラメータをaiSuggestedParamsに保存
+      aiSuggestedParams = JSON.parse(JSON.stringify(sug));
+      
       if (isAutoMode) {
-        aiSuggestedParams = JSON.parse(JSON.stringify(sug));
         aiDetectedGenre = "OPTIMIZED";
         
         // UIバッジにOPTIMIZEDを表示
@@ -3787,8 +3797,10 @@ function runAiAnalysis(showLog = true) {
           logToUI(`[AI Assistant] Applied Genre-Agnostic Studio Reference baseline. Audio is mathematically balanced.`, "success");
           logToUI(`[AI Assistant] (Recommendation) Identified track style: ${result.detectedGenre.toUpperCase()}. Select the ${result.detectedGenre.toUpperCase()} preset from the dropdown to apply specific genre coloration!`, "info");
         }
+        loadGenrePreset('auto');
       } else {
         // 個別ジャンルプリセット選択時の動的AI補正
+        loadGenrePreset(genreSelect.value);
         if (showLog) {
           logToUI(`[AI Assistant] Dynamically optimized the selected ${genreSelect.value.toUpperCase()} preset parameters to match this track's sonic profile.`, "success");
         }
