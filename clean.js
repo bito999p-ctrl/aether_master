@@ -1164,6 +1164,44 @@ function drawWaveformView() {
     waveCtx.shadowBlur = 0;
   }
 
+  // Draw timeline grid and time labels
+  const duration = audioBuffer.duration;
+  let intervalSec = 10;
+  if (duration > 300) {
+    intervalSec = 60;
+  } else if (duration > 120) {
+    intervalSec = 30;
+  } else if (duration > 60) {
+    intervalSec = 20;
+  } else if (duration > 30) {
+    intervalSec = 10;
+  } else {
+    intervalSec = 5;
+  }
+
+  waveCtx.font = '9px "Outfit", "Segoe UI", sans-serif';
+  waveCtx.fillStyle = 'rgba(148, 163, 184, 0.65)'; // Sleek slate gray text
+  waveCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  waveCtx.lineWidth = 1;
+  waveCtx.textBaseline = 'bottom';
+  
+  for (let t = intervalSec; t < duration; t += intervalSec) {
+    const progress = t / duration;
+    const x = progress * wWidth;
+    
+    // Vertical grid line
+    waveCtx.beginPath();
+    waveCtx.moveTo(x, 0);
+    waveCtx.lineTo(x, wHeight);
+    waveCtx.stroke();
+    
+    // Time string MM:SS
+    const mins = Math.floor(t / 60);
+    const secs = Math.floor(t % 60);
+    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    waveCtx.fillText(timeStr, x + 4, wHeight - 4);
+  }
+
   // Draw playback cursor position
   const currentOffset = isPlaying ? (pausedAt + (audioContext.currentTime - startTime)) : pausedAt;
   const progress = currentOffset / audioBuffer.duration;
@@ -4360,8 +4398,8 @@ async function runClippingAnalysis() {
   // Setup the mastering chain in the offline context
   const offlineChain = setupMasteringChain(offlineCtx, offlineSource, getCombinedParams(), dummyDest);
   
-  // Connect limiterGain (pre-limiter signal) directly to the offline context destination
-  offlineChain.limiterGain.connect(offlineCtx.destination);
+  // Connect limiter (post-limiter, pre-clipper signal) directly to the offline context destination
+  offlineChain.limiter.connect(offlineCtx.destination);
   
   // Start rendering
   offlineSource.start(0);
@@ -4391,12 +4429,11 @@ async function runClippingAnalysis() {
         if (valR > maxVal) maxVal = valR;
       }
       
-      // 0.96 (-0.35dBFS) is the threshold where the soft-clipper starts saturating/distorting.
-      // 1.0 (0dBFS) is where the signal exceeds digital zero and gets brickwall limited.
-      if (maxVal > 0.96) {
+      // 0.999 (~0dBFS) is the threshold where the signal exceeds digital maximum after the limiter, causing hard clipping in the waveshaper.
+      if (maxVal > 0.999) {
         const peakDb = 20 * Math.log10(maxVal);
         const timeSec = b * blockSizeSec;
-        const type = maxVal > 1.0 ? 'LIMITER OVERLOAD (音割れ/リミッター超過)' : 'SOFT-CLIP SATURATION (歪み/ソフトクリップ)';
+        const type = 'LIMITER OVERLOAD (音割れ/リミッター超過)';
         clippingPoints.push({
           time: timeSec,
           peakDb: peakDb,
