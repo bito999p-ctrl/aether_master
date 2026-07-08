@@ -50,6 +50,7 @@ let playbackOffset = 0; // Current time position in track
 let originalPeaks = null;
 let cachedProcessedPeaks = null;
 let baseLoudnessTarget = 'genre';
+let clippingScanTimeout = null;
 const PEAK_POINTS = 800;
 
 // Web Audio API Nodes for active playback
@@ -4309,6 +4310,7 @@ function invalidatePeakCache() {
   if (!isPlaying && audioBuffer && activeTab === 'waveform') {
     drawWaveformView();
   }
+  queueClippingScan();
 }
 
 function getProcessedPeaks() {
@@ -4317,5 +4319,180 @@ function getProcessedPeaks() {
   }
   return cachedProcessedPeaks;
 }
+
+// ==========================================================================
+// BACKGROUND CLIPPING & DISTORTION DETECTOR (音割れ対策スキャナー)
+// ==========================================================================
+function queueClippingScan() {
+  if (!audioBuffer) return;
+  if (clippingScanTimeout) {
+    clearTimeout(clippingScanTimeout);
+  }
+  clippingScanTimeout = setTimeout(runClippingAnalysis, 1000);
+}
+
+async function runClippingAnalysis() {
+  if (!audioBuffer) return;
+  
+  const statusEl = document.getElementById('clipping-status');
+  const logEl = document.getElementById('clipping-log');
+  
+  if (statusEl) {
+    statusEl.innerText = "STATUS: SCANNING...";
+    statusEl.style.color = "#00f2fe";
+  }
+  
+  const sampleRate = audioBuffer.sampleRate;
+  const numChannels = audioBuffer.numberOfChannels;
+  const duration = audioBuffer.duration;
+  
+  // Create an OfflineAudioContext to render the chain up to the Limiter Gain Stage
+  // This lets us analyze the true peaks entering the limiter and clipper.
+  const offlineCtx = new OfflineAudioContext(numChannels, sampleRate * duration, sampleRate);
+  
+  // Create offline source node
+  const offlineSource = offlineCtx.createBufferSource();
+  offlineSource.buffer = audioBuffer;
+  
+  // Create a dummy destination node to keep the final mastered output separate
+  const dummyDest = offlineCtx.createGain();
+  
+  // Setup the mastering chain in the offline context
+  const offlineChain = setupMasteringChain(offlineCtx, offlineSource, getCombinedParams(), dummyDest);
+  
+  // Connect limiterGain (pre-limiter signal) directly to the offline context destination
+  offlineChain.limiterGain.connect(offlineCtx.destination);
+  
+  // Start rendering
+  offlineSource.start(0);
+  
+  try {
+    const renderedBuffer = await offlineCtx.startRendering();
+    
+    // Analyze peaks in 100ms blocks
+    const blockSizeSec = 0.1;
+    const blockSizeSamples = Math.floor(sampleRate * blockSizeSec);
+    const numBlocks = Math.floor(renderedBuffer.length / blockSizeSamples);
+    
+    const clippingPoints = [];
+    
+    const leftData = renderedBuffer.getChannelData(0);
+    const rightData = numChannels > 1 ? renderedBuffer.getChannelData(1) : leftData;
+    
+    for (let b = 0; b < numBlocks; b++) {
+      const startSample = b * blockSizeSamples;
+      const endSample = startSample + blockSizeSamples;
+      
+      let maxVal = 0.0;
+      for (let i = startSample; i < endSample; i++) {
+        const valL = Math.abs(leftData[i]);
+        const valR = Math.abs(rightData[i]);
+        if (valL > maxVal) maxVal = valL;
+        if (valR > maxVal) maxVal = valR;
+      }
+      
+      // 0.96 (-0.35dBFS) is the threshold where the soft-clipper starts saturating/distorting.
+      // 1.0 (0dBFS) is where the signal exceeds digital zero and gets brickwall limited.
+      if (maxVal > 0.96) {
+        const peakDb = 20 * Math.log10(maxVal);
+        const timeSec = b * blockSizeSec;
+        const type = maxVal > 1.0 ? 'LIMITER OVERLOAD (音割れ/リミッター超過)' : 'SOFT-CLIP SATURATION (歪み/ソフトクリップ)';
+        clippingPoints.push({
+          time: timeSec,
+          peakDb: peakDb,
+          type: type
+        });
+      }
+    }
+    
+    // Group consecutive clipping blocks into time ranges to prevent console spam
+    const groupedRanges = [];
+    if (clippingPoints.length > 0) {
+      let currentRange = {
+        startTime: clippingPoints[0].time,
+        endTime: clippingPoints[0].time,
+        maxDb: clippingPoints[0].peakDb,
+        type: clippingPoints[0].type
+      };
+      
+      for (let i = 1; i < clippingPoints.length; i++) {
+        const pt = clippingPoints[i];
+        // Merge if within 0.25 seconds and of the same overload type
+        if (pt.time - currentRange.endTime <= 0.25 && pt.type === currentRange.type) {
+          currentRange.endTime = pt.time;
+          if (pt.peakDb > currentRange.maxDb) {
+            currentRange.maxDb = pt.peakDb;
+          }
+        } else {
+          groupedRanges.push(currentRange);
+          currentRange = {
+            startTime: pt.time,
+            endTime: pt.time,
+            maxDb: pt.peakDb,
+            type: pt.type
+          };
+        }
+      }
+      groupedRanges.push(currentRange);
+    }
+    
+    // Display results in the UI log
+    if (logEl) {
+      logEl.innerHTML = "";
+      if (groupedRanges.length === 0) {
+        if (statusEl) {
+          statusEl.innerText = "STATUS: SECURE (音割れなし)";
+          statusEl.style.color = "#06d6a0";
+        }
+        const line = document.createElement('div');
+        line.style.color = "#06d6a0";
+        line.innerText = `[${new Date().toLocaleTimeString()}] [SECURE] Scan completed. Waveform is clean. No clipping/distortion detected.`;
+        logEl.appendChild(line);
+      } else {
+        if (statusEl) {
+          statusEl.innerText = `STATUS: WARNING (${groupedRanges.length} points)`;
+          statusEl.style.color = "#ff0055";
+        }
+        
+        const summaryLine = document.createElement('div');
+        summaryLine.style.color = "#f77f00";
+        summaryLine.style.fontWeight = "bold";
+        summaryLine.style.marginBottom = "6px";
+        summaryLine.innerText = `[${new Date().toLocaleTimeString()}] [WARNING] Detected ${groupedRanges.length} overloaded areas. Lower INPUT GAIN or LIMITER BOOST to prevent clipping!`;
+        logEl.appendChild(summaryLine);
+        
+        groupedRanges.forEach(range => {
+          const line = document.createElement('div');
+          const timeDesc = Math.abs(range.startTime - range.endTime) < 0.15
+            ? formatClippingTime(range.startTime)
+            : `${formatClippingTime(range.startTime)} ~ ${formatClippingTime(range.endTime)}`;
+          
+          if (range.type.includes('OVERLOAD')) {
+            line.style.color = "#ff0055";
+            line.innerText = `[${timeDesc}] 🚨 ${range.type} | Max Peak: +${range.maxDb.toFixed(2)} dB`;
+          } else {
+            line.style.color = "#f77f00";
+            line.innerText = `[${timeDesc}] ⚠️ ${range.type} | Max Peak: ${range.maxDb.toFixed(2)} dB`;
+          }
+          logEl.appendChild(line);
+        });
+      }
+      logEl.scrollTop = 0;
+    }
+  } catch (err) {
+    console.error("Clipping analysis error:", err);
+    if (statusEl) {
+      statusEl.innerText = "STATUS: ERROR";
+      statusEl.style.color = "#ff0055";
+    }
+  }
+}
+
+function formatClippingTime(sec) {
+  const mins = Math.floor(sec / 60);
+  const secs = (sec % 60).toFixed(1);
+  return `${mins.toString().padStart(2, '0')}:${secs.padStart(4, '0')}`;
+}
+
 
 
