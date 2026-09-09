@@ -534,6 +534,11 @@
           <h2 class="panel-title"><i class="fa-solid fa-block-brick"></i> MAXIMIZER & LIMITER <span class="help-icon" data-tooltip="音を歪ませずに全体の音量（音圧）を商業用CDや配信サイトレベルまで引き上げる、最後の仕上げ調整ステージです。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="control-row">
+          <span class="control-label">CLIPPER DRIVE <span class="help-icon" data-tooltip="リミッター直前でドラム等の過度なトゲ（ピーク）を自然に整え、音を濁らせずに音圧を底上げするマスタリングクリッパーです。0dBでバイパス、2〜3dBでパンチのある現代的音圧になります。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="clipper-drive" min="0" max="6" step="0.1" value="0.0">
+          <span class="value-readout" id="clipper-drive-val">+0.0 dB</span>
+        </div>
+        <div class="control-row">
           <span class="control-label">GAIN BOOST <span class="help-icon" data-tooltip="音量の「引き上げ量」です。右に動かすほど全体の音がパワフルに大きくなります。音割れは自動で防がれます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="limiter-gain" min="0" max="15" step="0.1" value="4.0">
           <span class="value-readout" id="limiter-gain-val">+4.0 dB</span>
