@@ -165,9 +165,9 @@ const params = {
 };
 
 // Audio Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
-let aiSuggestedParams = null;
-let aiDetectedGenre = null;
-let lastAnalysisResult = null;
+export let aiSuggestedParams = null;
+export let aiDetectedGenre = null;
+export let lastAnalysisResult = null;
 
 // Audio Spices State Configuration
 const spices = {
@@ -182,7 +182,7 @@ const spices = {
 };
 
 // Compute combined parameters (original sliders + spice offsets)
-function getCombinedParams() {
+export function getCombinedParams() {
   return {
     ...params,
     satEnabled: params.satEnabled || spices.analogWarmth,
@@ -210,7 +210,7 @@ function getCombinedParams() {
 // Genre Presets Configuration (Academic Mastering Reference: eqMidHigh is reset to 0.0dB neutral)
 export const GENRE_PRESETS = {
   auto: {
-    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 12000,
+    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 5000,
     eqLowGain: 0.0, eqLowFreq: 90, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -220,7 +220,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, clipperDrive: 1.5, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   pops: {
-    satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10, satLpfFreq: 12000,
+    satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10, satLpfFreq: 5000,
     eqLowGain: 1.0, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -230,7 +230,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, clipperDrive: 1.8, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rnb: {
-    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 10000,
+    satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 5000,
     eqLowGain: 1.2, eqLowFreq: 75, eqLowQ: 0.55,
     eqLowMidGain: -0.6, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -240,7 +240,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.25, clipperDrive: 1.2, limiterBoost: 3.2, sideHighPassFreq: 110
   },
   rock: {
-    satEnabled: true, satType: 'tape', satDrive: 18, satMix: 12, satLpfFreq: 12000,
+    satEnabled: true, satType: 'tape', satDrive: 18, satMix: 12, satLpfFreq: 5500,
     eqLowGain: 1.0, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: 0.6, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -300,7 +300,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.30, clipperDrive: 3.2, limiterBoost: 4.2, sideHighPassFreq: 150
   },
   ambient: {
-    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 12000,
+    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 5000,
     eqLowGain: 2.0, eqLowFreq: 80, eqLowQ: 0.50,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -310,7 +310,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.55, clipperDrive: 0.0, limiterBoost: 2.0, sideHighPassFreq: 90
   },
   podcast: {
-    satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5, satLpfFreq: 8000,
+    satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5, satLpfFreq: 4000,
     eqLowGain: -2.0, eqLowFreq: 120, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.8, eqMidFreq: 1600, eqMidQ: 0.70,
@@ -320,7 +320,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.00, clipperDrive: 0.8, limiterBoost: 2.5, sideHighPassFreq: 150
   },
   classic: {
-    satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0, satLpfFreq: 10000,
+    satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0, satLpfFreq: 4000,
     eqLowGain: 0.5, eqLowFreq: 100, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -330,7 +330,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.30, clipperDrive: 0.0, limiterBoost: 1.5, sideHighPassFreq: 90
   },
   jazz: {
-    satEnabled: true, satType: 'tube', satDrive: 6, satMix: 5, satLpfFreq: 12000,
+    satEnabled: true, satType: 'tube', satDrive: 6, satMix: 5, satLpfFreq: 4500,
     eqLowGain: 0.8, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -340,7 +340,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.15, clipperDrive: 0.5, limiterBoost: 2.2, sideHighPassFreq: 90
   },
   acoustic: {
-    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8, satLpfFreq: 12000,
+    satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8, satLpfFreq: 4500,
     eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.55,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 0.70,
@@ -350,7 +350,7 @@ export const GENRE_PRESETS = {
     stereoWidth: 1.25, clipperDrive: 0.5, limiterBoost: 2.5, sideHighPassFreq: 90
   },
   custom: {
-    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 12000,
+    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 5000,
     eqLowGain: 0.0, eqLowFreq: 90, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
@@ -515,7 +515,7 @@ function generateMasteringClipCurve(driveDb = 0.0) {
 // ==========================================================================
 // SIGNAL CHAIN CREATION FUNCTION
 // ==========================================================================
-function setupMasteringChain(context, sourceNode, parameters, customDestination = null) {
+export function setupMasteringChain(context, sourceNode, parameters, customDestination = null) {
   const dest = customDestination || context.destination;
 
   // 1. Input Gain Node
@@ -591,7 +591,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   satHpf.Q.setValueAtTime(0.707, context.currentTime);
 
   waveShaper.curve = generateSaturatorCurve(parameters.satType, parameters.satDrive);
-  waveShaper.oversample = 'none'; // フィルター遅延による位相干渉（コームフィルター）を防ぐため、オーバーサンプリングを無効化します。
+  waveShaper.oversample = '2x'; // 2xオーバーサンプリングにより、ボーカルのサ行やシンバル高域の折り返し歪み（チリチリ・じりじり音）を根本抑制
 
   if (parameters.satEnabled) {
     const blend = parameters.satMix / 100;
@@ -613,7 +613,11 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   
   const satLpf = context.createBiquadFilter();
   satLpf.type = 'lowpass';
-  satLpf.frequency.setValueAtTime(parameters.satLpfFreq || 4500.0, context.currentTime);
+  let targetSatLpfFreq = parameters.satLpfFreq || 4500.0;
+  if (parameters.satType === 'tube') {
+    targetSatLpfFreq = Math.min(5000.0, targetSatLpfFreq); // 真空管サチュレーターは中低域の温かみ付加が目的のため、高域上限を5kHzに保護
+  }
+  satLpf.frequency.setValueAtTime(targetSatLpfFreq, context.currentTime);
   satLpf.Q.setValueAtTime(0.5, context.currentTime);
   
   waveShaper.connect(satLpf);
@@ -896,7 +900,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   // 9. Ceiling Gain Node
   const ceilingGain = context.createGain();
-  ceilingGain.gain.setValueAtTime(Math.pow(10, parameters.ceiling / 20), context.currentTime);
+  const ceilingDb = parameters.ceiling !== undefined ? parameters.ceiling : -1.0;
+  ceilingGain.gain.setValueAtTime(Math.pow(10, ceilingDb / 20), context.currentTime);
 
   safetyClipper.connect(ceilingGain);
   ceilingGain.connect(dest);
@@ -1863,6 +1868,7 @@ function updateSaturatorNode() {
   if (activeNodes.waveShaper) {
     const p = getCombinedParams();
     activeNodes.waveShaper.curve = generateSaturatorCurve(p.satType, p.satDrive);
+    activeNodes.waveShaper.oversample = '2x';
     
     if (p.satEnabled) {
       const blend = p.satMix / 100;
@@ -1873,7 +1879,11 @@ function updateSaturatorNode() {
       activeNodes.satWetGain.gain.setTargetAtTime(0.0, audioContext.currentTime, 0.01);
     }
     if (activeNodes.satLpf) {
-      activeNodes.satLpf.frequency.setTargetAtTime(p.satLpfFreq || 4500.0, audioContext.currentTime, 0.01);
+      let targetSatLpfFreq = p.satLpfFreq || 4500.0;
+      if (p.satType === 'tube') {
+        targetSatLpfFreq = Math.min(5000.0, targetSatLpfFreq);
+      }
+      activeNodes.satLpf.frequency.setTargetAtTime(targetSatLpfFreq, audioContext.currentTime, 0.01);
     }
   }
 }
@@ -2667,6 +2677,13 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     limiterBoost = Math.max(baselineLimiterBoost - 1.0, limiterBoost - bassOverloadPenalty);
   }
 
+  // 低域EQや高域EQのブーストが合算されている場合、リミッター入力でのヘッドルーム過負荷を防ぐためブースト量を引き締める
+  const totalEqBoost = Math.max(0, eqLowGain) + Math.max(0, eqHighGainTemp);
+  if (totalEqBoost > 2.5) {
+    const eqHeadroomCompensation = Math.min(1.5, (totalEqBoost - 2.5) * 0.4);
+    limiterBoost = Math.max(baselineLimiterBoost, limiterBoost - eqHeadroomCompensation);
+  }
+
   // 温和なアコースティック・クラシック系ジャンルでは、リミッターによる強烈な圧縮歪みやビビリ音を防ぎ、
   // 原音の広いダイナミクスを保護するために、マキシマイザーブースト（limiterBoost）の最大上限値を控えめに制限します。
   let maxAllowedLimiterBoost = 10.0;
@@ -2677,6 +2694,9 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   } else if (detectedGenre === 'jazz' || detectedGenre === 'ambient' || detectedGenre === 'podcast' ||
              basePresetKey === 'jazz' || basePresetKey === 'ambient' || basePresetKey === 'podcast') {
     maxAllowedLimiterBoost = 5.5;
+  } else if (detectedGenre === 'pops' && crestFactorDb > 12.0) {
+    // 静かなイントロとサビの落差が大きいPOPSでは、サビ部でのリミッター飽和・過渡歪みを防ぐため上限を4.0dBに保護
+    maxAllowedLimiterBoost = 4.0;
   }
 
   // どんなに静かな音源でも上限+10.0dB（温和なジャンルでは個別の最大上限）、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
@@ -2690,13 +2710,19 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   
   if (crestFactorDb > 11.5) {
     // トランジェントのトゲ（ドラムピーク）が大きいダイナミックな楽曲:
-    // リミッターのポンピング（不自然な息継ぎ歪み）を防ぐため、クリッパーで過渡ピークを自然に 2〜3dB トリミング
-    const clipperAdaptation = Math.min(2.0, (crestFactorDb - 11.5) * 0.5);
-    suggestedClipperDrive = Math.min(5.0, suggestedClipperDrive + clipperAdaptation);
+    // リミッターのポンピング（不自然な息継ぎ歪み）を防ぐため、クリッパーで過渡ピークを自然に 1〜2dB トリミング
+    const clipperAdaptation = Math.min(1.5, (crestFactorDb - 11.5) * 0.4);
+    suggestedClipperDrive = Math.min(3.5, suggestedClipperDrive + clipperAdaptation);
   } else if (crestFactorDb < 8.5) {
     // 既に強く圧縮されている楽曲: 余計なサチュレーション歪みを避けるため、クリッパーのドライブを控えめに緩和
     const clipperReduction = Math.min(1.5, (8.5 - crestFactorDb) * 0.5);
     suggestedClipperDrive = Math.max(0.0, suggestedClipperDrive - clipperReduction);
+  }
+
+  // 女性ボーカルのサ行や繊細なアコースティック楽器が含まれる楽曲、またはダイナミクスが大きい楽曲では、
+  // 過度なクリッパー歪み（チリチリ音）を防ぐため、プレ・クリッパーのドライブを最大 1.5dB に自動制限
+  if (sibilanceDynamicFreq > 0 || crestFactorDb > 12.0) {
+    suggestedClipperDrive = Math.min(1.5, suggestedClipperDrive);
   }
   
   // ラウドネス目標に応じたクリッパーの最適補正
@@ -2881,7 +2907,7 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       satType: basePreset.satType,
       satDrive: satDrive,
       satMix: satMix,
-      satLpfFreq: basePreset.satLpfFreq || 4500,
+      satLpfFreq: basePreset.satType === 'tube' ? Math.min(5000, basePreset.satLpfFreq || 4500) : (basePreset.satLpfFreq || 4500),
       eqLowGain: finalEqLowGain,
       eqLowFreq: suggestedEqLowFreq,
       eqLowQ: finalEqLowQ,
