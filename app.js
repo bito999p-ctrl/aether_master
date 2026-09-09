@@ -497,20 +497,17 @@ function generateMasteringClipCurve(driveDb = 0.0) {
     }
     return curve;
   }
-  // Knee threshold dynamically scales with clipperDrive (0dB: 1.0 -> 6dB: 0.65)
-  const T = Math.max(0.60, 1.0 - (driveDb / 6.0) * 0.35);
+  // Mastering Soft-Clipper Drive (Continuous C-infinity soft-saturation perfectly normalized to 1.0)
+  const alpha = Math.min(1.0, driveDb / 6.0);
+  const k = Math.pow(10, driveDb / 20); // Drive gain (1.0 to 2.0)
+  const tanhK = Math.tanh(k);
+
   for (let i = 0; i < n_samples; ++i) {
     const x = (i * 2) / (n_samples - 1) - 1;
     const absX = Math.abs(x);
-    if (absX <= T) {
-      curve[i] = x;
-    } else {
-      const sign = Math.sign(x);
-      const u = (absX - T) / (1.0 - T);
-      // C1 continuous Hermite cubic saturation: slope reaches exactly 0.0 with smooth horizontal tangent reaching 1.0 at x = 1.0 (zero crackle, bit transparent)
-      const y = T + (1.0 - T) * (u + u * u - u * u * u);
-      curve[i] = sign * y;
-    }
+    // Smooth soft-knee saturation: linear at small amplitudes, gently taming peaks and adding warm harmonics as drive increases
+    const y = (1.0 - alpha) * absX + alpha * (Math.tanh(k * absX) / tanhK);
+    curve[i] = Math.sign(x) * y;
   }
   return curve;
 }
@@ -1631,13 +1628,13 @@ function calculateProcessedPeaks() {
     }
 
     // 1. Pre-Limiter Soft Clipper simulation (shaves transient peaks gently without engine clamping)
-    if (p.clipperDrive > 0) {
-      const T = Math.max(0.60, 1.0 - (p.clipperDrive / 6.0) * 0.35);
+    if (p.clipperDrive > 0.05) {
+      const alpha = Math.min(1.0, p.clipperDrive / 6.0);
+      const k = Math.pow(10, p.clipperDrive / 20);
+      const tanhK = Math.tanh(k);
       const clipFunc = (v) => {
         const absV = Math.abs(v);
-        if (absV <= T) return v;
-        const u = Math.min(1.0, (absV - T) / (1.0 - T));
-        return Math.sign(v) * (T + (1.0 - T) * (u - u * u + (u * u * u) / 3.0));
+        return Math.sign(v) * ((1.0 - alpha) * absV + alpha * (Math.tanh(k * absV) / tanhK));
       };
       max = clipFunc(max);
       min = clipFunc(min);

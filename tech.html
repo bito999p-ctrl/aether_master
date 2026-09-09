@@ -285,9 +285,9 @@
       <p>サチュレーターおよびプレ・クリッパーで使用されている <code>WaveShaper</code> 用の伝達関数（カスタムカーブ計算）は、音響工学の物理特性に基づき以下の代数式を用いてリアルタイムに生成されています。</p>
       
       <div class="code-block">
-// 1. Pre-Limiter Soft Clipper (65,536 samples / 連続微分可能ソフトニー)
-f(x) = x                         [|x| <= 0.85 (-1.4dBFSまで完全ビット透明)]
-f(x) = sgn(x) * (0.85 + 0.15 * tanh((|x| - 0.85) / 0.15))   [|x| > 0.85]
+// 1. Pre-Limiter Soft Clipper (65,536 samples / 連続微分可能C-infinityソフトニー・ドライブ)
+f(x) = x                                                   [Drive = 0dB (完全ビット透明バイパス)]
+f(x) = sgn(x) * ((1 - α) * |x| + α * (tanh(k * |x|) / tanh(k)))  [Drive > 0dB (k = 10^(Drive/20), α = Drive/6.0)]
 
 // 2. TUBE (三極真空管モデリング: 第2次偶数倍音主体 & DCオフセット完全相殺)
 f(x) = tanh(k * (x + 0.06)) - tanh(0.06 * k)   [k = 1.0 + (Drive / 100) * 4.0]
