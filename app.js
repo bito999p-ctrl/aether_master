@@ -2591,9 +2591,24 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
 
   // 5. HIGH EQ (高域・エアバンド補正: 14000Hz)
   // ターゲットからのズレを100%反転して直接補正。曇った音源は明るく、うるさい音源は暖かく整えます（最大+3.5dB〜-4.5dB）
-  // 1. 入力ゲインステージングの先行計算（ピークレベルを -6.0dBFS に整えヘッドルームを確保）
+  // 1. AIインテリジェント・入力ゲインステージング（原音のピーク状態に応じた動的最適化）
   const originalPeakDb = 20 * Math.log10(maxAbsSample + 1e-6);
-  const suggestedInputGainDb = Math.max(-12.0, Math.min(12.0, -6.0 - originalPeakDb));
+  let suggestedInputGainDb = 0.0;
+
+  if (originalPeakDb > -0.8) {
+    // パターン1: 0dBFS付近（またはクリップ音源）
+    // 後段のEQブーストやサチュレーターでの内部クリップを防ぐため、安全マージン（ピーク -1.2dBFS）まで軽くトリム
+    suggestedInputGainDb = Math.max(-6.0, -1.2 - originalPeakDb);
+  } else if (originalPeakDb < -5.0) {
+    // パターン3: 録音レベルが著しく小さい音源（ピークが-5dBFS未満、昔の音源やアコースティック等）
+    // 後段のリミッターだけに過大な負担をかけないよう、適正作業レベル（ピーク -1.5dBFS付近）まで健康的に引き上げる
+    suggestedInputGainDb = Math.min(6.0, -1.5 - originalPeakDb);
+  } else {
+    // パターン2: 適切なマスタリング用ヘッドルームを持つ音源（ピーク -0.8dBFS 〜 -5.0dBFS、健康的な2mix）
+    // 原音の音圧とダイナミクスを無駄に削らず、完全ビット透明（0.0dB）で活かす
+    suggestedInputGainDb = 0.0;
+  }
+  suggestedInputGainDb = Math.round(suggestedInputGainDb * 10) / 10;
 
   // 2. ダイナミクス補正 (音楽理論・ダイナミックレンジ基準によるクレストファクター分析 ＆ 目標ラウドネス自動追従)
   let compThreshold = basePreset.compThreshold;
@@ -2659,20 +2674,27 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   }
 
   // 音量低下を防止するための最低限のリミッターブースト（出力ピークが少なくとも-1.0dBFSに達するように補償）
-  const baselineLimiterBoost = -1.0 - (suggestedInputGainDb + originalPeakDb);
-  let limiterBoost = Math.max(baselineLimiterBoost, requiredBoost);
+  const baselinePeakCompensation = -1.0 - (suggestedInputGainDb + originalPeakDb);
+
+  // ジャンル本来の音圧パンチ（市販CD/配信基準の押し込み量: 約+2.5〜+3.5dB）
+  const baseGenreBoost = (basePreset.limiterBoost !== undefined ? basePreset.limiterBoost : 3.5);
+  // 入力ゲインステージングがニュートラル（0dB）の健康的な2mixでは、EQブーストやサチュレーションのエネルギーを踏まえて基準ブーストを約-0.5dB微調整
+  const dynamicGenreBoost = (suggestedInputGainDb === 0.0) ? Math.max(2.8, baseGenreBoost - 0.5) : baseGenreBoost;
+
+  // 単なるピーク正規化にとどまらず、マスタリング特有の音圧・密度感（最低+1.2dBの押し込み）を保証
+  let limiterBoost = Math.max(baselinePeakCompensation + 1.2, Math.max(dynamicGenreBoost, requiredBoost));
 
   // 低域飽和による歪み・ビビリ防止（低域が基準ターゲットより著しく大きい場合、マキシマイザーブーストを自動制限）
   if (lowDiffDb > 1.0) {
-    const bassOverloadPenalty = Math.min(1.5, (lowDiffDb - 1.0) * 0.75);
-    limiterBoost = Math.max(baselineLimiterBoost - 1.0, limiterBoost - bassOverloadPenalty);
+    const bassOverloadPenalty = Math.min(1.0, (lowDiffDb - 1.0) * 0.5);
+    limiterBoost = Math.max(2.0, limiterBoost - bassOverloadPenalty);
   }
 
-  // 低域EQや高域EQのブーストが合算されている場合、リミッター入力でのヘッドルーム過負荷を防ぐためブースト量を引き締める
+  // 低域EQや高域EQのブーストが合算されている場合、リミッター入力でのヘッドルーム過負荷を防ぐためブースト量を安全に引き締める
   const totalEqBoost = Math.max(0, eqLowGain) + Math.max(0, eqHighGainTemp);
-  if (totalEqBoost > 2.5) {
-    const eqHeadroomCompensation = Math.min(1.5, (totalEqBoost - 2.5) * 0.4);
-    limiterBoost = Math.max(baselineLimiterBoost, limiterBoost - eqHeadroomCompensation);
+  if (totalEqBoost > 3.5) {
+    const eqHeadroomCompensation = Math.min(0.8, (totalEqBoost - 3.5) * 0.3);
+    limiterBoost = Math.max(2.2, limiterBoost - eqHeadroomCompensation);
   }
 
   // 温和なアコースティック・クラシック系ジャンルでは、リミッターによる強烈な圧縮歪みやビビリ音を防ぎ、
@@ -2686,11 +2708,11 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
              basePresetKey === 'jazz' || basePresetKey === 'ambient' || basePresetKey === 'podcast') {
     maxAllowedLimiterBoost = 5.5;
   } else if (detectedGenre === 'pops' && crestFactorDb > 11.5) {
-    // 静かなイントロとサビの落差が大きいPOPSでは、サビ部でのリミッター飽和・過渡歪みを防ぐため上限を3.8dBに保護
-    maxAllowedLimiterBoost = 3.8;
+    // 静かなイントロとサビの落差が大きいPOPSでは、サビ部でのリミッター飽和・過渡歪みを防ぐため上限を3.2dBに保護
+    maxAllowedLimiterBoost = 3.2;
   } else if (crestFactorDb > 12.5) {
-    // 一般の楽曲でも強弱差（クレストファクター）が非常に大きい場合は、大音量部でのリミッター過負荷を防ぐため上限を4.0dBに制限
-    maxAllowedLimiterBoost = 4.0;
+    // 一般の楽曲でも強弱差（クレストファクター）が非常に大きい場合は、大音量部でのリミッター過負荷を防ぐため上限を3.5dBに制限
+    maxAllowedLimiterBoost = 3.5;
   }
 
   // どんなに静かな音源でも上限+10.0dB（温和なジャンルでは個別の最大上限）、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
@@ -2714,9 +2736,9 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   }
 
   // サ行（シビランス）が目立つ楽曲や、強弱差（クレストファクター）が大きい楽曲では、
-  // プレ・クリッパーでの過度な歪み・チリチリ音を防ぐためドライブを最大1.2dBに制限
+  // プレ・クリッパーでの過度な歪み・チリチリ音を防ぐためドライブを最大1.0dBに制限（クリーンなソフトニー領域を維持）
   if (sibilanceDynamicFreq > 0 || crestFactorDb > 11.5) {
-    suggestedClipperDrive = Math.min(1.2, suggestedClipperDrive);
+    suggestedClipperDrive = Math.min(1.0, suggestedClipperDrive);
   }
   
   // ラウドネス目標に応じたクリッパーの最適補正
