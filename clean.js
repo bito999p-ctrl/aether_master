@@ -2449,36 +2449,133 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     tiltCompensation = eqHighGainTemp * 0.12; // 例: -1.2dBカットのとき、-0.14dBの低音引き締め（中間値へマイルド化）
   }
 
-  // 1. LOW EQ (低域補正: 80Hz/100Hz/120Hz)
+  // =========================================================================
+  // ACADEMIC SPECTRAL FREQUENCY OPTIMIZATION FOR 5-BAND EQ
+  // =========================================================================
+  // 1. 周波数重心 (Spectral Centroid) 算出関数
+  const getSpectralCentroid = (minHz, maxHz) => {
+    const bStart = Math.max(1, Math.floor((minHz * fftSize) / sampleRate));
+    const bEnd = Math.min(fftSize / 2 - 1, Math.floor((maxHz * fftSize) / sampleRate));
+    let weightedSum = 0;
+    let energySum = 0;
+    for (let b = bStart; b <= bEnd; b++) {
+      const f = (b * sampleRate) / fftSize;
+      const mag = avgSpectrum[b];
+      weightedSum += f * mag;
+      energySum += mag;
+    }
+    return energySum > 0 ? (weightedSum / energySum) : ((minHz + maxHz) / 2);
+  };
+
+  // 2. 局所共鳴ピーク (Prominent Spectral Peak) 探索関数
+  const getProminentPeakFreq = (minHz, maxHz, fallbackHz) => {
+    const bStart = Math.max(2, Math.floor((minHz * fftSize) / sampleRate));
+    const bEnd = Math.min(fftSize / 2 - 2, Math.floor((maxHz * fftSize) / sampleRate));
+    let bestFreq = fallbackHz;
+    let maxProminence = 1.05; // 最低でも5%の局所突起が必要
+    for (let b = bStart; b <= bEnd; b++) {
+      const mag = avgSpectrum[b];
+      if (mag > avgSpectrum[b - 1] && mag > avgSpectrum[b + 1]) {
+        const floor = (avgSpectrum[b - 2] + avgSpectrum[b + 2]) * 0.5 + 1e-9;
+        const prom = mag / floor;
+        if (prom > maxProminence) {
+          maxProminence = prom;
+          bestFreq = Math.round((b * sampleRate) / fftSize);
+        }
+      }
+    }
+    return bestFreq;
+  };
+
+  // 3. 最大エネルギー周波数 (Max Energy Frequency) 探索関数
+  const getMaxEnergyFreq = (minHz, maxHz, fallbackHz) => {
+    const bStart = Math.max(1, Math.floor((minHz * fftSize) / sampleRate));
+    const bEnd = Math.min(fftSize / 2 - 1, Math.floor((maxHz * fftSize) / sampleRate));
+    let bestFreq = fallbackHz;
+    let maxEnergy = -1;
+    for (let b = bStart; b <= bEnd; b++) {
+      if (avgSpectrum[b] > maxEnergy) {
+        maxEnergy = avgSpectrum[b];
+        bestFreq = Math.round((b * sampleRate) / fftSize);
+      }
+    }
+    return bestFreq;
+  };
+
+  // 1. LOW EQ (低域シェルフ: 50Hz〜130Hz)
   // ターゲットからのズレを100%反転して補正値とします（最大+4.0dB〜-4.0dB）
   const eqLowAdjustment = -lowDiffDb * spectralCorrectionScale;
   // Spotify基準のタイトな低音に極限まで肉薄させるため、自動算出値に対してわずか -0.3dB の微調整用カットバイアスおよび傾斜リンク補正を適用します
   const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment - 0.3 + tiltCompensation) * 10) / 10));
 
-  let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
-  if (lowDiffDb > 1.0) {
-    suggestedEqLowFreq = 120; // 低音過剰な場合は高めでカット
-  } else if (lowDiffDb < -1.0) {
-    suggestedEqLowFreq = 80;  // 低音不足な場合は低めから持ち上げ
+  // 40Hz〜160Hz区間のスペクトルエネルギー重心および最大ピークを解析
+  const lowCentroid = getSpectralCentroid(40, 160);
+  const lowPeak = getMaxEnergyFreq(40, 130, 80);
+  let suggestedEqLowFreq;
+  if (lowDiffDb < -0.8) {
+    // 低域不足（ブースト時）：キックの胴鳴りとベース土台を豊かに持ち上げるため、重心やや下（60〜85Hz）に配置
+    const targetHz = lowCentroid * 0.4 + lowPeak * 0.6;
+    suggestedEqLowFreq = Math.max(60, Math.min(85, Math.round(targetHz / 5) * 5));
+  } else if (lowDiffDb > 0.8) {
+    // 低域過剰（カット時）：50Hz付近のサブベースを削らず、不要な100Hz前後のブーミー感を落とすため高め（95〜125Hz）に配置
+    const targetHz = Math.max(95, lowCentroid * 1.12);
+    suggestedEqLowFreq = Math.max(95, Math.min(125, Math.round(targetHz / 5) * 5));
   } else {
-    suggestedEqLowFreq = 100;
+    // 概ねバランス良好：重心周波数をベースに75〜105Hzで自然にチューニング
+    suggestedEqLowFreq = Math.max(75, Math.min(105, Math.round(lowCentroid / 5) * 5));
   }
 
-  // 2. LOW-MID EQ (中低域補正: 200Hz)
+  // 2. LOW-MID EQ (中低域ピーク: 180Hz〜360Hz)
   // 低域全体の過不足に対して50%の割合で追従し、ふくよかさ・スッキリ感を調整します（最大+2.0dB〜-2.0dB）。傾斜リンク補正も加味します。
   const eqLowMidAdjustment = -lowDiffDb * 0.5 * spectralCorrectionScale;
   const eqLowMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment + tiltCompensation) * 10) / 10));
 
-  // 3. MID EQ (中域補正: 1000Hz)
+  // 180Hz〜360Hzの「こもり・箱鳴り・帯域重複」の共鳴ピークをスキャン
+  const lowMidPeak = getProminentPeakFreq(180, 360, 0);
+  const lowMidCentroid = getSpectralCentroid(180, 360);
+  let suggestedEqLowMidFreq;
+  if (lowMidPeak >= 180 && lowMidPeak <= 360) {
+    suggestedEqLowMidFreq = Math.round(lowMidPeak / 5) * 5;
+  } else {
+    suggestedEqLowMidFreq = Math.max(190, Math.min(340, Math.round(lowMidCentroid / 5) * 5));
+  }
+
+  // 3. MID EQ (中域ピーク: 700Hz〜1600Hz)
   // 箱鳴りやラジオ感を防ぐため、追従感度を 0.5 → 0.75 に高め、カットバイアスも -0.8 → -1.5dB へ強めてすっきりさせます
   const eqMidAdjustment = (-presenceDiffDb * 0.75 - 1.5) * spectralCorrectionScale; 
   const eqMidGain = Math.max(-4.5, Math.min(0.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 10) / 10));
 
-  // 4. MID-HIGH EQ (中高域・プレゼンス補正: 4500Hz)
+  // 700Hz〜1600Hzの中域母音フォルマント・鼻声・缶鳴りピークをスキャン
+  const midPeak = getProminentPeakFreq(700, 1600, 0);
+  const midCentroid = getSpectralCentroid(700, 1600);
+  let suggestedEqMidFreq;
+  if (midPeak >= 700 && midPeak <= 1600) {
+    suggestedEqMidFreq = Math.round(midPeak / 25) * 25;
+  } else {
+    suggestedEqMidFreq = Math.max(750, Math.min(1500, Math.round(midCentroid / 25) * 25));
+  }
+
+  // 4. MID-HIGH EQ (中高域ピーク: 2500Hz〜5500Hz)
   // 等ラウドネス曲線（ISO 226）に基づき、聴覚感度が急峻に高まる3k〜5kHz帯の過剰な持ち上げ（聴覚疲労・音割れの原因）を完全リセット。
   // 原則としてフラット（0.0dB）を基準とし、ターゲット偏差に対する微細なティルト補正（±1.5dB以内、感度0.35）にとどめます。
   const eqMidHighAdjustment = -presenceDiffDb * 0.35 * spectralCorrectionScale;
   const eqMidHighGain = Math.max(-1.5, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
+
+  // 2500Hz〜5500Hzの外耳道共鳴・耳障りな摩擦音（Presence/Harshness）ピークをスキャン
+  let harshPeak = 0;
+  const harshRes = filteredPeaks.find(p => p.freq >= 2500 && p.freq <= 5500);
+  if (harshRes) {
+    harshPeak = harshRes.freq;
+  } else {
+    harshPeak = getProminentPeakFreq(2500, 5500, 0);
+  }
+  const midHighCentroid = getSpectralCentroid(2500, 5500);
+  let suggestedEqMidHighFreq;
+  if (harshPeak >= 2500 && harshPeak <= 5500) {
+    suggestedEqMidHighFreq = Math.round(harshPeak / 50) * 50;
+  } else {
+    suggestedEqMidHighFreq = Math.max(2800, Math.min(5000, Math.round(midHighCentroid / 50) * 50));
+  }
 
   // 5. HIGH EQ (高域・エアバンド補正: 14000Hz)
   // ターゲットからのズレを100%反転して直接補正。曇った音源は明るく、うるさい音源は暖かく整えます（最大+3.5dB〜-4.5dB）
@@ -2682,8 +2779,12 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   // ボーカルのサ行や高域のきつい金属音（6kHz〜9kHz）をブーストするのを防ぐため、クロスオーバー下限周波数を10,500Hzに引き上げ（10.5kHz〜14kHzのエアバンド域のみを処理）
   const normalizedRatio = Math.max(0.08, Math.min(0.38, airToBrillianceRatio));
   let suggestedEqHighFreq = 10500 + ((normalizedRatio - 0.08) / 0.30) * 3500;
-  suggestedEqHighFreq = Math.round(suggestedEqHighFreq / 250) * 250;
-  suggestedEqHighFreq = Math.max(10500, Math.min(14000, suggestedEqHighFreq));
+  if (sibilanceDynamicFreq > 0) {
+    const deesserUpperLimit = Math.min(16000, Math.max(9500, sibilanceDynamicFreq + 1500));
+    suggestedEqHighFreq = Math.max(suggestedEqHighFreq, deesserUpperLimit + 500);
+  }
+  suggestedEqHighFreq = Math.round(suggestedEqHighFreq / 100) * 100;
+  suggestedEqHighFreq = Math.max(10000, Math.min(15000, suggestedEqHighFreq));
 
   // 4. Stereo Bass phase cancellation safeguard (ビビリ音・歪み防止)
   let finalEqLowGain = eqLowGain;
@@ -2781,13 +2882,13 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       eqLowFreq: suggestedEqLowFreq,
       eqLowQ: finalEqLowQ,
       eqLowMidGain: eqLowMidGain,
-      eqLowMidFreq: basePreset.eqLowMidFreq || 200,
+      eqLowMidFreq: suggestedEqLowMidFreq,
       eqLowMidQ: basePreset.eqLowMidQ || 0.60,
       eqMidGain: eqMidGain,
-      eqMidFreq: basePreset.eqMidFreq,
+      eqMidFreq: suggestedEqMidFreq,
       eqMidQ: basePreset.eqMidQ || 1.0,
       eqMidHighGain: eqMidHighGain,
-      eqMidHighFreq: basePreset.eqMidHighFreq || 4800,
+      eqMidHighFreq: suggestedEqMidHighFreq,
       eqMidHighQ: basePreset.eqMidHighQ || 1.0,
       eqHighGain: eqHighGain,
       eqHighFreq: suggestedEqHighFreq,
@@ -3375,23 +3476,23 @@ function updateAiReportCard() {
         <span style="color: #00f2fe; font-weight: 600;">${params.inputGainDb >= 0 ? '+' : ''}${params.inputGainDb.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ LOW:</span>
+        <span>EQ LOW (${params.eqLowFreq} Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqLowGain >= 0 ? '+' : ''}${params.eqLowGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ LOW-MID:</span>
+        <span>EQ LOW-MID (${params.eqLowMidFreq} Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqLowMidGain >= 0 ? '+' : ''}${params.eqLowMidGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ MID:</span>
+        <span>EQ MID (${params.eqMidFreq >= 1000 ? (params.eqMidFreq / 1000).toFixed(2) + 'k' : params.eqMidFreq} Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqMidGain >= 0 ? '+' : ''}${params.eqMidGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ MID-HIGH:</span>
+        <span>EQ MID-HIGH (${(params.eqMidHighFreq / 1000).toFixed(2)}k Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ HIGH:</span>
+        <span>EQ HIGH (${(params.eqHighFreq / 1000).toFixed(1)}k Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqHighGain >= 0 ? '+' : ''}${params.eqHighGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
@@ -3613,7 +3714,7 @@ function registerGuiEvents() {
   const eqLowMidFreqInput = document.getElementById('eq-low-mid-freq');
   if (eqLowMidFreqInput) {
     eqLowMidFreqInput.addEventListener('change', (e) => {
-      params.eqLowMidFreq = Math.max(150, Math.min(350, parseInt(e.target.value)));
+      params.eqLowMidFreq = Math.max(150, Math.min(400, parseInt(e.target.value)));
       e.target.value = params.eqLowMidFreq;
       selectCustomPreset();
       updateEqNodes();
@@ -3665,7 +3766,7 @@ function registerGuiEvents() {
   const eqMidHighFreqInput = document.getElementById('eq-mid-high-freq');
   if (eqMidHighFreqInput) {
     eqMidHighFreqInput.addEventListener('change', (e) => {
-      params.eqMidHighFreq = Math.max(2000, Math.min(5000, parseInt(e.target.value)));
+      params.eqMidHighFreq = Math.max(2000, Math.min(6000, parseInt(e.target.value)));
       e.target.value = params.eqMidHighFreq;
       selectCustomPreset();
       updateEqNodes();
