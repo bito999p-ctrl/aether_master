@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=5.0.0">
+  <link rel="stylesheet" href="styles.css?v=6.0.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -68,7 +68,7 @@
       font-size: 1.5rem;
       font-weight: 700;
       color: #fff;
-      margin-top: 45px;
+      margin-top: 50px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
@@ -100,7 +100,7 @@
     }
     .highlight-card {
       background: rgba(0, 242, 254, 0.04);
-      border: 1px dashed rgba(0, 242, 254, 0.2);
+      border: 1px dashed rgba(0, 242, 254, 0.25);
       border-radius: 10px;
       padding: 24px;
       margin: 28px 0;
@@ -131,15 +131,15 @@
       margin: 24px 0;
     }
     .feature-card {
-      background: rgba(255, 255, 255, 0.01);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 10px;
       padding: 20px;
       transition: all var(--transition-speed);
     }
     .feature-card:hover {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.035);
+      border-color: rgba(0, 242, 254, 0.25);
       transform: translateY(-2px);
     }
     .feature-card h4 {
@@ -158,19 +158,80 @@
       margin-bottom: 0;
       line-height: 1.7;
     }
+
+    /* Recipe Grid */
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin: 24px 0;
+    }
+    .recipe-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 22px;
+      transition: all var(--transition-speed);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .recipe-card:hover {
+      background: rgba(0, 242, 254, 0.03);
+      border-color: rgba(0, 242, 254, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+    .recipe-card h4 {
+      color: #fff;
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .recipe-card h4 i {
+      color: var(--accent-cyan);
+    }
+    .recipe-tags {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .recipe-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(0, 242, 254, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+    }
+    .recipe-badge.purple {
+      background: rgba(157, 78, 221, 0.15);
+      color: #d8b4fe;
+      border-color: rgba(157, 78, 221, 0.3);
+    }
+    .recipe-badge.orange {
+      background: rgba(247, 127, 0, 0.15);
+      color: #fca311;
+      border-color: rgba(247, 127, 0, 0.3);
+    }
     
     /* FAQ Accordion Styling */
     details {
-      background: rgba(255, 255, 255, 0.01);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       padding: 16px 20px;
       transition: all var(--transition-speed);
     }
     details[open] {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(0, 242, 254, 0.2);
+      background: rgba(255, 255, 255, 0.035);
+      border-color: rgba(0, 242, 254, 0.25);
     }
     summary {
       font-weight: 600;
@@ -200,7 +261,7 @@
     }
     details .faq-content {
       margin-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
       padding-top: 14px;
     }
     details p {
@@ -213,8 +274,8 @@
 
     /* Logic Flow Styling */
     .flow-container {
-      background: rgba(255, 255, 255, 0.01);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 12px;
       padding: 24px;
       margin: 24px 0;
@@ -265,7 +326,7 @@
     /* Table of Contents / Jump Menu */
     .toc-nav {
       background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 8px;
       padding: 14px 20px;
       margin-bottom: 30px;
@@ -285,10 +346,10 @@
     .toc-links {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
     }
     .toc-links a {
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       color: var(--text-primary);
       text-decoration: none;
       padding: 6px 12px;
@@ -325,194 +386,306 @@
     
     <header class="doc-header">
       <h1 class="doc-title">AetherMaster 総合ユーザーズガイド</h1>
-      <div class="doc-subtitle">マスタリングの基本操作からAIの解析ロジック、各モジュールの詳細、高度なトラブルシューティングまで一冊に凝縮しました。</div>
+      <div class="doc-subtitle">初心者から上級者まで。基本の3ステップ、プロ秘伝の「目的別レシピ」、全8種スパイスの活用法、高度な音響DSPの仕組みを網羅した完全解説書です。</div>
     </header>
 
     <nav class="toc-nav">
       <span class="toc-title"><i class="fa-solid fa-compass"></i> クイックナビゲーション:</span>
       <div class="toc-links">
-        <a href="#sec-basic"><i class="fa-solid fa-list-ol"></i> 基礎編</a>
-        <a href="#sec-ai"><i class="fa-solid fa-brain"></i> AI解析編</a>
+        <a href="#sec-basic"><i class="fa-solid fa-list-ol"></i> 基礎編 (3ステップ)</a>
+        <a href="#sec-recipes"><i class="fa-solid fa-wand-magic-sparkles"></i> 目的別レシピ集</a>
+        <a href="#sec-spices"><i class="fa-solid fa-pepper-hot"></i> 8大スパイス活用編</a>
         <a href="#sec-dsp"><i class="fa-solid fa-sliders"></i> DSPモジュール編</a>
-        <a href="#sec-faq"><i class="fa-solid fa-circle-question"></i> 実践編 (FAQ)</a>
+        <a href="#sec-ai"><i class="fa-solid fa-brain"></i> AI解析編</a>
+        <a href="#sec-faq"><i class="fa-solid fa-circle-question"></i> 初心者FAQ</a>
       </div>
     </nav>
 
     <!-- Section 1 -->
     <section id="sec-basic">
       <h2 class="section-title"><i class="fa-solid fa-list-ol"></i> 基礎編：3ステップでできる簡単マスタリング</h2>
-      <p>AetherMaster は、高度なAIアシスタントを搭載しているため、専門知識がなくても以下の3ステップでプロ級のマスタリングを実行できます。</p>
+      <p>AetherMaster（エーテルマスター）は、高度なAIアシスタントを内蔵しているため、難しいDTM用語を知らなくても、以下の<strong>わずか3ステップ</strong>で市販CDや商業配信クオリティのマスター音源を作成できます。</p>
       
       <ol class="steps-list">
         <li>
-          <p><strong><span class="step-badge">1</span>音源ファイルを読み込む</strong><br>
-          マスタリングしたい曲（WAV、MP3、M4Aなど）を画面上の点線枠内にドラッグ＆ドロップするか、クリックしてファイルを選択します。</p>
+          <p><strong><span class="step-badge">1</span> 音源ファイルを読み込む</strong><br>
+          マスタリングしたい曲（WAV、MP3、M4A、FLAC等）を画面中央の点線枠内にドラッグ＆ドロップするか、枠をクリックしてファイルを選びます。読み込みが完了すると、AIが瞬時に波形や音響特性の全体スキャンを開始します。</p>
         </li>
         <li>
-          <p><strong><span class="step-badge">2</span>ジャンルプリセットを選択する</strong><br>
-          「GENRE PRESET」メニューから、あなたの曲のスタイル（POPS, EDM, ROCK, HIP HOP など）を選択します。選択すると、AI が自動でそのジャンルに最も適した音響バランスの解析とパラメーター調整を実行します。</p>
+          <p><strong><span class="step-badge">2</span> プリセットを選ぶ（またはそのまま再生して聴く）</strong><br>
+          「GENRE PRESET」メニューから、あなたの曲のジャンル（POPS, EDM, ROCK, HIP HOP, JAZZ など）を選びます。迷ったときは<strong>「AUTO」のままでOK</strong>です。AIが原曲の良さを崩さない最も理想的なスタジオバランスを自動構築します。</p>
         </li>
         <li>
-          <p><strong><span class="step-badge">3</span>書き出してダウンロードする</strong><br>
-          好みのエクスポートフォーマット（高音質な WAV、または軽量な MP3）を選択し、「BAKE & DOWNLOAD MASTER」ボタンをクリックします。処理が終わると、自動的にマスタリング済みのファイルが保存されます。</p>
+          <p><strong><span class="step-badge">3</span> 書き出してダウンロードする</strong><br>
+          好みの保存形式（最高音質な <strong>WAV</strong>、またはスマホ共有に便利な <strong>MP3</strong>）を選択し、一番下の大きな<strong>「BAKE & DOWNLOAD MASTER」</strong>ボタンをクリックします。わずか数秒でプロ品質に仕上がった音源がダウンロードされます。</p>
         </li>
       </ol>
     </section>
 
-    <!-- Section 2 -->
+    <!-- Section 2: Recipes -->
+    <section id="sec-recipes">
+      <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> 目的別レシピ編：こうしたいときは？（お悩み逆引き集）</h2>
+      <p>「もっとこうしたい！」という具体的なサウンドイメージがあるときは、以下のレシピを試してみてください。最小限の操作で劇的に変化します。</p>
+
+      <div class="recipe-grid">
+        <div class="recipe-card">
+          <div>
+            <h4><i class="fa-solid fa-bolt"></i> 市販曲のような大音圧・迫力にしたい！</h4>
+            <p>リミッターだけを無理に上げると音がペタンコに潰れてしまいます。新機能<strong>「CLIPPER DRIVE」を +1.5dB〜+2.5dB</strong> まで上げ、スパイスの<strong>「LOUDNESS PUSH」をON</strong>にしてください。ドラムのアタックを残したまま、迫力ある巨大な音圧が得られます。</p>
+          </div>
+          <div class="recipe-tags">
+            <span class="recipe-badge">CLIPPER DRIVE: +2.0dB</span>
+            <span class="recipe-badge purple">LOUDNESS PUSH: ON</span>
+            <span class="recipe-badge orange">Target: LOUD / CLUB</span>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div>
+            <h4><i class="fa-solid fa-feather"></i> スマホやイヤホンで聴くと耳が痛い・疲れる…</h4>
+            <p>デジタル音源特有の 3.5k〜4.5kHz のトゲ（ハーシュネス）が原因です。スパイスの<strong>「SILKY SMOOTH」をON</strong>にし、NOISE CLEANERの<strong>「DE-ESSER」を 40%〜60%</strong> 付近まで上げてください。刺さる角が優しく取れ、長時間聴いても疲れないカフェ風の上質サウンドになります。</p>
+          </div>
+          <div class="recipe-tags">
+            <span class="recipe-badge purple">SILKY SMOOTH: ON</span>
+            <span class="recipe-badge">DE-ESSER: 50%</span>
+            <span class="recipe-badge">Mid-High EQ: 0.0dB</span>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div>
+            <h4><i class="fa-solid fa-drum"></i> 低音がボワボワして部屋にこもる・キックが埋もれる</h4>
+            <p>200Hz付近の「濁り（泥水感）」が原因です。新スパイス<strong>「PULTEC BASS」をON</strong>にしてください。名機Pultecイコライザーの秘伝トリックにより、重低音を支えつつ200Hzのこもりを一瞬でカット。キックの輪郭とベースラインがくっきり引き締まります。</p>
+          </div>
+          <div class="recipe-tags">
+            <span class="recipe-badge purple">PULTEC BASS: ON</span>
+            <span class="recipe-badge">Rumble Cut: ON</span>
+            <span class="recipe-badge">KICK PUNCH: ON (お好み)</span>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div>
+            <h4><i class="fa-solid fa-microphone-lines"></i> 歌声（ボーカル）がオケに埋もれて聴こえにくい</h4>
+            <p>スパイスの<strong>「VOCAL PRESENCE」をON</strong>にしてください。言葉の明瞭度や子音が宿る 3.5k〜4.5kHz 帯がピンポイントで持ち上がり、バックトラックを邪魔することなく、歌声の輪郭だけがセンター手前にスッと浮き立って聴こえるようになります。</p>
+          </div>
+          <div class="recipe-tags">
+            <span class="recipe-badge purple">VOCAL PRESENCE: ON</span>
+            <span class="recipe-badge">Width: 110%〜115%</span>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div>
+            <h4><i class="fa-solid fa-arrows-left-right-to-line"></i> 横に広げたいが、スマホで音が消えるのが怖い…</h4>
+            <p>心配ありません！スパイスの<strong>「STEREO WIDER」をON</strong>にしてください。AetherMasterのステレオイコライザーは、低音域（140Hz以下）を自動でセンターにモノラル固定する安全回路が連動しています。スマホの片耳イヤホンや単体スピーカーでもボーカルやキックが絶対に薄くなりません。</p>
+          </div>
+          <div class="recipe-tags">
+            <span class="recipe-badge purple">STEREO WIDER: ON</span>
+            <span class="recipe-badge">Low-End Mono: 自動連動</span>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div>
+            <h4><i class="fa-solid fa-shield-halved"></i> 音割れ（クリッピング）していないか確実に確かめたい</h4>
+            <p>画面下部の<strong>「CLIPPING & DISTORTION RADAR」</strong>にある<strong>「SCAN NOW（音割れ検査）」</strong>ボタンをクリックしてください。バックグラウンドで曲全体を高速走査し、0dBFSを超えて歪んでいる箇所やピーク値をミリ秒単位でレポートしてくれます。</p>
+          </div>
+          <div class="recipe-tags">
+            <span class="recipe-badge orange">SCAN NOW ボタン実行</span>
+            <span class="recipe-badge">CPU負荷: 普段は完全ゼロ</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Spices -->
+    <section id="sec-spices">
+      <h2 class="section-title"><i class="fa-solid fa-pepper-hot"></i> 8大スパイス活用編：ワンクリックで変わる秘伝の隠し味</h2>
+      <p>「AUDIO SPICES」キャビネットには、プロのマスタリング現場で定番として施される職人技がボタン1つに封入されています。好きなものを自由に組み合わせて使えます。</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-wind"></i> 高音の抜け感 <span style="font-size:0.75rem; color:var(--text-muted);">AIR TREBLE</span></h4>
+          <p>15,000Hz以上の超高域（Air Band）を滑らかにブースト。ボーカルのサ行やシンバルの耳障りなシャリつきを刺激することなく、空気の澄んだ高級感だけを加えます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-bullseye"></i> キックの抜け感 <span style="font-size:0.75rem; color:var(--text-muted);">KICK PUNCH</span></h4>
+          <p>キックの胴鳴り（55Hz）を狭帯域で押し出し、さらにコンプレッサーのアタック時間を30ms遅らせて打頭を逃がすことで、ドラムのパンチ感を劇的に際立たせます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-weight-hanging"></i> 低音の引き締め <span style="font-size:0.75rem; color:var(--text-muted);">PULTEC BASS</span></h4>
+          <p>伝説の名機Pultec EQのトリック。超低域（80Hz）を支えつつ、モワつきの原因となる200Hzのこもりをカットし、キックとベースをタイトに引き締めます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-user"></i> ボーカルの存在感 <span style="font-size:0.75rem; color:var(--text-muted);">VOCAL PRESENCE</span></h4>
+          <p>人間の耳が最も敏感なプレゼンス帯域（3.5k〜4.5kHz）を持ち上げ、オケに埋もれがちな歌声や主旋律の歌詞を一歩前にクリアに浮き立たせます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-mug-saucer"></i> 耳触りの良さ <span style="font-size:0.75rem; color:var(--text-muted);">SILKY SMOOTH</span></h4>
+          <p>イヤホンや大音量リスニングで耳が痛くなりやすい 3.8k〜4.5kHz のトゲを優しくスクープ。何時間でも聴いていられるシルキーなカフェミュージック調に仕上げます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-expand"></i> 空間の広がり <span style="font-size:0.75rem; color:var(--text-muted);">STEREO WIDER</span></h4>
+          <p>低音の位相崩れ（低音がスカスカになる現象）を防ぎながら、安全なマージン（+18%）で左右の広がりを自然に拡大し、立体的で開放感ある音場を作ります。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-fire-flame-curved"></i> アナログの温かみ <span style="font-size:0.75rem; color:var(--text-muted);">ANALOG WARMTH</span></h4>
+          <p>真空管（TUBE）特有の心地よい第2次偶数倍音を付加。デジタル特有の冷たさや平坦さを解消し、太く温かいビンテージアナログコンソールの質感を加えます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-gauge-high"></i> 音圧プッシュ <span style="font-size:0.75rem; color:var(--text-muted);">LOUDNESS PUSH</span></h4>
+          <p>プレ・クリッパーとリミッターが協調し、ダイナミクスを崩さずに力強く音圧を底上げ。あと一歩の迫力が欲しいときの強力なプッシュボタンです。</p>
+        </div>
+      </div>
+
+      <div class="highlight-card">
+        <h4><i class="fa-solid fa-heart"></i> おすすめのスパイス組み合わせ（マリアージュ）</h4>
+        <ul>
+          <li><strong>現代J-POP / アニソン黄金セット</strong>：【VOCAL PRESENCE】＋【KICK PUNCH】＋【STEREO WIDER】</li>
+          <li><strong>洋楽・EDM・クラブ爆音セット</strong>：【PULTEC BASS】＋【LOUDNESS PUSH】＋【STEREO WIDER】</li>
+          <li><strong>優しいアコースティック・歌モノセット</strong>：【SILKY SMOOTH】＋【ANALOG WARMTH】＋【AIR TREBLE】</li>
+          <li><strong>ロック・バンドサウンド激熱セット</strong>：【KICK PUNCH】＋【PULTEC BASS】＋【LOUDNESS PUSH】</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 4: DSP -->
+    <section id="sec-dsp">
+      <h2 class="section-title"><i class="fa-solid fa-sliders"></i> DSPモジュール編：各プロセッサーの役割（上級者向け）</h2>
+      <p>AetherMaster の内部シグナルチェーンは、世界の一流マスタリングスタジオに準拠したプロセッサーで構成されています。</p>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-fire"></i> サチュレーター (Saturator)</h4>
+          <p><strong>TUBE（真空管）</strong>：第2次偶数倍音主体の温かい立体感。<br>
+          <strong>TAPE（磁気テープ）</strong>：第3次奇数倍音による滑らかな一体感（Glue）。<br>
+          <strong>DRIVE（ソリッドステート）</strong>：BJTトランジスタ回路によるタイトな押し出し感。<br>
+          ※いずれも220Hz以下をカットするハイパス保護付きで、重低音がモワつきません。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-sliders"></i> 5バンド アカデミックEQ</h4>
+          <p>人間の耳の感度特性（ISO 226 等ラウドネス曲線）に基づき、聴覚疲労を起こしやすいプレゼンス帯の過剰なブーストを完全排除。Low (80Hz), Low-Mid (200Hz), Mid (1000Hz), Mid-High (4500Hz), High (9000Hz) の5系統で原曲の良さを忠実に磨き上げます。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-scissors"></i> プレ・ソフトクリッパー (Clipper Drive)</h4>
+          <p>リミッターの手前でドラムなどの鋭い過渡ピーク（ミリ秒未満のトゲ）を先回りして滑らかに吸収する専用プロセッサー。リミッターの息継ぎ歪み（ポンピング）を根絶し、パンチのある高音圧を実現します。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-compress"></i> Glue コンプレッサー</h4>
+          <p>ばらついた音量を均一化し、バラバラだった各パートを一つのマスターテープに接着（Glue）したかのような音楽的一体感を生み出します。キックのアタックを潰さないソフトニー設計です。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-arrows-left-right"></i> M/S ステレオイメージャー</h4>
+          <p>音の左右の広がり幅を調整します。110Hz〜140Hz以下の低音域は自動的にセンターへモノラル固定されるため、左右の位相打ち消しによる「低音スカスカ現象」を100%防止します。</p>
+        </div>
+        <div class="feature-card">
+          <h4><i class="fa-solid fa-volume-high"></i> マキシマイザー＆リミッター</h4>
+          <p>商業配信レベルまで音圧を安全に引き上げる最終段。1.0msの高速アタックと80msの低歪み適応型リリース、さらに出力上限 -1.0dBFS のCeiling（天井）マージンにより、配信時の音割れを防止します。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: AI -->
     <section id="sec-ai">
       <h2 class="section-title"><i class="fa-solid fa-brain"></i> AI解析編：AIスマート・アシスタンスの内部ロジック</h2>
-      <p>「ANALYZE & AUTO-CORRECT EQ」ボタンをクリックすると、AIが楽曲全体をバックグラウンドで解析し、最も音が良くなる設計値を自動で算出します。このとき内部では、以下のステップが順番に走っています。</p>
+      <p>「ANALYZE & AUTO-CORRECT EQ」ボタンをクリックすると、AIが楽曲全体をバックグラウンドで高速解析し、最も音が良くなる設計値を自動で算出します。</p>
       
       <div class="flow-container">
         <div class="flow-step">
           <div class="flow-icon">1</div>
           <div class="flow-body">
             <h4>多角形音響スキャン (FFT & Dynamics Scan)</h4>
-            <p>音源の「最も静かな区間」「最も盛り上がっている区間」をサンプリングし、FFT（高速フーリエ変換）を用いて、低域・中域・高域・プレゼンス（歌声の帯域）の比率を厳密に測定します。また、音の強弱のダイナミクス幅（クレストファクター）や左右の位相ズレ（ステレオ相関値）も同時に測定します。</p>
+            <p>音源の無音部分を除外し、アクティブ区間のみからFFT（高速フーリエ変換）を用いて、低域・低中域・中域・高域のスペクトル傾斜（ピンクノイズ -4.5dB/oct 基準）を測定します。また、クレストファクター（音のトゲの鋭さ）やステレオ相関値（位相の健全性）も同時に走査します。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-icon">2</div>
           <div class="flow-body">
-            <h4>ジャンル特徴量の自動推定 (Style Identification)</h4>
-            <p>測定された比率から、この楽曲が「どのジャンル（EDM, HipHop, Pops, Rockなど）の音響プロファイルに最も近いか」を自動で推定します。推定結果は操作ログに「推奨ジャンル」として表示され、手動選択の目安になります。</p>
+            <h4>動的ジャンルプロファイルの自動推定</h4>
+            <p>測定データから楽曲のスタイル（EDM, Pops, Rock, Classic等）を推定。各ジャンルが目指すべきターゲット周波数カーブとの偏差を計算します。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-icon">3</div>
           <div class="flow-body">
-            <h4>目標期待値（Targets）への自動アライメント</h4>
-            <p>AIは、元の音源の周波数バランスと、ターゲットとする「理想的な基準バランス」を比較します。
-            <strong>AI AUTO（デフォルト）状態では、ジャンルに依存しない最もニュートラルなスタジオ基準値（Studio Reference Target）</strong>を目標としてEQのブースト/カットを計算します。これにより、ジャンル判定が万が一違っていた場合でも、不自然な音色になるのを防ぎます。</p>
+            <h4>インテリジェントなパラメーター自動補正</h4>
+            <p>AIは原音のキャラクターを壊さないよう、極端なブースト/カットを抑制する安全リミット（±1.5dB以内）を適用しながら、最適なEQゲイン、コンプレッサーしきい値、クリッパードライブ、ステレオ幅を瞬時に算出・セットします。</p>
           </div>
         </div>
       </div>
-
-      <div class="highlight-card">
-        <h4><i class="fa-solid fa-circle-info"></i> AUTO（自動）と個別ジャンルプリセットの違い</h4>
-        <p>AI AUTOモードは常に「原音の良さを崩さないフラットな高音質」を狙います。一方で、ドロップダウンメニューから特定のジャンル（例：`EDM`）を手動で選択すると、AIは<strong>「そのジャンル専用のターゲット期待値（EDMなら重低音と超高域が引き立つVシェイプ）」</strong>に向けてEQを瞬時に再計算し、そのジャンルに特化した色付け（Coloration）を施します。</p>
-      </div>
     </section>
 
-    <!-- Section 3 -->
-    <section id="sec-dsp">
-      <h2 class="section-title"><i class="fa-solid fa-sliders"></i> DSPモジュール編：各プロセッサーの役割（上級者向け）</h2>
-      <p>AetherMaster の内部シグナルチェーンは、プロのスタジオ機材と同等の各種プロセッサーで構成されています。それぞれの役割と調整のコツは以下の通りです。</p>
-      
-      <div class="feature-grid">
-        <div class="feature-card">
-          <h4><i class="fa-solid fa-fire"></i> サチュレーター (Saturator)</h4>
-          <p>アナログの真空管（Tube）やテープを過大入力した際に生じる、心地よい「倍音（歪み）」をシミュレートして加えます。デジタル特有の冷たさを取り除き、音が太く、温かくまとまります。</p>
-        </div>
-        <div class="feature-card">
-          <h4><i class="fa-solid fa-broom"></i> ノイズクリーナー (Noise Cleaner)</h4>
-          <p><strong>Rumble Cut</strong>: 80Hz以下の空調ノイズや不要な重低音をカットします。ただし、EDMやHipHopなどのサブベースが命のジャンルでは、AIが自動でONにするのを防ぐ安全セーフガードが働きます。<br>
-          <strong>Hiss Reducer</strong>: 無音部分のサー音を消去する動的フィルターです。音が曇らないように13,000Hz以上の帯域のみをマイルドに狙い撃ちします。</p>
-        </div>
-        <div class="feature-card">
-          <h4><i class="fa-solid fa-sliders"></i> 3バンドEQ (Equalizer)</h4>
-          <p>低音域（Low）、中音域（Mid/歌声）、高音域（High/空気感）の3つをコントロールします。AIは自動解析時、低音域を最大 `+4.5 dB`、高音域を最大 `+0.8 dB` までの安全範囲内で緻密にブースト/カットします。</p>
-        </div>
-        <div class="feature-card">
-          <h4><i class="fa-solid fa-compress"></i> Glue コンプレッサー</h4>
-          <p>ばらついた音量をなだらかに均一化し、バラバラだった各楽器の音をまるで一つの接着剤（Glue）でくっつけたかのように一体化させ、楽曲のまとまり感を高めます。</p>
-        </div>
-        <div class="feature-card">
-          <h4><i class="fa-solid fa-arrows-left-right"></i> ステレオイメージャー</h4>
-          <p>音の左右の広がり幅を調整します。ベースやキックなどの110Hz以下のエネルギーは自動でセンターにモノラル化して固定されるため、位相の打ち消し合いによるスカスカ感を防ぎ、引き締まった定位を保ちます。</p>
-        </div>
-        <div class="feature-card">
-          <h4><i class="fa-solid fa-volume-high"></i> マキシマイザー＆リミッター</h4>
-          <p>音割れを起こさずに、音圧（全体の迫力・音量）を極限まで引き上げる最終段のプロセッサーです。アタックが固く潰れすぎないよう、しきい値 `-1.0 dB`、リリース `120ms` という耳に優しいプロのスタジオ仕様で動作します。</p>
-        </div>
-        <div class="feature-card">
-          <h4><i class="fa-solid fa-microphone"></i> DE-ESSER (ディエッサー)</h4>
-          <p>ボーカルの「サ、シ、ス、セ、ソ」が刺さるキンキンした擦れ音（8kHz〜11kHz）を抑える、サ行専用のエフェクトです。Q値 `2.2` という音楽的で滑らかなカーブで動作し、ボーカルの艶感を保ったまま痛い音だけを取り除きます。</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 4 -->
+    <!-- Section 6: FAQ -->
     <section id="sec-faq">
-      <h2 class="section-title"><i class="fa-solid fa-circle-question"></i> 実践編：お悩み解決＆使いこなすためのFAQ</h2>
-      <p>聞き比べや音色調整でよく突き当たる問題の解決方法をまとめました。クリックして回答を展開できます。</p>
+      <h2 class="section-title"><i class="fa-solid fa-circle-question"></i> 初心者FAQ：よくある疑問とお悩み解決</h2>
+      <p>初めてマスタリングツールを使う方が疑問に思いやすいポイントをQ&A形式でまとめました。</p>
 
-      <details>
-        <summary>Q1. AIが推定したジャンル表示（コンソールログ）が、自分の意図と違っていたら？</summary>
+      <details open>
+        <summary>Q1. DTMやマスタリングの専門知識が全くありません。どこを触ればいいですか？</summary>
         <div class="faq-content">
-          <p>A. <strong>解決は非常に簡単です。メニュー左上の「PRESET」から、あなたの意図する正しいジャンルを手動で選択してください。</strong></p>
-          <p>AetherMasterのAIは、ジャンルを「間違ったからといって変な音にする」ことはありません。AUTO（自動）のときは常にニュートラルなスタジオ標準値を目指して処理されます。手動でジャンル（例：`EDM` や `ROCK`）を選択した瞬間に、AIはそのジャンルの期待値（ターゲット）に合わせてEQやコンプレッサーのパラメーターを一瞬で再計算し、好ましい色付けを適用します。</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Q2. 高音域が耳に痛い、金属音がカンカン・シャリシャリして固く感じたら？</summary>
-        <div class="faq-content">
-          <p>A. 以下の3つのアプローチを試すことで、非常に滑らかで聴きやすい高域に整えることができます。</p>
+          <p>A. <strong>難しいつまみは一切触らなくて大丈夫です！</strong></p>
+          <p>以下のたった3ステップだけでプロ級の音に仕上がります：</p>
           <ol>
-            <li><strong>「DE-ESSER」スライダーを上げる</strong>: サ行やキンキンする高音のアタックを狙い撃ちで抑え込みます。まずは 50%〜80% 付近でお試しください。</li>
-            <li><strong>「High EQ」を 0.5dB〜1.0dB 程度下げる</strong>: 高域全体の明るさをマイルドにします。</li>
-            <li><strong>「LIMITER GAIN BOOST」を少し下げる</strong>: リミッターの突っ込みすぎによる音の潰れ（固さ）が緩和され、トランジェント（アタック）に余裕が生まれます。</li>
+            <li>曲ファイルを画面に放り込む。</li>
+            <li>「AUDIO SPICES」の中から、気になる効果（例：【高音の抜け感】や【キックの抜け感】）をポチッとONにする。</li>
+            <li>一番下の「BAKE & DOWNLOAD MASTER」ボタンを押してダウンロードする。</li>
           </ol>
+          <p>スライダーの調整はAIがすでに最適化してくれているため、触らなくても完璧なバランスになります。</p>
         </div>
       </details>
 
       <details>
-        <summary>Q2-2. ボーカルの距離感が遠く感じられたり、中音域の「カーン」という痛い響き（圧迫感）を解消したいときは？</summary>
+        <summary>Q2. エクスポート形式の「WAV」と「MP3」はどちらを選べばいいですか？</summary>
         <div class="faq-content">
-          <p>A. AetherMasterのイコライザー（4-BAND EQ）に新設された<strong>「MID PEAK (1kHz)」</strong>と<strong>「MID-HIGH PEAK (3kHz)」</strong>を調整することで、劇的に改善できます。</p>
-          <p>ボーカルの抜け感や距離感（手前に引き出す力）は 3kHz 周辺に集中しており、逆に耳につく「カーン」という鼻につく金属音や窮屈な音圧感（圧迫感）は 1kHz 周辺に集中しています。</p>
-          <ol>
-            <li><strong>ボーカルを近く、明瞭に引き出したい場合</strong>: <strong>「MID-HIGH PEAK (3kHz)」を 0.5dB〜1.5dB 程度ブースト</strong>します。高域全体のシェルビングEQとは異なり、サ行（刺さる高音）を刺激することなく、ボーカルの艶やかさと抜けの良さだけを手前に引き出せます。</li>
-            <li><strong>「カーン」という金属音や過度な音圧（圧迫感）を抑えたい場合</strong>: <strong>「MID PEAK (1kHz)」を -0.5dB〜-2.0dB 程度カット（減衰）</strong>します。1kHz周辺をカットすると、マキシマイザーで押し込んだ時の窮屈な圧迫感が取れ、開放的で余裕のある高音質なサウンドが得られます。</li>
-          </ol>
+          <p>A. <strong>迷ったら「WAV」をおすすめします。</strong></p>
+          <ul>
+            <li><strong>WAV (16-bit PCM / Lossless)</strong>：音の情報を100%劣化させずに記録する最高音質形式です。TuneCoreなどの音楽配信サービス、YouTubeへの動画投稿、CD制作、マスターデータの永久保存には必ずこちらを選んでください。</li>
+            <li><strong>MP3 (320 kbps / High Quality)</strong>：高音質なままファイルサイズを約1/5に軽量化する形式です。スマートフォンへの転送、LINEやDiscordでの楽曲シェア、試聴用チェックに最適です。</li>
+          </ul>
         </div>
       </details>
 
       <details>
-        <summary>Q3. 低音がスカスカして物足りない、ベースやキックにプロのような圧が欲しい場合は？</summary>
+        <summary>Q3. AUDIO SPICES（スパイス）は何個も同時にONにして大丈夫ですか？</summary>
         <div class="faq-content">
-          <p>A. 以下の調整でプロ仕様の重厚なボトムエンド（低音）を構築できます。</p>
-          <ol>
-            <li><strong>「Low EQ」を 1.0dB〜2.5dB 程度ブーストする</strong>: 低音域のふくよかさを直接補強します。AIは最大+4.5dBまでの安全な範囲で豊かな低音をサポートします。</li>
-            <li><strong>PRESETを「EDM」または「HIPHOP」にする</strong>: 低音のターゲット比率が高いジャンルに切り替えることで、AIが自動的に重低音を重視したカーブを算出します。</li>
-            <li><strong>「Rumble Cut」スイッチをOFFにする</strong>: EDMやヒップホップ等のサブベース（80Hz以下）がカットされてしまわないよう、スイッチがOFFになっていることを確認してください（AI判定では自動的にOFFになります）。</li>
-          </ol>
+          <p>A. <strong>はい、何個でも自由に組み合わせていただいて大丈夫です！</strong></p>
+          <p>AetherMasterの各スパイスは、互いの周波数がぶつかって音が濁らないよう高度に計算されて設計されています。例えば「キックの抜け感」と「ボーカルの存在感」と「空間の広がり」を同時にONにしても、破綻することなくバランスよく相乗効果を発揮します。自分の好みの組み合わせを見つけてみてください。</p>
         </div>
       </details>
 
       <details>
-        <summary>Q4. Hiss Reducer や De-esser を使用した際、ボーカルの抜け感（空気感や明瞭さ）をさらに引き上げ、音がこもるのを防ぐための調整のコツ（Tips）はありますか？</summary>
+        <summary>Q4. AIが推定したジャンル表示が自分の思っていた曲調と違っていたら？</summary>
         <div class="faq-content">
-          <p>A. <strong>はい、新設された周波数範囲スライダーと以下の調整のコツ（Tips）を組み合わせることで、ノイズを除去しつつ極上の抜け感を維持できます。</strong></p>
-          <p>AetherMaster v5.0.0 は超高音域（Air帯域）を動的に保護するダブルシェルフ機構を備えていますが、素材の持ち味を100%引き出すためには以下のマニュアル微調整が非常に効果的です。</p>
-          <ol>
-            <li><strong>HISS REDUCERの「Start Freq（開始周波数）」を 10,000Hz 〜 12,000Hz に引き上げる</strong>:
-              ノイズ除去の開始点を高く設定することで、ボーカルの子音や息づかい（ブレス成分など）の重要な高域成分をフィルターの減衰から完全に逃がすことができます。これにより、高音のきらびやかさと抜け感を一切損なうことなく、その上にある耳障りなサー音だけをマイルドに除去できます。</li>
-            <li><strong>HISS REDUCERの「End Freq（終了周波数）」を 18,000Hz 〜 20,000Hz に引き上げる</strong>:
-              終了周波数を高めに指定することで、超高音（Air帯域）の保護フィルター（hissAirFilter）が働く帯域を拡張し、空気の抜けるようなシルキーな質感を綺麗に残します。</li>
-            <li><strong>DE-ESSERの「Start Freq（開始周波数）」を 7,500Hz 〜 8,500Hz 以上に高く設定する</strong>:
-              サ行のトゲ（刺さる擦れ音）を抑えるディエッサーの開始周波数を高く設定することで、ボーカル本来のふくよかな響きを削りすぎず、最も耳に痛い超高域のピークだけをピンポイントで鋭くノッチ（減衰）処理します。</li>
-            <li><strong>「vocalPresence (ボーカル存在感)」スパイスをONにする</strong>:
-              画面下部のスパイスオプションをONにすると、ボーカルの存在感を高めるための特化型EQ・倍音付加回路が並列でアクティブになり、他のパートに埋もれずにきれいに手前に抜けてくるようになります。</li>
-          </ol>
+          <p>A. <strong>全く問題ありません。左上の「PRESET」メニューから、あなたの意図する正しいジャンルを手動で選んでください。</strong></p>
+          <p>手動でジャンルを選んだ瞬間に、AIはそのジャンル専用のターゲット特性に向けてEQやつまみを瞬時に再計算し、そのジャンルに最もマッチした味付けを施します。</p>
         </div>
       </details>
 
       <details>
-        <summary>Q5. 出力された音源が歪んで聞こえたり、ビリビリ鳴ったり（クリッピング）したら？</summary>
+        <summary>Q5. 出力された音源が小さく感じる、または逆に大きすぎて割れてしまうときは？</summary>
         <div class="faq-content">
-          <p>A. <strong>「LIMITER GAIN BOOST」を下げてください。</strong></p>
-          <p>元々の音源の音量が非常に大きい（または低音が過剰にブーストされている）状態で、さらにリミッターのゲインを上げすぎると、いくら高性能なリミッターであっても音が飽和して歪みが生じます。再生中に画面右側の「LIMITER ACTIVE」ランプ（赤色）が激しく点灯しっぱなしになる場合は、ランプが時々点滅する程度までスライダーを下げてください。</p>
+          <p>A. <strong>「LOUDNESS TARGET」メニュー、または「LIMITER GAIN BOOST」スライダーで調整してください。</strong></p>
+          <ul>
+            <li><strong>もっと迫力・音量が欲しい場合</strong>：「LOUDNESS TARGET」を <code>LOUD</code> または <code>CLUB</code> に切り替えるか、「CLIPPER DRIVE」を +2.0dB、「GAIN BOOST」を +5.0dB 付近まで上げてください。</li>
+            <li><strong>音が大きすぎて歪んだり疲れる場合</strong>：「LOUDNESS TARGET」を <code>STREAMING</code> または <code>PURE</code> に切り替えるか、「GAIN BOOST」を少し下げてください。</li>
+          </ul>
         </div>
       </details>
 
       <details>
-        <summary>Q6. スマートフォン（特にiPhoneやiPad）で音が全く再生されない、途中で止まる場合は？</summary>
+        <summary>Q6. 一番良い音で仕上げるための「元の音源ファイル」の準備のコツはありますか？</summary>
         <div class="faq-content">
-          <p>A. <strong>iOSデバイスの「消音スイッチ（マナーモード）」がONになっている可能性があります。</strong></p>
-          <p>iOS（Safari）の仕様により、本体側面のサイレントスイッチがオレンジ色（消音状態）になっていると、ブラウザ上の音声（Web Audio API）が完全にミュートされます。スイッチを解除してマナーモードをOFFにするか、コントロールセンターから音量を上げてください。</p>
+          <p>A. <strong>書き出し前の音源が「すでに音割れ（0dBFS超過）していないこと」が最も大切です。</strong></p>
+          <p>DAWや音楽制作ソフトから書き出す際は、マスターフェーダーのピークが <code>-3dB 〜 -6dB</code> 付近に収まるように書き出してください。頭打ち（クリップ）していない余裕のある音源をAetherMasterに入力すると、サチュレーターやEQの倍音付加が100%ピュアに働き、驚くほど美しい仕上がりになります。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Q7. iPhoneやiPadで音が全く出ない、または途中で止まる場合は？</summary>
+        <div class="faq-content">
+          <p>A. <strong>本体側面の「消音スイッチ（マナーモード）」がONになっていないか確認してください。</strong></p>
+          <p>iOS（Safari）のシステム仕様により、サイレントスイッチが消音（オレンジ色）になっていると、ブラウザ上のオーディオ機能（Web Audio API）が自動でミュートされます。マナーモードを解除するか、音量ボタンを上げてから再生ボタンを押してください。</p>
         </div>
       </details>
     </section>

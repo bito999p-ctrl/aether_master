@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=5.0.0">
+  <link rel="stylesheet" href="styles.css?v=6.0.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
   <style>
     .doc-container {
@@ -195,6 +195,39 @@
     </header>
 
     <div class="timeline">
+      <!-- v6.0.0 -->
+      <div class="timeline-item major">
+        <div class="version-header">
+          <span class="version-tag major">v6.0.0</span>
+          <span class="version-date">2026.09.09</span>
+          <span class="version-title">【メジャーアップデート】アカデミック・マスタリング再構築、プレ・クリッパー音圧制御、サチュレーター刷新、AUDIO SPICES 8大拡張 ＆ 音割れ検知レーダー搭載</span>
+        </div>
+        <ul class="update-list">
+          <li><span class="badge-add">新機能</span><strong>プレ・リミッター・ソフトクリッパー（Pre-Clipper Drive）の導入</strong>：リミッターの手前でドラムなどの鋭いミリ秒未満の過渡ピークを先回りして滑らかに吸収する専用の65,536サンプル・ソフトニーWaveshaperを新設。リミッターの急激なゲインリダクションによる「ポンピング（息継ぎ歪み）」を根絶し、ドラムのパンチ感を残したまま市販商業音源に匹敵する高音圧を実現。</li>
+          <li><span class="badge-add">新機能</span><strong>AUDIO SPICES の全面プロ仕様リファイン ＆ 新規スパイス「PULTEC BASS」「SILKY SMOOTH」追加（全8種）</strong>：
+            <ul>
+              <li><strong>低音の引き締め（PULTEC BASS）[NEW]</strong>：名機Pultecトリックを再現。80Hzを補強しつつ200Hzのこもり（泥水感）をカットし、キックとベースの輪郭をタイトに引き締め。</li>
+              <li><strong>耳触りの良さ（SILKY SMOOTH）[NEW]</strong>：イヤホン再生で耳が痛くなりやすい3.8k〜4.5kHzのトゲを優しくスクープし、長時間聴いても疲れないシルキーなカフェミュージック調に仕上げ。</li>
+              <li><strong>高音の抜け感（AIR TREBLE）の適正化</strong>：15kHz超高域ハイシェルフ（airShelf）を新設。サ行の刺さりを一切増やさずに透き通った空気感だけを付加。</li>
+              <li><strong>ボーカルの存在感（VOCAL PRESENCE）の適正化</strong>：1000Hzのこもりを避け、声の子音や明瞭度が宿るMid-High帯域（3.5k〜4.5kHz）へ最適化。</li>
+              <li><strong>空間の広がり（STEREO WIDER）の適正化</strong>：広がり幅を安全マージン（+18%）に調整し、Sideのハイパスを140Hzに引き上げて低音の位相打ち消しを防止。</li>
+            </ul>
+          </li>
+          <li><span class="badge-add">新機能</span><strong>音割れ検知モニター「CLIPPING & DISTORTION RADAR」の搭載</strong>：「SCAN NOW」ボタンを押すことで、バックグラウンドで曲全体を高速スキャンし、0dBFS超過や歪みが生じている箇所とピークdBを一覧レポート。普段の再生中やつまみ調整時にはCPU負荷が完全ゼロになる省電力設計。</li>
+          <li><span class="badge-change">改善</span><strong>ISO 226 等ラウドネス曲線に基づくアカデミック5バンドEQ設計</strong>：人間の耳が最も敏感で聴覚疲労を起こしやすいプレゼンス帯（4500Hz）の固定ブーストを完全撤廃し、全ジャンルニュートラル（0.0dB）にリセット。ピンクノイズ（-4.5dB/oct）を基準とした音響工学ターゲットカーブによる高精度アライメントへ刷新。</li>
+          <li><span class="badge-change">改善</span><strong>全サチュレーター（TUBE / TAPE / DRIVE）の音響物理モデリング刷新</strong>：
+            <ul>
+              <li><strong>TUBE</strong>：3極真空管の第2次偶数倍音主体の温かい立体感モデルへリファイン。DCオフセットを完全相殺。</li>
+              <li><strong>DRIVE</strong>：ハードクランプ（直角歪み）を完全撤廃し、BJTディスクリート・コンソールの滑らかでタイトなアナログドライブへ進化。</li>
+              <li><strong>サブベース保護（220Hz HPF）</strong>：歪み経路の手前で220Hz以下をカットし、重低音の混変調歪み（IMD）を排除。</li>
+            </ul>
+          </li>
+          <li><span class="badge-fix">修正</span><strong>ジャンルプリセット切り替え時のゲインステージング統一</strong>：プリセット切り替え時に発生していたプチプチ音（チリチリ歪み）を、inputGainDbの自動保持と平滑補間により完全解消。</li>
+          <li><span class="badge-change">改善</span><strong>総合ユーザーズガイド（guide.html）の全面刷新</strong>：「目的別レシピ集（こうしたいときは？）」や初心者向けFAQを大幅増補。</li>
+        </ul>
+      </div>
+
+
       
       <!-- v5.0.0 -->
       <div class="timeline-item major">

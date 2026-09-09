@@ -19,7 +19,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=3.27.6">
+  <link rel="stylesheet" href="styles.css?v=6.0.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-C8CLCFDVX2"></script>
@@ -290,7 +290,7 @@
           <h2 class="panel-title"><i class="fa-solid fa-wind"></i> NOISE CLEANER <span class="help-icon" data-tooltip="曲の中に含まれる不要な雑音（空調音やシャーという砂嵐音）を検知して取り除くセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="control-row">
-          <span class="control-label">RUMBLE CUT <span class="help-icon" data-tooltip="オンにすると、マイクの吹かれや空調の「ゴー」という不要な超低音ノイズだけをカットし、低音をすっきりさせます。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <span class="control-label">RUMBLE CUT <span class="help-icon" data-tooltip="オンにすると、マイクの吹かれや空調の不要な超低域ノイズ（32Hz以下）を安全にカットし、キックの芯を損なわずに低音をすっきりさせます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <label class="switch">
             <input type="checkbox" id="rumble-cut-enable">
             <span class="slider-round"></span>
@@ -308,12 +308,12 @@
         </div>
         <div class="control-row secondary-control" id="hiss-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 2px; opacity: 0.85;">
           <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Start Freq</span>
-          <input type="range" id="hiss-freq-slider" min="4000" max="12000" step="100" value="9000" style="height: 4px;">
+          <input type="range" id="hiss-freq-slider" min="4000" max="14000" step="50" value="9000" style="height: 4px;">
           <span class="value-readout" id="hiss-freq-val" style="min-width: 65px; text-align: right;">9,000 Hz</span>
         </div>
         <div class="control-row secondary-control" id="hiss-max-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 4px; opacity: 0.85;">
           <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrow-right-to-bracket"></i> End Freq (上限)</span>
-          <input type="range" id="hiss-max-freq-slider" min="6000" max="20000" step="100" value="16000" style="height: 4px;">
+          <input type="range" id="hiss-max-freq-slider" min="5000" max="20000" step="50" value="16000" style="height: 4px;">
           <span class="value-readout" id="hiss-max-freq-val" style="min-width: 65px; text-align: right;">16,000 Hz</span>
         </div>
         <div class="control-row" style="margin-top: 8px;">
@@ -328,12 +328,12 @@
         </div>
         <div class="control-row secondary-control" id="deesser-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 2px; opacity: 0.85;">
           <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Start Freq</span>
-          <input type="range" id="deesser-freq-slider" min="4000" max="10000" step="100" value="7500" style="height: 4px;">
+          <input type="range" id="deesser-freq-slider" min="4000" max="12000" step="50" value="7500" style="height: 4px;">
           <span class="value-readout" id="deesser-freq-val" style="min-width: 65px; text-align: right;">7,500 Hz</span>
         </div>
         <div class="control-row secondary-control" id="deesser-max-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 4px; opacity: 0.85;">
           <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrow-right-to-bracket"></i> End Freq (上限)</span>
-          <input type="range" id="deesser-max-freq-slider" min="5000" max="16000" step="100" value="9500" style="height: 4px;">
+          <input type="range" id="deesser-max-freq-slider" min="4500" max="16000" step="50" value="9500" style="height: 4px;">
           <span class="value-readout" id="deesser-max-freq-val" style="min-width: 65px; text-align: right;">9,500 Hz</span>
         </div>
       </section>
@@ -401,7 +401,7 @@
           <div class="eq-row">
             <input type="range" id="eq-low-mid-gain" min="-12" max="12" step="0.5" value="0.0">
             <div class="freq-input-group">
-              <input type="number" id="eq-low-mid-freq" min="150" max="350" value="200">
+              <input type="number" id="eq-low-mid-freq" min="150" max="400" value="200">
               <span class="unit">Hz</span>
             </div>
           </div>
@@ -443,7 +443,7 @@
           <div class="eq-row">
             <input type="range" id="eq-mid-high-gain" min="-12" max="12" step="0.5" value="0.0">
             <div class="freq-input-group">
-              <input type="number" id="eq-mid-high-freq" min="2000" max="5000" value="3000">
+              <input type="number" id="eq-mid-high-freq" min="2000" max="6000" value="3000">
               <span class="unit">Hz</span>
             </div>
           </div>
@@ -534,6 +534,11 @@
           <h2 class="panel-title"><i class="fa-solid fa-block-brick"></i> MAXIMIZER & LIMITER <span class="help-icon" data-tooltip="音を歪ませずに全体の音量（音圧）を商業用CDや配信サイトレベルまで引き上げる、最後の仕上げ調整ステージです。"><i class="fa-regular fa-circle-question"></i></span></h2>
         </div>
         <div class="control-row">
+          <span class="control-label">CLIPPER DRIVE <span class="help-icon" data-tooltip="リミッター直前でドラム等の過度なトゲ（ピーク）を自然に整え、音を濁らせずに音圧を底上げするマスタリングクリッパーです。0dBでバイパス、2〜3dBでパンチのある現代的音圧になります。"><i class="fa-regular fa-circle-question"></i></span></span>
+          <input type="range" id="clipper-drive" min="0" max="6" step="0.1" value="0.0">
+          <span class="value-readout" id="clipper-drive-val">+0.0 dB</span>
+        </div>
+        <div class="control-row">
           <span class="control-label">GAIN BOOST <span class="help-icon" data-tooltip="音量の「引き上げ量」です。右に動かすほど全体の音がパワフルに大きくなります。音割れは自動で防がれます。"><i class="fa-regular fa-circle-question"></i></span></span>
           <input type="range" id="limiter-gain" min="0" max="15" step="0.1" value="4.0">
           <span class="value-readout" id="limiter-gain-val">+4.0 dB</span>
@@ -554,7 +559,7 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-air-treble">
               <span class="spice-title">高音の抜け感 <span class="spice-sub">AIR TREBLE</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、高音域のさらに上の空気感を持ち上げ、透き通った高級感のある澄んだサウンドにします。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、15kHz以上の超高域（Air Band）を滑らかに持ち上げ、サ行の刺さりを防ぎながら透き通った空気感と気品を加えます。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-air-treble">
@@ -574,12 +579,12 @@
           </div>
 
           <div class="spice-card">
-            <label class="spice-label" for="spice-stereo-wider">
-              <span class="spice-title">空間の広がり <span class="spice-sub">STEREO WIDER</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、ボーカルや楽器のステレオ感を広げ、コンサートホールで聴いているような広大な音響にします。"><i class="fa-regular fa-circle-question"></i></span>
+            <label class="spice-label" for="spice-pultec-bass">
+              <span class="spice-title">低音の引き締め <span class="spice-sub">PULTEC BASS</span></span>
+              <span class="help-icon" data-tooltip="オンにすると、名機Pultecトリックを再現。重低音を支えつつ200Hzのこもり（泥水感）をカットし、キックとベースの輪郭をタイトに引き締めます。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
-              <input type="checkbox" id="spice-stereo-wider">
+              <input type="checkbox" id="spice-pultec-bass">
               <span class="slider-round"></span>
             </label>
           </div>
@@ -587,10 +592,32 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-vocal-presence">
               <span class="spice-title">ボーカルの存在感 <span class="spice-sub">VOCAL PRESENCE</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、歌声や主旋律の帯域（中音域）を前に引き出し、歌詞などをはっきりと聴き取りやすくします。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、声の明瞭度や子音が宿るプレゼンス帯域を自然に引き出し、歌詞をオケから一歩前にクリアに浮き立たせます。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-vocal-presence">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="spice-card">
+            <label class="spice-label" for="spice-silky-smooth">
+              <span class="spice-title">耳触りの良さ <span class="spice-sub">SILKY SMOOTH</span></span>
+              <span class="help-icon" data-tooltip="オンにすると、イヤホンや大音量で耳が痛くなりやすい帯域のトゲを優しく丸め、長時間でも聴き疲れしないシルキーで上質な質感にします。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-silky-smooth">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="spice-card">
+            <label class="spice-label" for="spice-stereo-wider">
+              <span class="spice-title">空間の広がり <span class="spice-sub">STEREO WIDER</span></span>
+              <span class="help-icon" data-tooltip="オンにすると、低音の位相崩れを防ぎながら横方向の広がりを自然に拡大し、立体的で開放感のある音響空間を作ります。"><i class="fa-regular fa-circle-question"></i></span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="spice-stereo-wider">
               <span class="slider-round"></span>
             </label>
           </div>
@@ -609,7 +636,7 @@
           <div class="spice-card">
             <label class="spice-label" for="spice-loudness-push">
               <span class="spice-title">音圧プッシュ <span class="spice-sub">LOUDNESS PUSH</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、全体のバランスを壊さずに、もう一歩しっかりとパワフルに音量感（音圧）をプッシュします。"><i class="fa-regular fa-circle-question"></i></span>
+              <span class="help-icon" data-tooltip="オンにすると、クリッパーとリミッターが協調し、全体のバランスやダイナミクスを壊さずに力強く音圧を底上げします。"><i class="fa-regular fa-circle-question"></i></span>
             </label>
             <label class="switch">
               <input type="checkbox" id="spice-loudness-push">
@@ -654,6 +681,19 @@
           <div class="progress-track">
             <div id="progress-fill" class="progress-fill"></div>
           </div>
+        </div>
+      </section>
+
+      <section class="panel console-panel full-width" id="clipping-radar-panel" style="margin-top: 20px;">
+        <div class="panel-header">
+          <h2 class="panel-title" style="color: #f77f00;"><i class="fa-solid fa-triangle-exclamation"></i> CLIPPING & DISTORTION RADAR (音割れ検知モニター) <span class="help-icon" data-tooltip="「SCAN NOW」ボタンを押すとバックグラウンドで曲全体をスキャンし、音割れ（0dBFS超過）が生じている箇所とピークdBを一覧表示します。普段のつまみ調整時はCPUを一切消費しません。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-family: var(--font-tech); font-size: 0.7rem; font-weight: 700; color: #a4a3b8;" id="clipping-status">STATUS: READY</div>
+            <button id="btn-scan-clipping" class="tab-btn" style="display: flex; align-items: center; gap: 6px; color: #00f2fe; border-color: rgba(0, 242, 254, 0.4); font-weight: 600; cursor: pointer;"><i class="fa-solid fa-magnifying-glass"></i> SCAN NOW (音割れ検査)</button>
+          </div>
+        </div>
+        <div class="console-log-content" id="clipping-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8; word-wrap: break-word; word-break: break-all; white-space: pre-wrap;">
+          <div class="log-line info" style="color: #a4a3b8;">[SYSTEM] 音割れモニター待機中。「SCAN NOW」ボタンを押すと、現在のマスタリング設定で曲全体の音割れ（0dBFS超過）を検査します。</div>
         </div>
       </section>
 
@@ -728,6 +768,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=5.0.0"></script>
+  <script type="module" src="app.js?v=6.0.0"></script>
 </body>
 </html>

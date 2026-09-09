@@ -8,17 +8,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css?v=5.0.0">
+  <link rel="stylesheet" href="styles.css?v=6.0.0">
   <link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
   <style>
     .doc-container {
       max-width: 950px;
       width: 100%;
       margin: 40px auto;
-      padding: 30px;
+      padding: 35px;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
-      border-radius: 12px;
+      border-radius: 16px;
       box-shadow: var(--panel-shadow);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -61,17 +61,18 @@
     .doc-subtitle {
       color: var(--text-secondary);
       font-size: 1.1rem;
+      line-height: 1.6;
     }
     .section-title {
       font-size: 1.4rem;
       font-weight: 700;
       color: #fff;
-      margin-top: 40px;
+      margin-top: 45px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
       gap: 10px;
-      border-left: 3px solid var(--accent-purple);
+      border-left: 4px solid var(--accent-purple);
       padding-left: 12px;
     }
     .section-title i {
@@ -97,107 +98,76 @@
       color: #fff;
     }
     .highlight-card {
-      background: rgba(255, 0, 85, 0.04);
-      border: 1px dashed rgba(255, 0, 85, 0.2);
-      border-radius: 8px;
-      padding: 20px;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 22px;
       margin: 24px 0;
-      line-height: 1.6;
+      line-height: 1.7;
     }
     .highlight-card h4 {
-      color: var(--accent-red);
-      margin-bottom: 8px;
-      font-size: 1rem;
+      color: var(--accent-cyan);
+      margin-bottom: 10px;
+      font-size: 1.05rem;
       display: flex;
       align-items: center;
       gap: 8px;
     }
+    .code-block {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #00f2fe;
+      margin: 16px 0;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
     .tech-spec-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
-      font-size: 0.9rem;
-    }
-    .tech-spec-table th, .tech-spec-table td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin: 24px 0;
+      font-size: 0.88rem;
     }
     .tech-spec-table th {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.04);
       color: #fff;
-      font-weight: 600;
+      font-weight: 700;
+      text-align: left;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: var(--font-tech);
     }
     .tech-spec-table td {
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
       color: var(--text-secondary);
       vertical-align: top;
+      line-height: 1.6;
     }
-    .tech-spec-table tr:hover {
-      background: rgba(255, 255, 255, 0.01);
-    }
-    .tag {
-      background: rgba(157, 78, 221, 0.15);
-      color: var(--accent-purple);
-      border: 1px solid rgba(157, 78, 221, 0.3);
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-family: var(--font-tech);
-      font-weight: 600;
+    .tech-spec-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
     }
     .tag-cyan {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
       background: rgba(0, 242, 254, 0.1);
-      color: var(--accent-cyan);
       border: 1px solid rgba(0, 242, 254, 0.3);
-      padding: 2px 8px;
-      border-radius: 4px;
+      color: #00f2fe;
       font-size: 0.75rem;
       font-family: var(--font-tech);
       font-weight: 600;
-    }
-    .tag-orange {
-      background: rgba(247, 127, 0, 0.1);
-      color: var(--accent-orange);
-      border: 1px solid rgba(247, 127, 0, 0.3);
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-family: var(--font-tech);
-      font-weight: 600;
-    }
-    .tag-red {
-      background: rgba(255, 0, 85, 0.1);
-      color: var(--accent-red);
-      border: 1px solid rgba(255, 0, 85, 0.3);
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-family: var(--font-tech);
-      font-weight: 600;
-    }
-    .code-block {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 6px;
-      padding: 16px;
-      font-family: var(--font-tech);
-      font-size: 0.85rem;
-      color: var(--accent-cyan);
-      line-height: 1.5;
-      overflow-x: auto;
-      margin: 20px 0;
     }
     @media (max-width: 768px) {
       .doc-container {
-        padding: 16px;
+        padding: 20px;
         margin: 15px auto;
-        border-radius: 8px;
       }
-      .tech-spec-table {
-        display: block;
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+      .doc-title {
+        font-size: 1.8rem;
       }
     }
   </style>
@@ -207,165 +177,185 @@
     <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> AetherMaster に戻る</a>
     
     <header class="doc-header">
-      <h1 class="doc-title">AetherMaster 技術仕様 & DSP分析</h1>
-      <div class="doc-subtitle">Web Audio API 信号フロー、実装されたアルゴリズム、および非採用技術に関する解説</div>
+      <h1 class="doc-title">AetherMaster 技術仕様 & DSP分析 (v6.0.0)</h1>
+      <div class="doc-subtitle">Web Audio API 信号フロー、プレ・クリッパー、アカデミックEQ設計、非線形倍音伝達関数の音響物理仕様</div>
     </header>
 
     <section>
       <p>AetherMaster は、最新のブラウザ標準である <strong>Web Audio API</strong> を用いて、クライアントサイド（ブラウザ内）だけで極めて低遅延・高音質なマスタリングを実行する仮想ハードウェア/DSPスイートです。</p>
-      <p>サーバーに音声を送ることなく、ローカルのCPUとブラウザのオーディオスレッドを使用してリアルタイムに処理を実行します。以下に、本ツールが採用している音声信号パス（Signal Chain）と技術仕様の詳細を解説します。</p>
+      <p>サーバーに音声を一切送信せず、ローカルのCPUとブラウザの専用オーディオスレッドを使用してリアルタイムにDSP処理を実行します。以下に、本ツールが採用している最新の音声信号パス（Signal Chain）と音響工学的スペックの詳細を解説します。</p>
     </section>
 
     <section>
-      <h2 class="section-title"><i class="fa-solid fa-route"></i> DSP シグナルパス (信号フロー)</h2>
-      <p>音声信号は、デコードされた `AudioBuffer` から再生（またはオフラインレンダリング）される際、以下の順序で直列・並列に接続された各DSPノードを通過します。</p>
+      <h2 class="section-title"><i class="fa-solid fa-route"></i> DSP シグナルパス (信号フロー全12ステージ)</h2>
+      <p>音声信号は、デコードされた <code>AudioBuffer</code> から再生（またはオフラインレンダリング）される際、以下の順序で直列・並列に接続された各DSPノードを通過します。</p>
       
       <table class="tech-spec-table">
         <thead>
           <tr>
-            <th style="width: 25%">セクション</th>
-            <th style="width: 30%">使用Web Audio APIノード</th>
-            <th>処理概要と目的</th>
+            <th style="width: 22%">ステージ</th>
+            <th style="width: 28%">使用ノード</th>
+            <th>処理概要と音響工学的目的</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>1. Input Gain</strong></td>
+            <td><strong>1. Input Gain & True Peak走査</strong></td>
             <td><span class="tag-cyan">GainNode</span></td>
-            <td>入力音源の音量を事前にゲイン調整し、マスタリングチェーンに入る前段のヘッドルームを確保します。</td>
+            <td>L/R独立ピーク走査によりステレオ音源の真の最大振幅を検知。マスタリング回路への過入力を防ぎ、正確なヘッドルーム（-6.0 dBFS）を前段で確保します。</td>
           </tr>
           <tr>
             <td><strong>2. Noise Cleaner (Rumble & Hiss)</strong></td>
-            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 3, <span class="tag-cyan">WaveShaperNode</span> (整流器), <span class="tag-cyan">GainNode</span> (変調量)</td>
+            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 3, <span class="tag-cyan">WaveShaperNode</span>, <span class="tag-cyan">GainNode</span> &times; 2</td>
             <td>
-              定常的な背景雑音を除去するノイズクリーニング段。
-              <ul>
-                <li><strong>Rumble Cut (HPF)</strong>：80Hz以下の超低域空調ノイズや電源ハム音を急峻に物理遮断。</li>
-                <li><strong>Hiss Reducer (2-Band Double-Shelf)</strong>：ヒス除去による超高音域（Air帯域/空気感）の「曇り」を防止するダブル・ハイシェルフ保護構造。開始周波数（Start Freq：4k〜12kHz）以上の高音域を減衰させるハイシェルフフィルター（hissFilter, 最大-16.0dB）と、上限周波数（End Freq：6k〜20kHz）以上の空気感を復元するための逆相補強ハイシェルフフィルター（hissAirFilter）を直列に接続。演奏中はサイドチェーンエンベロープ（HPF＋絶対値整流器＋10Hz平滑フィルター）によって両フィルターの特性を動的にフラット（0dB）に戻し、無音時にはヒスを強力カットしながらも16kHz以上の抜け感を完全に保護します。</li>
-              </ul>
+              <strong>Rumble Cut (HPF)</strong>: 80Hz以下の空調振動や電源ハムを物理遮断。<br>
+              <strong>Hiss Reducer (2-Band Double-Shelf)</strong>: 9kHz以上のヒスを減衰させるハイシェルフと、16kHz以上のAir帯域を逆相復元するハイシェルフを直列接続。サイドチェーンエンベロープで動的にフラット（0dB）に戻し、無音時のサー音だけをカット。
             </td>
           </tr>
           <tr>
-            <td><strong>3. Parallel Saturator</strong></td>
-            <td><span class="tag-cyan">WaveShaperNode</span> (並列), <span class="tag-cyan">GainNode</span> (Dry/Wet)</td>
-            <td>倍音を付加する飽和器。`WaveShaperNode`の伝達関数（カスタムシェイピングカーブ）を用いて、偶数・奇数倍音を生成。アナログテープ（Tape）や真空管（Tube）の質感をDry音にブレンドします。フィルター遅延による位相干渉を防ぐため、オーバーサンプリングは無効 (`none`) に設計されています。</td>
+            <td><strong>3. Parallel Audiophile Saturator</strong></td>
+            <td><span class="tag-cyan">WaveShaperNode</span> (並列), <span class="tag-cyan">BiquadFilterNode</span> &times; 2, <span class="tag-cyan">GainNode</span> (Dry/Wet)</td>
+            <td>
+              真空管（TUBE）、磁気テープ（TAPE）、BJTソリッドステート（DRIVE）の3系統モデリング。<br>
+              <strong>サブベース保護回路 (220Hz HPF)</strong>: 歪み経路の手前で220Hz以下をカットし、キックやベースの巨大振幅による混変調歪み（IMD/モワつき）を100%防止。原音の芯とタイトさを保ったまま、中高域に上質な倍音だけを並列合算します。
+            </td>
           </tr>
           <tr>
-            <td><strong>4. 3-Band Equalizer</strong></td>
-            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 3</td>
-            <td>`lowshelf` (低域 EQ)、`peaking` (中域 EQ, 可変 Q: 0.3〜5.0)、`highshelf` (高域 EQ) の3つのフィルターを直列に接続。ジャンル特性に応じた音楽的な周波数のブースト/カットに加え、中域のQ値（帯域幅）を調整可能です。</td>
+            <td><strong>4. 5-Band Academic EQ</strong></td>
+            <td><span class="tag-cyan">BiquadFilterNode</span> &times; 7</td>
+            <td>
+              ISO 226 等ラウドネス曲線（人間の耳の感度特性）に基づき、聴覚疲労を起こしやすいプレゼンス帯の過剰ブーストを廃止したプロ仕様設計。
+              <ul>
+                <li><code>eqLow</code>: 80Hz Low Shelf</li>
+                <li><code>eqLowMid</code>: 200Hz Peaking（温かみ・こもり制御）</li>
+                <li><code>kickPeaking</code>: 55Hz Narrow Peaking (Q=2.0, キック胴鳴り専用)</li>
+                <li><code>eqMid</code>: 1000Hz Peaking（ボーカルのボディ感）</li>
+                <li><code>eqMidHigh</code>: 4500Hz Peaking（声の子音・明瞭度）</li>
+                <li><code>eqHigh</code>: 9000Hz High Shelf</li>
+                <li><code>airShelf</code>: 15000Hz Ultra-High Shelf（空気感専用）</li>
+              </ul>
+            </td>
           </tr>
           <tr>
             <td><strong>5. AI Sibilance Notch (De-esser)</strong></td>
             <td><span class="tag-cyan">BiquadFilterNode</span> (Peaking, dynamic cut)</td>
-            <td>
-              ボーカルの「サ、シ、ス、セ、ソ」などの歯擦音（シビランス）を動的に除去するインテリジェント・ディエッサー。`Start Freq` (4k〜10kHz) と `End Freq` (5k〜16kHz) のスライダーで設定された周波数範囲から、幾何平均中心周波数 \(f_c = \sqrt{f_{start} \cdot f_{end}}\) および帯域幅（Q値）\(Q = \frac{f_c}{f_{end} - f_{start}}\) をリアルタイムに自動算出して Web Audio API 内の Peaking フィルターに割り当てます。ボーカルのキンキンしたトゲを狙い撃ちで急峻にノッチ処理（最大-15.0dB）し、オケの他の高域成分やボーカル本来の艶を削ることなくクリアに出力します。
-            </td>
+            <td>ボーカルのサ行（シビランス）を動的に除去。設定された周波数範囲から幾何平均中心周波数とQ値をリアルタイム自動算出し、ボーカルの艶を削ることなく痛いトゲだけを急峻に抑制します。</td>
           </tr>
           <tr>
             <td><strong>6. Glue Compressor</strong></td>
             <td><span class="tag-cyan">DynamicsCompressorNode</span></td>
-            <td>ゆるやかなコンプレッションによりダイナミクスを均一化。ソフトアタック（30ms前後）によりトランジェント（打楽器のアタック感）を残しつつ、全体をまとめ上げ（Glue）ます。</td>
+            <td>アナログスタイルのソフトニー（18dB）により、楽曲全体を1枚のマスターテープに接着（Glue）したような一体感を形成。キックの打頭を逃がすため、KICK PUNCH時はアタックが自動で+30ms遅延されます。</td>
           </tr>
           <tr>
             <td><strong>7. M/S Stereo Imager</strong></td>
-            <td><span class="tag-cyan">ChannelSplitterNode</span>, <span class="tag-cyan">ChannelMergerNode</span>, <span class="tag-cyan">GainNode</span> (Mid/Side), <span class="tag-cyan">BiquadFilterNode</span> (Side HPF)</td>
-            <td>
-              音源のL/Rを Mid（センター）と Side（広がり）にマトリックス変換して独立処理。
-              <ul>
-                <li><strong>Mid</strong>：センター定位のボーカル・キックの輪郭を維持するため、ゲインは完全に `1.0` に固定。</li>
-                <li><strong>Side</strong>：`width` スライダーで広がり幅を調整。さらに、低域の左右の位相干渉による低域のボヤけ（シュワシュワ音）を防ぐため、<strong>Side成分をカットする可変ハイパスフィルター（90Hz〜150Hz）</strong>を搭載。EDMやHipHopなどのクラブ系では150Hz、生楽器系では90Hzなど、ジャンル別で自動的に最適化されます。これにより低域はモノラル付近にタイトに保たれつつ、豊かな空間表現を可能にしています。</li>
-              </ul>
-            </td>
+            <td><span class="tag-cyan">ChannelSplitterNode</span>, <span class="tag-cyan">GainNode</span> &times; 4, <span class="tag-cyan">BiquadFilterNode</span> (Side HPF)</td>
+            <td>音源を Mid（センター）と Side（広がり）にマトリックス変換。ボーカル・キックのセンター定位（Mid=1.0）を維持しつつ、Sideの可変ハイパス（110Hz〜140Hz）で低音の位相打ち消しを完全に防止します。</td>
           </tr>
           <tr>
-            <td><strong>8. Maximizer Pre-Gain</strong></td>
+            <td><strong>8. Maximizer Pre-Gain Boost</strong></td>
             <td><span class="tag-cyan">GainNode</span></td>
-            <td>Brickwall Limiter に対してどれだけ突っ込むか（音圧の押し上げ）をデシベル（`limiterBoost`）単位で調整する増幅段です。</td>
+            <td>マキシマイザーの押し上げ量をデシベル単位で増幅する純粋なリニアゲインステージです。</td>
           </tr>
           <tr>
-            <td><strong>9. Brickwall Limiter</strong></td>
+            <td><strong>9. Pre-Limiter Soft Clipper</strong></td>
+            <td><span class="tag-cyan">WaveShaperNode</span> (65,536 samples)</td>
+            <td><strong>本ツールの核心技術</strong>。リミッターに入る直前で、ミリ秒未満の鋭い過渡ピーク（ドラムのアタックなど）を多項式ハイブリッド・ソフトニー曲線で自然に丸め込みます。リミッターの息継ぎ歪み（ポンピング）を根絶し、音圧とダイナミクスを両立します。</td>
+          </tr>
+          <tr>
+            <td><strong>10. Brickwall Limiter</strong></td>
             <td><span class="tag-cyan">DynamicsCompressorNode</span></td>
-            <td>マスタリングの最終段で音圧を押し出すリミッター。`threshold=-3.0dB` に設定し、応答を滑らかにするため `knee=3.0dB`、`ratio=20.0:1` に設計。超過エネルギーを滑らかに先回り圧縮する3dBのクッション（Look-aheadエミュレーション）を設けています。アタックタイムは最速の `0.1ms`、リリースタイムは低域の歪みを防ぐ最適な `80ms` に設計されています。</td>
+            <td>高速アタック（1.0ms）と適応型リリース（80ms）で動作するブリックウォールリミッター。3dBのクッション（Look-aheadエミュレーション）により、超過エネルギーを滑らかに制御します。</td>
           </tr>
           <tr>
-            <td><strong>10. Safety Soft-Clipper</strong></td>
+            <td><strong>11. Safety Soft-Clipper</strong></td>
             <td><span class="tag-cyan">WaveShaperNode</span></td>
-            <td>最終段で発生するデジタルクリッピング（ビビリ音）を完全に防止する安全装置。2倍オーバーサンプリングされたWaveShaperを使用し、振幅 `0.96` (-0.35dB) までは完全直線（透明）、それを超える突発的なピークのみを三次関数で滑らかにサチュレーションさせます。これにより、ベースなどの定常波をクリップさせずにクリアに出力します。</td>
+            <td>最終段で発生しうるデジタルクリッピング（ビビリ音）を完全に防止する安全装置。振幅 0.96 (-0.35dB) までは完全透明、それを超える突発ピークのみを滑らかにサチュレーションさせます。</td>
           </tr>
           <tr>
-            <td><strong>11. Ceiling Gain</strong></td>
+            <td><strong>12. Ceiling Gain</strong></td>
             <td><span class="tag-cyan">GainNode</span></td>
-            <td>デジタル配信サービス（Spotify、YouTube 等）にアップロードした際、非可逆圧縮（AAC/MP3）への変換時に生じるクリッピングを回避するため、最終出力の上限（天井）を `-1.0dB` 前後に制御してマスタリング処理を完了します。</td>
+            <td>ストリーミング配信サイト（Spotify, Apple Music, YouTube等）で不可逆圧縮（AAC/MP3）された際のクリッピング（True Peak歪み）を防ぐため、最終天井を -1.0dBFS にマージン制御して完結します。</td>
           </tr>
         </tbody>
       </table>
     </section>
 
     <section>
-      <h2 class="section-title"><i class="fa-solid fa-arrows-split-up-and-left"></i> 左右L/R独立ピーク検出 ＆ 自動インプットゲイン調整</h2>
-      <p>ステレオ音源において、左右に広くパンニングされた楽器（ダブルトラッキングされたギター等）が含まれる場合、従来のL+R平均（Mid信号）のみのピーク検出では真の最大音量を過小評価し、マスタリング回路への過入力（歪みの原因）を招いていました。AetherMasterでは、左右（L/R）それぞれのチャンネルの最大振幅値を独立して走査し、真のステレオピークを正確に検出します。</p>
+      <h2 class="section-title"><i class="fa-solid fa-code"></i> アナログモデリングの数学的伝達関数</h2>
+      <p>サチュレーターおよびプレ・クリッパーで使用されている <code>WaveShaper</code> 用の伝達関数（カスタムカーブ計算）は、音響工学の物理特性に基づき以下の代数式を用いてリアルタイムに生成されています。</p>
       
       <div class="code-block">
-        // 左右独立ピーク検出と自動インプットゲイン算出
-        PeakL = Math.abs(SampleL);
-        PeakR = Math.abs(SampleR);
-        TruePeak = Math.max(PeakL, PeakR);
-        SuggestedInputGainDb = -6.0dB - 20 * Math.log10(TruePeak);
-      </div>
-      
-      <p>このロジックにより、どのような広いステレオ広がりを持つ楽曲であっても、デジタルクリッピングから100%保護されるヘッドルーム（-6.0 dBFS）をマスタリング回路に入る手前で完璧に確保します。</p>
+// 1. Pre-Limiter Soft Clipper (65,536 samples / 連続微分可能ソフトニー)
+f(x) = x                         [|x| <= 0.85 (-1.4dBFSまで完全ビット透明)]
+f(x) = sgn(x) * (0.85 + 0.15 * tanh((|x| - 0.85) / 0.15))   [|x| > 0.85]
 
-    <section>
-      <h2 class="section-title"><i class="fa-solid fa-code"></i> テープ・チューブサチュレーションの数式シミュレーション</h2>
-      <p>サチュレーターで使用されている `WaveShaper` 用の伝達関数（カーブ計算）は、以下の代数式を用いて対称・非対称の非線形歪みをリアルタイムに生成しています。</p>
-      
-      <div class="code-block">
-        // Tape モード (Math.tanh によるソフトクリッピング。滑らかな倍音)
-        f(x) = tanh(k * x) / tanh(k)   [k = 0.5 + (Drive / 100) * 5.5]
+// 2. TUBE (三極真空管モデリング: 第2次偶数倍音主体 & DCオフセット完全相殺)
+f(x) = tanh(k * (x + 0.06)) - tanh(0.06 * k)   [k = 1.0 + (Drive / 100) * 4.0]
 
-        // Tube モード (非対称設計により偶数倍音を強調。温かく太い音)
-        f(x) = (x < 0) ? (tanh(k * x) / tanh(k)) : (0.8 * x + 0.2 * x^2)
+// 3. TAPE (オープンリール磁気テープ: 第3次奇数倍音対称ヒステリシス)
+f(x) = tanh(k * x) / tanh(k)   [k = 0.5 + (Drive / 100) * 5.5]
+
+// 4. DRIVE (BJTディスクリート・コンソール: 直角クランプ全廃・マスタリング級ドライブ)
+f(x) = tanh(k * x) / tanh(k)   [k = 0.8 + (Drive / 100) * 4.5]
       </div>
     </section>
 
     <section>
-      <h2 class="section-title"><i class="fa-solid fa-ban"></i> 本格的だけど「あえて」やっていないこと（非採用技術）</h2>
-      <p>プロ仕様のマスタリング機材やDAWプラグインでは定番とされていますが、AetherMaster において<strong>クライアント動作の安定性と音質維持のために意図的に採用を見送った機能</strong>と、その技術的背景を公開します。</p>
+      <h2 class="section-title"><i class="fa-solid fa-pepper-hot"></i> AUDIO SPICES 内部パラメーター連動仕様</h2>
+      <p>全8種の AUDIO SPICES が内部で操作する Web Audio API パラメーターの一覧です。すべての処理は加算・減算オフセットとして安全にクランプされ、原曲の音質を損なうことなく音楽的な変化をもたらします。</p>
 
-      <div class="highlight-card">
-        <h4><i class="fa-solid fa-eye"></i> 1. 先読みリミッター (Look-Ahead Limiter) の非採用</h4>
-        <p><strong>Look-Ahead とは</strong>：数ミリ秒（例：2〜5ms）先の信号を事前に読み取ることで、突発的なピーク（アタック）がスレッショルドを越える前にリミッターのゲインリダクションを立ち上げ、完全に「ノークリップ（超過ゼロ）」にする技術です。</p>
-        <p><strong>非採用の理由と解決策</strong>：</p>
-        <ul>
-          <li>Web Audio API の標準 `DynamicsCompressorNode` はリアルタイム処理用であり、Look-Ahead 時間を動的に設定するパラメータを持ちません。</li>
-          <li>これを手動（`AudioWorklet` など）で再現しようとすると、JSメインスレッドと音声スレッド間のバッファ遅延が発生し、リアルタイムでのスムーズなスライダー追従やスマホ動作時のCPU負荷（発熱）が許容値を超えてしまいます。</li>
-          <li><strong>代替アプローチ</strong>：AetherMaster では、リミッターの `attack` を限界まで速い `1ms` に設定し、かつ出力の最終段に `-1.0dB` の **Ceiling（天井）マージン** を設けることで、ルックアヘッド無しでもデジタルクリッピング（音割れ）を極めて効果的に防ぐアプローチをとっています。</li>
-        </ul>
-      </div>
-
-      <div class="highlight-card">
-        <h4><i class="fa-solid fa-wave-square"></i> 2. マルチバンド・コンプレッサー (Multi-Band Compressor) の非採用</h4>
-        <p><strong>Multi-Band とは</strong>：音を「低域」「中域」「高域」などの周波数帯に分割し、それぞれの帯域に独立したコンプレッサーをかけてダイナミクスを制御する技術です。</p>
-        <p><strong>非採用の理由と解決策</strong>：</p>
-        <ul>
-          <li>Web Audio API 内で音域を分割する場合、複数の `BiquadFilterNode`（クロスオーバーフィルター）を使用しますが、Web Audio の基本フィルターはクロスオーバー領域で急峻な**位相の回転（Phase Distortion / コームフィルター現象）**を引き起こします。これにより、マスタリング後の音が全体的に痩せたり、特定の周波数が打ち消し合って音が不自然になるリスクがあります。</li>
-          <li>高精度な Linkwitz-Riley フィルターを JS / Web Assembly で実装する手法もありますが、特に非力なスマートフォン端末において劇的な負荷上昇と発熱を招きます。</li>
-          <li><strong>代替アプローチ</strong>：単一の優れた **Glue Compressor**（シングルのまとまり重視）を使用し、その前段で **3バンドEQ** および **AIの動的ディエッサー（Sibilance Notch）** であらかじめサ行のキンキン共鳴音や全体の周波数バランスを高度に整えておくことで、マルチバンドを使用しなくても濁りのないクリアな音圧を実現しています。</li>
-        </ul>
-      </div>
-
-      <div class="highlight-card">
-        <h4><i class="fa-solid fa-percent"></i> 3. ディザリング (Dithering / Noise Shaping) の非採用</h4>
-        <p><strong>Dithering とは</strong>：マスタリングデータの最終書き出し時（例：32bit float から 16bit integer に落とす時）に、極めて微小なホワイトノイズ（ディザー）を意図的に加え、デジタル量子化歪みを人間の耳に聞こえないノイズでマスキングする処理です。</p>
-        <p><strong>非採用の理由と解決策</strong>：</p>
-        <ul>
-          <li>AetherMaster からエクスポートされる 16bit WAV ファイル（`wav-exporter.js` 内で変換）は、浮動小数点数から `0x7FFF / 0x8000` への丸め処理（単純切り捨て・四捨五入）を行っています。</li>
-          <li>現代のリスニング環境（特にユーザーの多くが Suno AI 等の生成音源をベースにしている点）や、最終配布先となるストリーミング配信サイト（Spotify、YouTube、TikTok 等）では、アップロード後に音源が必ず AAC/MP3 などの**非可逆圧縮形式（Lossy）に再エンコード**されます。</li>
-          <li>非可逆圧縮コーデックのプロセスにおいては、ディザリングで加えた超微小ノイズは「不要な高域成分」として圧縮アルゴリズムにより真っ先に消去されるため、ディザリングの効果は理論上ほぼ完全に無効化されます。</li>
-          <li>そのため、書き出し処理の軽量化とコードサイズ削減を優先し、複雑なノイズシェイピング・ディザリングはあえて非搭載としています。</li>
-        </ul>
-      </div>
+      <table class="tech-spec-table">
+        <thead>
+          <tr>
+            <th style="width: 25%">スパイス名</th>
+            <th style="width: 35%">連動パラメーター</th>
+            <th>音響工学的動作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>AIR TREBLE</strong></td>
+            <td><code>airShelfGain: +1.8 dB</code></td>
+            <td>15,000Hz High Shelf (Q=0.707) で超高域のみを持ち上げ、シビランス（8k〜10kHz）を刺激せずに空気感を付加。</td>
+          </tr>
+          <tr>
+            <td><strong>KICK PUNCH</strong></td>
+            <td><code>kickPeakingGain: +3.0 dB</code><br><code>compAttack: +0.030 s</code></td>
+            <td>55Hz Peaking (Q=2.0) でキックの胴鳴りをブーストし、コンプのアタックを遅らせて打頭のトランジェントを逃がす。</td>
+          </tr>
+          <tr>
+            <td><strong>PULTEC BASS</strong></td>
+            <td><code>eqLowGain: +1.2 dB</code><br><code>eqLowMidGain: -1.0 dB</code></td>
+            <td>80Hz Low Shelf でサブベースを補強しつつ、200Hz Peaking で濁り（泥水感）をカットする伝説のPultecトリック。</td>
+          </tr>
+          <tr>
+            <td><strong>VOCAL PRESENCE</strong></td>
+            <td><code>eqMidHighGain: +1.0 dB</code></td>
+            <td>4,500Hz Peaking (Q=1.0) で子音と声の明瞭度を引き出し、ボーカルをセンター手前に浮立たせる。</td>
+          </tr>
+          <tr>
+            <td><strong>SILKY SMOOTH</strong></td>
+            <td><code>eqMidHighGain: -1.0 dB</code></td>
+            <td>3,800Hz〜4,500Hz のハーシュネス帯をスクープし、デジタル特有のトゲを丸めて聴覚疲労を低減。</td>
+          </tr>
+          <tr>
+            <td><strong>STEREO WIDER</strong></td>
+            <td><code>stereoWidth: +0.18</code><br><code>sideHighPassFreq: +30 Hz (140Hz)</code></td>
+            <td>広がり幅を安全マージン（+18%）で拡大し、同時にSideのハイパス周波数を140Hzに引き上げて低音の位相崩れを防止。</td>
+          </tr>
+          <tr>
+            <td><strong>ANALOG WARMTH</strong></td>
+            <td><code>satEnabled: true</code><br><code>satDrive: +15% / satMix: +18%</code></td>
+            <td>真空管（TUBE）第2次偶数倍音を付加。220Hz HPFにより低域を濁らせず、中高域に温かい太さを追加。</td>
+          </tr>
+          <tr>
+            <td><strong>LOUDNESS PUSH</strong></td>
+            <td><code>clipperDrive: +1.5 dB</code><br><code>limiterBoost: +1.5 dB</code></td>
+            <td>プレ・クリッパーとリミッターが1.5dBずつ分担して押し込み、ポンピングを起こさずに音圧を底上げ。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
     <footer class="app-footer" style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
       <div class="footer-links">

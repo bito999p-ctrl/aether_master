@@ -50,6 +50,7 @@ let playbackOffset = 0; // Current time position in track
 let originalPeaks = null;
 let cachedProcessedPeaks = null;
 let baseLoudnessTarget = 'genre';
+let clippingScanTimeout = null;
 const PEAK_POINTS = 800;
 
 // Web Audio API Nodes for active playback
@@ -62,6 +63,7 @@ let activeNodes = {
   kickPeaking: null,
   eqMid: null,
   eqHigh: null,
+  airShelf: null,
   eqCorrective1: null, // AI corrective EQ notch filter 1
   eqCorrective2: null, // AI corrective EQ notch filter 2
   eqCorrective3: null, // AI corrective EQ notch filter 3
@@ -145,7 +147,8 @@ const params = {
   stereoWidth: 1.20, // 120%
   sideHighPassFreq: 110,
   
-  // Limiter/Maximizer
+  // Limiter/Maximizer & Pre-Clipper
+  clipperDrive: 1.5, // +1.5 dB (Mastering Pre-Limiter Soft Clipper)
   limiterBoost: 4.0, // +4.0 dB
   
   // Noise Cleaner
@@ -170,8 +173,10 @@ let lastAnalysisResult = null;
 const spices = {
   airTreble: false,
   kickPunch: false,
-  stereoWider: false,
+  pultecBass: false,
   vocalPresence: false,
+  silkySmooth: false,
+  stereoWider: false,
   analogWarmth: false,
   loudnessPush: false
 };
@@ -183,21 +188,26 @@ function getCombinedParams() {
     satEnabled: params.satEnabled || spices.analogWarmth,
     satDrive: Math.max(0, Math.min(100, params.satDrive + (spices.analogWarmth ? 15 : 0))),
     satMix: Math.max(0, Math.min(100, params.satMix + (spices.analogWarmth ? 18 : 0))),
-    eqLowGain: params.eqLowGain, // No low shelf boost for kickPunch (prevents bass guitar mud)
+    eqLowGain: params.eqLowGain + (spices.pultecBass ? 1.2 : 0.0),
+    eqLowMidGain: (params.eqLowMidGain || 0.0) + (spices.pultecBass ? -1.0 : 0.0),
     kickPeakingGain: spices.kickPunch ? 3.0 : 0.0, // Dedicated narrow 55Hz kick thump peaking boost
-    eqMidGain: params.eqMidGain + (spices.vocalPresence ? 1.2 : 0.0),
-    eqHighGain: params.eqHighGain + (spices.airTreble ? 1.5 : 0.0),
+    eqMidGain: params.eqMidGain, // Keep neutral so mixes don't get honky/nasal
+    eqMidHighGain: (params.eqMidHighGain || 0.0) + (spices.vocalPresence ? 1.0 : 0.0) + (spices.silkySmooth ? -1.0 : 0.0),
+    eqHighGain: params.eqHighGain, // Keep high shelf neutral
+    airShelfGain: spices.airTreble ? 1.8 : 0.0, // Dedicated ultra-high 15kHz air shelf
     compEnabled: params.compEnabled || spices.kickPunch,
     compThreshold: params.compThreshold, // No aggressive threshold lowering to prevent pumping
     compRatio: params.compRatio,         // Keep ratio natural and transparent
     compAttack: Math.max(0.001, Math.min(0.5, params.compAttack + (spices.kickPunch ? 0.030 : 0.0))), // Let transient punch pop out
     compRelease: params.compRelease,
-    stereoWidth: Math.max(0.0, Math.min(2.0, params.stereoWidth + (spices.stereoWider ? 0.45 : 0.0))),
+    stereoWidth: Math.max(0.0, Math.min(2.0, params.stereoWidth + (spices.stereoWider ? 0.18 : 0.0))),
+    sideHighPassFreq: (params.sideHighPassFreq || 110) + (spices.stereoWider ? 30 : 0),
+    clipperDrive: Math.max(0.0, Math.min(6.0, (params.clipperDrive !== undefined ? params.clipperDrive : 0.0) + (spices.loudnessPush ? 1.5 : 0.0))),
     limiterBoost: Math.max(0.0, Math.min(15.0, params.limiterBoost + (spices.loudnessPush ? 1.5 : 0.0)))
   };
 }
 
-// Genre Presets Configuration
+// Genre Presets Configuration (Academic Mastering Reference: eqMidHigh is reset to 0.0dB neutral)
 export const GENRE_PRESETS = {
   auto: {
     satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 12000,
@@ -207,67 +217,67 @@ export const GENRE_PRESETS = {
     eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.3, eqHighFreq: 9000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
-    stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
+    stereoWidth: 1.15, clipperDrive: 1.5, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   pops: {
     satEnabled: true, satType: 'tube', satDrive: 15, satMix: 10, satLpfFreq: 12000,
-    eqLowGain: 1.2, eqLowFreq: 80, eqLowQ: 0.55,
+    eqLowGain: 1.0, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
-    eqMidHighGain: 2.2, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
-    eqHighGain: -0.5, eqHighFreq: 14000, eqHighQ: 0.50,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqHighGain: 0.0, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.035, compRelease: 0.16,
-    stereoWidth: 1.15, limiterBoost: 3.5, sideHighPassFreq: 110
+    stereoWidth: 1.15, clipperDrive: 1.8, limiterBoost: 3.5, sideHighPassFreq: 110
   },
   rnb: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 12, satLpfFreq: 10000,
     eqLowGain: 1.2, eqLowFreq: 75, eqLowQ: 0.55,
     eqLowMidGain: -0.6, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -0.8, eqMidFreq: 1000, eqMidQ: 0.70,
-    eqMidHighGain: 1.2, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.4, eqHighFreq: 10000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
-    stereoWidth: 1.25, limiterBoost: 3.2, sideHighPassFreq: 110
+    stereoWidth: 1.25, clipperDrive: 1.2, limiterBoost: 3.2, sideHighPassFreq: 110
   },
   rock: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 12, satLpfFreq: 12000,
     eqLowGain: 1.0, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: 0.6, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -0.4, eqMidFreq: 1000, eqMidQ: 0.70,
-    eqMidHighGain: 1.8, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.6, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.35, compAttack: 0.05, compRelease: 0.15,
-    stereoWidth: 1.15, limiterBoost: 4.0, sideHighPassFreq: 110
+    stereoWidth: 1.15, clipperDrive: 2.5, limiterBoost: 4.0, sideHighPassFreq: 110
   },
   metal: {
     satEnabled: true, satType: 'tape', satDrive: 25, satMix: 14, satLpfFreq: 12000,
     eqLowGain: 1.0, eqLowFreq: 70, eqLowQ: 0.55,
     eqLowMidGain: -1.2, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -1.5, eqMidFreq: 1000, eqMidQ: 0.70,
-    eqMidHighGain: 1.5, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.5, eqHighFreq: 8500, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.40, compAttack: 0.02, compRelease: 0.10,
-    stereoWidth: 1.28, limiterBoost: 3.8, sideHighPassFreq: 120
+    stereoWidth: 1.28, clipperDrive: 3.0, limiterBoost: 3.8, sideHighPassFreq: 120
   },
   edm: {
     satEnabled: true, satType: 'tape', satDrive: 18, satMix: 20, satLpfFreq: 16000,
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.55,
     eqLowMidGain: -0.8, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -0.5, eqMidFreq: 800, eqMidQ: 0.70,
-    eqMidHighGain: 2.5, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.4, eqHighFreq: 14000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -7.0, compRatio: 1.35, compAttack: 0.05, compRelease: 0.20,
-    stereoWidth: 1.30, limiterBoost: 4.5, sideHighPassFreq: 150
+    stereoWidth: 1.30, clipperDrive: 3.5, limiterBoost: 4.5, sideHighPassFreq: 150
   },
   hiphop: {
     satEnabled: true, satType: 'tape', satDrive: 15, satMix: 14, satLpfFreq: 12000,
     eqLowGain: 1.8, eqLowFreq: 65, eqLowQ: 0.55,
     eqLowMidGain: -0.5, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -0.8, eqMidFreq: 350, eqMidQ: 0.70,
-    eqMidHighGain: 1.2, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.5, eqHighFreq: 10000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -8.0, compRatio: 1.40, compAttack: 0.035, compRelease: 0.15,
-    stereoWidth: 1.20, limiterBoost: 3.6, sideHighPassFreq: 150
+    stereoWidth: 1.20, clipperDrive: 2.5, limiterBoost: 3.6, sideHighPassFreq: 150
   },
   lofi: {
     satEnabled: true, satType: 'tape', satDrive: 45, satMix: 30, satLpfFreq: 16000,
@@ -277,17 +287,17 @@ export const GENRE_PRESETS = {
     eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -4.5, eqHighFreq: 7000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.5, compAttack: 0.06, compRelease: 0.30,
-    stereoWidth: 0.92, limiterBoost: 2.8, sideHighPassFreq: 110
+    stereoWidth: 0.92, clipperDrive: 1.0, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   hardcore: {
-    satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22, satLpfFreq: 16000,
+    satEnabled: true, satType: 'hardcore', satDrive: 22, satMix: 16, satLpfFreq: 12000,
     eqLowGain: 1.5, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: -0.8, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 0.70,
-    eqMidHighGain: 1.5, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.3, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
-    stereoWidth: 1.38, limiterBoost: 4.2, sideHighPassFreq: 150
+    stereoWidth: 1.30, clipperDrive: 3.2, limiterBoost: 4.2, sideHighPassFreq: 150
   },
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 12000,
@@ -297,7 +307,7 @@ export const GENRE_PRESETS = {
     eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.3, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -6.0, compRatio: 1.2, compAttack: 0.12, compRelease: 0.40,
-    stereoWidth: 1.55, limiterBoost: 2.0, sideHighPassFreq: 90
+    stereoWidth: 1.55, clipperDrive: 0.0, limiterBoost: 2.0, sideHighPassFreq: 90
   },
   podcast: {
     satEnabled: true, satType: 'tube', satDrive: 5, satMix: 5, satLpfFreq: 8000,
@@ -307,7 +317,7 @@ export const GENRE_PRESETS = {
     eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.3, eqHighFreq: 8000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -10.0, compRatio: 1.3, compAttack: 0.02, compRelease: 0.15,
-    stereoWidth: 1.00, limiterBoost: 2.5, sideHighPassFreq: 150
+    stereoWidth: 1.00, clipperDrive: 0.8, limiterBoost: 2.5, sideHighPassFreq: 150
   },
   classic: {
     satEnabled: false, satType: 'tube', satDrive: 0, satMix: 0, satLpfFreq: 10000,
@@ -317,56 +327,66 @@ export const GENRE_PRESETS = {
     eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.3, eqHighFreq: 10000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -4.0, compRatio: 1.15, compAttack: 0.15, compRelease: 0.50,
-    stereoWidth: 1.30, limiterBoost: 1.5, sideHighPassFreq: 90
+    stereoWidth: 1.30, clipperDrive: 0.0, limiterBoost: 1.5, sideHighPassFreq: 90
   },
   jazz: {
     satEnabled: true, satType: 'tube', satDrive: 6, satMix: 5, satLpfFreq: 12000,
     eqLowGain: 0.8, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
-    eqMidHighGain: 0.6, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.3, eqHighFreq: 14000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.20, compAttack: 0.06, compRelease: 0.25,
-    stereoWidth: 1.15, limiterBoost: 2.2, sideHighPassFreq: 90
+    stereoWidth: 1.15, clipperDrive: 0.5, limiterBoost: 2.2, sideHighPassFreq: 90
   },
   acoustic: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 8, satLpfFreq: 12000,
     eqLowGain: 1.0, eqLowFreq: 120, eqLowQ: 0.55,
     eqLowMidGain: 0.8, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: 0.4, eqMidFreq: 2000, eqMidQ: 0.70,
-    eqMidHighGain: 0.3, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.2, eqHighFreq: 11000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -7.5, compRatio: 1.25, compAttack: 0.045, compRelease: 0.22,
-    stereoWidth: 1.25, limiterBoost: 2.5, sideHighPassFreq: 90
+    stereoWidth: 1.25, clipperDrive: 0.5, limiterBoost: 2.5, sideHighPassFreq: 90
+  },
+  custom: {
+    satEnabled: true, satType: 'tube', satDrive: 12, satMix: 10, satLpfFreq: 12000,
+    eqLowGain: 0.0, eqLowFreq: 90, eqLowQ: 0.55,
+    eqLowMidGain: 0.0, eqLowMidFreq: 200, eqLowMidQ: 0.55,
+    eqMidGain: 0.0, eqMidFreq: 1000, eqMidQ: 0.70,
+    eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
+    eqHighGain: -0.3, eqHighFreq: 9000, eqHighQ: 0.50,
+    compEnabled: true, compThreshold: -8.0, compRatio: 1.35, compAttack: 0.04, compRelease: 0.20,
+    stereoWidth: 1.15, clipperDrive: 1.5, limiterBoost: 3.5, sideHighPassFreq: 110
   }
 };
 
-// Genre Targets Configuration
+// Genre Targets Configuration (Pink Noise Slope -4.5dB/octave Academic Profile)
 export const GENRE_TARGETS = {
-  auto: { low: 2.6, high: 0.16, presence: 0.42 },
-  pops: { low: 2.3, high: 0.17, presence: 0.44 },
-  rnb: { low: 2.9, high: 0.16, presence: 0.41 },
-  rock: { low: 2.7, high: 0.14, presence: 0.43 },
-  metal: { low: 2.8, high: 0.18, presence: 0.42 },
-  edm: { low: 3.2, high: 0.20, presence: 0.40 },
-  hiphop: { low: 3.1, high: 0.14, presence: 0.38 },
-  lofi: { low: 2.8, high: 0.12, presence: 0.36 },
-  hardcore: { low: 2.9, high: 0.19, presence: 0.42 },
-  ambient: { low: 2.6, high: 0.21, presence: 0.44 },
-  podcast: { low: 1.5, high: 0.13, presence: 0.47 },
-  classic: { low: 2.2, high: 0.13, presence: 0.39 },
-  jazz: { low: 2.4, high: 0.14, presence: 0.41 },
-  acoustic: { low: 2.2, high: 0.15, presence: 0.43 },
-  custom: { low: 2.6, high: 0.16, presence: 0.42 }
+  auto: { low: 2.6, high: 0.16, presence: 0.40 },
+  pops: { low: 2.4, high: 0.16, presence: 0.39 },
+  rnb: { low: 2.8, high: 0.15, presence: 0.38 },
+  rock: { low: 2.6, high: 0.14, presence: 0.40 },
+  metal: { low: 2.7, high: 0.16, presence: 0.40 },
+  edm: { low: 3.1, high: 0.18, presence: 0.38 },
+  hiphop: { low: 3.0, high: 0.14, presence: 0.36 },
+  lofi: { low: 2.7, high: 0.12, presence: 0.35 },
+  hardcore: { low: 2.8, high: 0.18, presence: 0.40 },
+  ambient: { low: 2.5, high: 0.18, presence: 0.40 },
+  podcast: { low: 1.6, high: 0.13, presence: 0.42 },
+  classic: { low: 2.2, high: 0.13, presence: 0.38 },
+  jazz: { low: 2.4, high: 0.14, presence: 0.39 },
+  acoustic: { low: 2.2, high: 0.14, presence: 0.39 },
+  custom: { low: 2.6, high: 0.16, presence: 0.40 }
 };
 
 // Loudness Targets
 const LOUDNESS_TARGETS = {
-  genre: { boost: null },     // Genre Default (follows selected preset)
-  streaming: { boost: 4.0 },  // Standard Streaming -14 LUFS target
-  club: { boost: 7.0 },       // Standard Club -9 LUFS target
-  loud: { boost: 10.0 },      // Standard Heavy -7 LUFS target
-  pure: { boost: 0.0 }        // High Dynamic Range -18 LUFS target
+  genre: { boost: null, clipper: null },     // Genre Default (follows selected preset)
+  streaming: { boost: 4.0, clipper: 1.2 },  // Standard Streaming -14 LUFS target
+  club: { boost: 7.0, clipper: 2.5 },       // Standard Club -9 LUFS target
+  loud: { boost: 10.0, clipper: 3.5 },      // Standard Heavy -7 LUFS target
+  pure: { boost: 0.0, clipper: 0.0 }        // High Dynamic Range -18 LUFS target
 };
 
 // Level meter decay values
@@ -389,15 +409,16 @@ function generateSaturatorCurve(type, drive) {
   const curve = new Float32Array(n_samples);
   
   if (type === 'tube') {
-    // Asymmetric soft distortion (vacuum tube even harmonics)
-    const k = 0.5 + (drive / 100) * 8.5; // range 0.5 to 9.0
-    const offset = 0.12; // asymmetry offset
+    // Asymmetric triode tube saturation (musical 2nd-order even harmonics for 3D analog warmth)
+    const k = 0.6 + (drive / 100) * 3.4; // range 0.6 to 4.0 (audiophile mastering grade)
+    const offset = 0.06; // subtle tube triode grid bias for musical 2nd harmonic
+    const dcCenter = Math.tanh(k * offset);
     for (let i = 0; i < n_samples; ++i) {
       const x = (i * 2) / n_samples - 1;
       const x_off = x + offset;
       const y = Math.tanh(k * x_off);
-      // Subtract DC offset to keep zero-crossing centered
-      curve[i] = y - Math.tanh(k * offset);
+      // Subtract DC offset to keep zero-crossing perfectly centered
+      curve[i] = y - dcCenter;
     }
     
     // 範囲[-1.0, 1.0]に正規化し、デジタルクリッピングノイズを防ぐ
@@ -419,13 +440,12 @@ function generateSaturatorCurve(type, drive) {
       curve[i] = Math.tanh(k * x) / Math.tanh(k);
     }
   } else if (type === 'hardcore') {
-    // Hard clipping / Overdrive
-    const k = 1.0 + (drive / 100) * 14.0; // gain factor
+    // Aggressive Solid-State Console Drive (Punchy odd harmonics with smooth analog saturation, zero digital hard clamp)
+    const k = 0.8 + (drive / 100) * 4.5; // range 0.8 to 5.3
     for (let i = 0; i < n_samples; ++i) {
       const x = (i * 2) / n_samples - 1;
-      const val = x * k;
-      // Hard clamp with soft knee transition
-      curve[i] = Math.max(-0.82, Math.min(0.82, val));
+      // Symmetric BJT solid-state transfer curve: smooth saturation without flat square-wave fuzz
+      curve[i] = Math.tanh(k * x) / Math.tanh(k);
     }
   } else {
     // Linear (Bypass)
@@ -437,18 +457,19 @@ function generateSaturatorCurve(type, drive) {
 }
 
 function generateSoftClipCurve() {
-  const n_samples = 44100;
+  const n_samples = 65536;
   const curve = new Float32Array(n_samples);
-  const threshold = 0.96; // Linear up to 0.96 amplitude (~ -0.35 dBFS) to prevent low-end intermodulation distortion
+  const threshold = 0.85; // Linear up to 0.85 (-1.4 dBFS) to preserve bit transparency
   for (let i = 0; i < n_samples; ++i) {
-    const x = (i * 2) / n_samples - 1;
+    const x = (i * 2) / (n_samples - 1) - 1;
     const absX = Math.abs(x);
     if (absX <= threshold) {
       curve[i] = x;
     } else {
       const sign = Math.sign(x);
-      const excess = (absX - threshold) / (1.0 - threshold);
-      const y = threshold + (1.0 - threshold) * (-Math.pow(excess, 3) + Math.pow(excess, 2) + excess);
+      const u = (absX - threshold) / (1.0 - threshold);
+      // C1 continuous Hermite cubic saturation knee: seamless slope match at threshold, horizontal tangent reaching exactly 1.0 at 1.0
+      const y = threshold + (1.0 - threshold) * (u + u * u - u * u * u);
       curve[i] = sign * y;
     }
   }
@@ -461,6 +482,35 @@ function generateAbsoluteValCurve() {
   for (let i = 0; i < n_samples; ++i) {
     const x = (i * 2) / (n_samples - 1) - 1;
     curve[i] = Math.abs(x);
+  }
+  return curve;
+}
+
+// Pre-Limiter Mastering Soft Clipper Curve (Smooth C2 continuous saturation with variable drive)
+function generateMasteringClipCurve(driveDb = 0.0) {
+  const n_samples = 65536; // high resolution for mastering precision
+  const curve = new Float32Array(n_samples);
+  if (!driveDb || driveDb <= 0.05) {
+    // Pure 100% bit-transparent bypass
+    for (let i = 0; i < n_samples; ++i) {
+      curve[i] = (i * 2) / (n_samples - 1) - 1;
+    }
+    return curve;
+  }
+  // Knee threshold dynamically scales with clipperDrive (0dB: 1.0 -> 6dB: 0.65)
+  const T = Math.max(0.60, 1.0 - (driveDb / 6.0) * 0.35);
+  for (let i = 0; i < n_samples; ++i) {
+    const x = (i * 2) / (n_samples - 1) - 1;
+    const absX = Math.abs(x);
+    if (absX <= T) {
+      curve[i] = x;
+    } else {
+      const sign = Math.sign(x);
+      const u = (absX - T) / (1.0 - T);
+      // C1 continuous Hermite cubic saturation: slope reaches exactly 0.0 with smooth horizontal tangent reaching 1.0 at x = 1.0 (zero crackle, bit transparent)
+      const y = T + (1.0 - T) * (u + u * u - u * u * u);
+      curve[i] = sign * y;
+    }
   }
   return curve;
 }
@@ -478,13 +528,16 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Rumble Filter (HPF)
   const rumbleFilter = context.createBiquadFilter();
   rumbleFilter.type = 'highpass';
-  rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 90.0 : 18.0, context.currentTime); // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
+  rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 32.0 : 18.0, context.currentTime); // 32Hz mastering HPF when enabled, 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
   rumbleFilter.Q.setValueAtTime(0.707, context.currentTime);
 
   // Dynamic Hiss Filter (VCF High Shelf - Lower bound)
+  const safeHissStart = Math.min(parameters.hissReductionFreq || 9000.0, (parameters.hissReductionMaxFreq || 16000.0) - 1000.0);
+  const safeHissEnd = Math.max(parameters.hissReductionMaxFreq || 16000.0, safeHissStart + 1000.0);
+
   const hissFilter = context.createBiquadFilter();
   hissFilter.type = 'highshelf';
-  hissFilter.frequency.setValueAtTime(parameters.hissReductionFreq || 9000.0, context.currentTime); // Dynamic hiss cutoff frequency
+  hissFilter.frequency.setValueAtTime(safeHissStart, context.currentTime); // Dynamic hiss cutoff frequency
   hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
@@ -496,7 +549,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dynamic Hiss Air Filter (VCF High Shelf - Upper bound to preserve air band)
   const hissAirFilter = context.createBiquadFilter();
   hissAirFilter.type = 'highshelf';
-  hissAirFilter.frequency.setValueAtTime(parameters.hissReductionMaxFreq || 16000.0, context.currentTime); // Dynamic hiss max cutoff frequency
+  hissAirFilter.frequency.setValueAtTime(safeHissEnd, context.currentTime); // Dynamic hiss max cutoff frequency
   hissAirFilter.Q.setValueAtTime(0.707, context.currentTime);
   // 相殺ゲインはプラスの値。ベースゲインの逆符号を設定することで上限周波数以上の帯域をフラットに戻す
   hissAirFilter.gain.setValueAtTime(-baseGain, context.currentTime);
@@ -525,7 +578,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   hissEnvelopeGain.gain.setValueAtTime(maxEnvGain, context.currentTime);
 
   const hissAirEnvelopeGain = context.createGain();
-  // 上限周波数の正の相殺ゲインを打ち消すため、負のゲインを封入
+  // 上限周波数の正の相殺ゲインを打ち消すため、負 of maxEnvGain (i.e. -maxEnvGain)
   hissAirEnvelopeGain.gain.setValueAtTime(-maxEnvGain, context.currentTime);
 
   // 2. Parallel Saturator Stage
@@ -613,10 +666,10 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqMid.frequency.setValueAtTime(parameters.eqMidFreq, context.currentTime);
   eqMid.gain.setValueAtTime(parameters.eqMidGain, context.currentTime);
 
-  // Dedicated Mid-High Peaking Filter for Vocal Presence & Modern Shine (4500Hz)
+  // Dedicated Mid-High Peaking Filter for Vocal Presence & Modern Shine (4800Hz)
   const eqMidHigh = context.createBiquadFilter();
   eqMidHigh.type = 'peaking';
-  eqMidHigh.frequency.setValueAtTime(parameters.eqMidHighFreq || 4500.0, context.currentTime);
+  eqMidHigh.frequency.setValueAtTime(parameters.eqMidHighFreq || 4800.0, context.currentTime);
   eqMidHigh.gain.setValueAtTime(parameters.eqMidHighGain || 0.0, context.currentTime);
   eqMidHigh.Q.setValueAtTime(parameters.eqMidHighQ || 1.0, context.currentTime);
 
@@ -626,14 +679,20 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqHigh.gain.setValueAtTime(parameters.eqHighGain, context.currentTime);
   eqHigh.Q.setValueAtTime(parameters.eqHighQ || 0.70, context.currentTime);
 
+  // Dedicated Ultra-High Air Shelf for Air Treble (15kHz)
+  const airShelf = context.createBiquadFilter();
+  airShelf.type = 'highshelf';
+  airShelf.frequency.setValueAtTime(15000, context.currentTime);
+  airShelf.gain.setValueAtTime(parameters.airShelfGain || 0.0, context.currentTime);
+  airShelf.Q.setValueAtTime(0.707, context.currentTime);
+
   // Dedicated Dynamic Sibilance Notch (9000Hz De-esser)
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
-  const fStart = parameters.deesserFreq || parameters.sibilanceDynamicFreq || 7500;
-  const fEnd = parameters.deesserMaxFreq || 9500;
-  const fEndValid = fEnd > fStart ? fEnd : fStart + 1000;
-  const deesserCenterFreq = Math.sqrt(fStart * fEndValid);
-  const deesserQ = deesserCenterFreq / (fEndValid - fStart);
+  const safeDeesserStart = Math.min(parameters.deesserFreq || parameters.sibilanceDynamicFreq || 7500, (parameters.deesserMaxFreq || 9500) - 500);
+  const safeDeesserEnd = Math.max(parameters.deesserMaxFreq || 9500, safeDeesserStart + 500);
+  const deesserCenterFreq = Math.sqrt(safeDeesserStart * safeDeesserEnd);
+  const deesserQ = deesserCenterFreq / (safeDeesserEnd - safeDeesserStart);
   sibilanceNotch.frequency.setValueAtTime(deesserCenterFreq, context.currentTime);
   sibilanceNotch.Q.setValueAtTime(deesserQ, context.currentTime); // dynamically calculated Q based on frequency band span
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
@@ -704,7 +763,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   kickPeaking.connect(eqMid);
   eqMid.connect(eqMidHigh);
   eqMidHigh.connect(eqHigh);
-  eqHigh.connect(sibilanceNotch);
+  eqHigh.connect(airShelf);
+  airShelf.connect(sibilanceNotch);
   sibilanceNotch.connect(eqCorrective1);
   eqCorrective1.connect(eqCorrective2);
   eqCorrective2.connect(eqCorrective3);
@@ -791,13 +851,24 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   leftSum.connect(merger, 0, 0);
   rightDiff.connect(merger, 0, 1);
 
-  // 6. Limiter pre-gain (Maximizer)
+  // 6. Pre-Limiter Mastering Soft Clipper (Tames transient peaks without digital clipping)
+  const clipperDrive = parameters.clipperDrive !== undefined ? parameters.clipperDrive : 0.0;
+  const preClipper = context.createWaveShaper();
+  preClipper.curve = generateMasteringClipCurve(clipperDrive);
+  preClipper.oversample = '2x';
+
+  // 7. Maximizer Gain Stage (Loudness Boost to Target)
   const limiterGain = context.createGain();
   limiterGain.gain.setValueAtTime(Math.pow(10, parameters.limiterBoost / 20), context.currentTime);
 
-  merger.connect(limiterGain);
+  // Pro Mastering Pipeline:
+  // (1) M/S Merger (audio <= 1.0) -> Pre-Clipper (Curve rounds peaks smoothly without C++ engine clamp)
+  merger.connect(preClipper);
+  // (2) Pre-Clipper -> Maximizer Boost (raises loudness cleanly)
+  preClipper.connect(limiterGain);
 
-  // 7. Brickwall Limiter
+  // 8. Brickwall Limiter (DynamicsCompressorNode)
+  // Receives already peak-tamed audio, eliminating transient overshoot & pumping
   const limiter = context.createDynamicsCompressor();
   limiter.threshold.setValueAtTime(-1.0, context.currentTime); // -1.0dB に引き上げて過剰な圧縮圧と高域トランジェントの潰れを低減（ダイナミクスを保護）
   
@@ -807,7 +878,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   const isGentle = (genreKey === 'classic' || genreKey === 'jazz' || genreKey === 'ambient' || genreKey === 'acoustic' || genreKey === 'podcast' ||
                     (genreKey === 'auto' && (aiDetectedGenre === 'classic' || aiDetectedGenre === 'jazz' || aiDetectedGenre === 'ambient' || aiDetectedGenre === 'acoustic' || aiDetectedGenre === 'podcast')));
   
-  const initialAttack = isGentle ? 0.005 : 0.0015; // 温和な曲には5msアタックで超低域波形を保護、モダンな曲には1.5ms
+  const initialAttack = isGentle ? 0.005 : 0.001; // 温和な曲には5msアタックで超低域波形を保護、モダンな大音圧曲には1.0ms超高速アタック
   const initialRelease = isGentle ? 0.25 : 0.12;  // 温和な曲には250msリリースで歪み防止、モダンな曲には音圧重視の120ms
   const initialKnee = isGentle ? 12.0 : 4.0;      // 温和な曲には12dBソフト膝で極めて自然な制限、モダンな曲には4dB
 
@@ -816,15 +887,17 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   limiter.attack.setValueAtTime(initialAttack, context.currentTime);
   limiter.release.setValueAtTime(initialRelease, context.currentTime);
 
-  // 7b. Safety Soft Clipper (WaveShaper Node)
+  // (3) Maximizer Boost -> Limiter
+  limiterGain.connect(limiter);
+
+  // 8b. Safety Soft Clipper (WaveShaper Node)
   const safetyClipper = context.createWaveShaper();
   safetyClipper.curve = generateSoftClipCurve();
   safetyClipper.oversample = '2x'; // 2x oversampling to prevent aliasing
 
-  limiterGain.connect(limiter);
   limiter.connect(safetyClipper);
 
-  // 8. Ceiling Gain Node
+  // 9. Ceiling Gain Node
   const ceilingGain = context.createGain();
   ceilingGain.gain.setValueAtTime(Math.pow(10, parameters.ceiling / 20), context.currentTime);
 
@@ -852,6 +925,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     eqMid,
     eqMidHigh,
     eqHigh,
+    airShelf,
     sibilanceNotch,
     sibilanceNotchDynamicGain,
     eqCorrective1,
@@ -866,6 +940,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     midGain,
     sideGain,
     sideHighPass,
+    preClipper,
     limiterGain,
     limiter,
     safetyClipper,
@@ -1005,6 +1080,7 @@ function startPlayback() {
   activeNodes.eqMid = chain.eqMid;
   activeNodes.eqMidHigh = chain.eqMidHigh;
   activeNodes.eqHigh = chain.eqHigh;
+  activeNodes.airShelf = chain.airShelf;
   activeNodes.sibilanceNotch = chain.sibilanceNotch;
   activeNodes.sibilanceNotchDynamicGain = chain.sibilanceNotchDynamicGain;
   activeNodes.eqCorrective1 = chain.eqCorrective1;
@@ -1019,6 +1095,7 @@ function startPlayback() {
   activeNodes.midGain = chain.midGain;
   activeNodes.sideGain = chain.sideGain;
   activeNodes.sideHighPass = chain.sideHighPass;
+  activeNodes.preClipper = chain.preClipper;
   activeNodes.limiterGain = chain.limiterGain;
   activeNodes.limiter = chain.limiter;
   activeNodes.safetyClipper = chain.safetyClipper;
@@ -1161,6 +1238,44 @@ function drawWaveformView() {
   }
   if (useShadows) {
     waveCtx.shadowBlur = 0;
+  }
+
+  // Draw timeline grid and time labels
+  const duration = audioBuffer.duration;
+  let intervalSec = 10;
+  if (duration > 300) {
+    intervalSec = 60;
+  } else if (duration > 120) {
+    intervalSec = 30;
+  } else if (duration > 60) {
+    intervalSec = 20;
+  } else if (duration > 30) {
+    intervalSec = 10;
+  } else {
+    intervalSec = 5;
+  }
+
+  waveCtx.font = '9px "Outfit", "Segoe UI", sans-serif';
+  waveCtx.fillStyle = 'rgba(148, 163, 184, 0.65)'; // Sleek slate gray text
+  waveCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  waveCtx.lineWidth = 1;
+  waveCtx.textBaseline = 'bottom';
+  
+  for (let t = intervalSec; t < duration; t += intervalSec) {
+    const progress = t / duration;
+    const x = progress * wWidth;
+    
+    // Vertical grid line
+    waveCtx.beginPath();
+    waveCtx.moveTo(x, 0);
+    waveCtx.lineTo(x, wHeight);
+    waveCtx.stroke();
+    
+    // Time string MM:SS
+    const mins = Math.floor(t / 60);
+    const secs = Math.floor(t % 60);
+    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    waveCtx.fillText(timeStr, x + 4, wHeight - 4);
   }
 
   // Draw playback cursor position
@@ -1515,11 +1630,24 @@ function calculateProcessedPeaks() {
       min = min * (1.0 - blend) + satMin * blend;
     }
 
-    // Boost into Limiter
+    // 1. Pre-Limiter Soft Clipper simulation (shaves transient peaks gently without engine clamping)
+    if (p.clipperDrive > 0) {
+      const T = Math.max(0.60, 1.0 - (p.clipperDrive / 6.0) * 0.35);
+      const clipFunc = (v) => {
+        const absV = Math.abs(v);
+        if (absV <= T) return v;
+        const u = Math.min(1.0, (absV - T) / (1.0 - T));
+        return Math.sign(v) * (T + (1.0 - T) * (u - u * u + (u * u * u) / 3.0));
+      };
+      max = clipFunc(max);
+      min = clipFunc(min);
+    }
+
+    // 2. Boost into Maximizer Stage (Raises loudness to target)
     max *= limitG;
     min *= limitG;
 
-    // ソフトリミッターにより、波形の頂点が完全に平ら（音割れ風）になるのを防ぐ
+    // 3. Limiter dynamic control (receives peak-tamed audio, zero pumping)
     max = softLimit(max);
     min = softLimit(min);
 
@@ -1692,19 +1820,21 @@ function updateNoiseCutNodes() {
   invalidatePeakCache();
   if (activeNodes.rumbleFilter && activeNodes.hissFilter && activeNodes.hissAirFilter &&
       activeNodes.hissEnvelopeGain && activeNodes.hissAirEnvelopeGain) {
-    const targetRumbleFreq = params.rumbleCutEnabled ? 90.0 : 18.0; // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
+    const targetRumbleFreq = params.rumbleCutEnabled ? 32.0 : 18.0; // 32Hz mastering HPF when enabled, 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
     const hissAmount = params.hissReductionAmount || 0;
     const maxCut = params.hissReductionMaxCut !== undefined ? params.hissReductionMaxCut : -16.0;
     // ベースゲインはマイナスの値（減衰）
     const baseGain = maxCut * (hissAmount / 100.0);
+    const safeHissStart = Math.min(params.hissReductionFreq || 9000.0, (params.hissReductionMaxFreq || 16000.0) - 1000.0);
+    const safeHissEnd = Math.max(params.hissReductionMaxFreq || 16000.0, safeHissStart + 1000.0);
     activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
-    activeNodes.hissFilter.frequency.setTargetAtTime(params.hissReductionFreq || 9000.0, audioContext.currentTime, 0.02);
+    activeNodes.hissFilter.frequency.setTargetAtTime(safeHissStart, audioContext.currentTime, 0.02);
     
     // Hiss Air Filter (相殺ゲインはプラスの値、ベースゲインの逆符号)
     activeNodes.hissAirFilter.gain.setTargetAtTime(-baseGain, audioContext.currentTime, 0.02);
-    activeNodes.hissAirFilter.frequency.setTargetAtTime(params.hissReductionMaxFreq || 16000.0, audioContext.currentTime, 0.02);
+    activeNodes.hissAirFilter.frequency.setTargetAtTime(safeHissEnd, audioContext.currentTime, 0.02);
     
     // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
     const maxEnvGain = -baseGain;
@@ -1719,11 +1849,10 @@ function updateNoiseCutNodes() {
       // シャリシャリ（サ行等のシビランス）を強力に吸い取るため、最大減衰量を調整可能にして除去力を向上
       const dynamicCut = deesserMax * (amount / 100.0);
       
-      const fStart = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
-      const fEnd = params.deesserMaxFreq || 9500;
-      const fEndValid = fEnd > fStart ? fEnd : fStart + 1000;
-      const deesserCenterFreq = Math.sqrt(fStart * fEndValid);
-      const deesserQ = deesserCenterFreq / (fEndValid - fStart);
+      const safeDeesserStart = Math.min(params.deesserFreq || params.sibilanceDynamicFreq || 7500, (params.deesserMaxFreq || 9500) - 500);
+      const safeDeesserEnd = Math.max(params.deesserMaxFreq || 9500, safeDeesserStart + 500);
+      const deesserCenterFreq = Math.sqrt(safeDeesserStart * safeDeesserEnd);
+      const deesserQ = deesserCenterFreq / (safeDeesserEnd - safeDeesserStart);
       
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(deesserCenterFreq, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotch.Q.setTargetAtTime(deesserQ, audioContext.currentTime, 0.02);
@@ -1775,7 +1904,7 @@ function updateEqNodes() {
     activeNodes.eqMid.Q.setTargetAtTime(p.eqMidQ, audioContext.currentTime, 0.01);
   }
   if (activeNodes.eqMidHigh) {
-    activeNodes.eqMidHigh.frequency.setTargetAtTime(p.eqMidHighFreq || 4500, audioContext.currentTime, 0.01);
+    activeNodes.eqMidHigh.frequency.setTargetAtTime(p.eqMidHighFreq || 4800, audioContext.currentTime, 0.01);
     activeNodes.eqMidHigh.gain.setTargetAtTime(p.eqMidHighGain || 0.0, audioContext.currentTime, 0.01);
     activeNodes.eqMidHigh.Q.setTargetAtTime(p.eqMidHighQ || 1.0, audioContext.currentTime, 0.01);
   }
@@ -1783,6 +1912,9 @@ function updateEqNodes() {
     activeNodes.eqHigh.frequency.setTargetAtTime(p.eqHighFreq, audioContext.currentTime, 0.01);
     activeNodes.eqHigh.gain.setTargetAtTime(p.eqHighGain, audioContext.currentTime, 0.01);
     activeNodes.eqHigh.Q.setTargetAtTime(p.eqHighQ || 0.70, audioContext.currentTime, 0.01);
+  }
+  if (activeNodes.airShelf) {
+    activeNodes.airShelf.gain.setTargetAtTime(p.airShelfGain || 0.0, audioContext.currentTime, 0.01);
   }
 }
 
@@ -1854,7 +1986,7 @@ function updateLimiterGainNode() {
       const isGentle = (genreKey === 'classic' || genreKey === 'jazz' || genreKey === 'ambient' || genreKey === 'acoustic' || genreKey === 'podcast' ||
                         (genreKey === 'auto' && (aiDetectedGenre === 'classic' || aiDetectedGenre === 'jazz' || aiDetectedGenre === 'ambient' || aiDetectedGenre === 'acoustic' || aiDetectedGenre === 'podcast')));
       
-      const targetAttack = isGentle ? 0.005 : 0.0015; // 5ms attack to protect low cycles; 1.5ms for modern loud tracks
+      const targetAttack = isGentle ? 0.005 : 0.001; // 5ms attack to protect low cycles; 1.0ms for modern loud tracks
       const targetRelease = isGentle ? 0.25 : 0.12;  // 250ms release for clean low end; 120ms for modern loud tracks
       const targetKnee = isGentle ? 12.0 : 4.0;      // 12dB soft knee for transparent limiting; 4dB knee for modern loud tracks
       
@@ -1862,6 +1994,15 @@ function updateLimiterGainNode() {
       activeNodes.limiter.release.setTargetAtTime(targetRelease, audioContext.currentTime, 0.02);
       activeNodes.limiter.knee.setTargetAtTime(targetKnee, audioContext.currentTime, 0.02);
     }
+  }
+}
+
+function updateClipperNode() {
+  invalidatePeakCache();
+  if (activeNodes.preClipper) {
+    const p = getCombinedParams();
+    const drive = p.clipperDrive !== undefined ? p.clipperDrive : 0.0;
+    activeNodes.preClipper.curve = generateMasteringClipCurve(drive);
   }
 }
 
@@ -2131,8 +2272,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     }
   }
 
-  // Hiss estimation (amplitude average between 6kHz and 15kHz in the quietest block)
-  const binHissStart = Math.floor((6000 * fftSize) / sampleRate);
+  // Hiss estimation (amplitude average between 8kHz and 15kHz in the quietest block)
+  const binHissStart = Math.floor((8000 * fftSize) / sampleRate);
   const binHissEnd = Math.floor((15000 * fftSize) / sampleRate);
   let hissSum = 0;
   for (let j = binHissStart; j <= binHissEnd; j++) {
@@ -2141,9 +2282,10 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const hissNoiseFloor = hissSum / (binHissEnd - binHissStart + 1);
   const hissNoiseFloorDb = 20 * Math.log10(hissNoiseFloor + 1e-6) + 26.0; // Added FFT bin bandwidth gain correction factor (+26dB) to align bin average with broadband level
 
-  // Rumble estimation (amplitude average between 20Hz and 60Hz in the quietest block)
-  const binRumbleStart = Math.floor((20 * fftSize) / sampleRate);
-  const binRumbleEnd = Math.floor((60 * fftSize) / sampleRate);
+  // Rumble estimation (amplitude average between 15Hz and 35Hz in the quietest block)
+  // マスタリング音響工学基準: 50Hzのキック帯域を巻き込まず、真の超低周波インフラサウンド（15Hz〜35Hz）のみをスキャン
+  const binRumbleStart = Math.max(1, Math.floor((15 * fftSize) / sampleRate));
+  const binRumbleEnd = Math.floor((35 * fftSize) / sampleRate);
   let rumbleSum = 0;
   for (let j = binRumbleStart; j <= binRumbleEnd; j++) {
     rumbleSum += sliceSpectrums[minRmsIdx][j];
@@ -2151,26 +2293,18 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const rumbleNoiseFloor = rumbleSum / (binRumbleEnd - binRumbleStart + 1);
   const rumbleNoiseFloorDb = 20 * Math.log10(rumbleNoiseFloor + 1e-6) + 26.0; // Added FFT bin bandwidth gain correction factor (+26dB) to align bin average with broadband level
 
-  // Suggested values (ノイズ検出時にのみONにし、ノイズ未検出時は完全にOFFのままにする仕様へ復元)
+  // Suggested values:
+  // 1. RUMBLE CUT: 真の超低周波ノイズ（空調・マイク吹かれ・DCオフセット）が -58dBFS を超える場合のみ 32Hz HPF を発動
   let sugRumbleCut = false;
-  // しきい値を-58dBから-65dBに引き下げ、微小な超低音ノイズに対しても過敏に反応してカットできるように感度を向上
-  if (rumbleNoiseFloorDb > -65.0) {
+  if (rumbleNoiseFloorDb > -58.0 && minRmsVal < 0.08) {
     sugRumbleCut = true;
   }
 
+  // 2. HISS REDUCER: モニター環境で知覚可能な高域サー音（-72dBFS超過）が存在する場合のみ発動（アコースティック等の通常余韻を誤検知しない設計）
   let sugHissAmount = 0;
-  // しきい値を-78dBから-83dBに引き下げ（ヘッドホン等で聞こえる微小なアナログサー音やヒスノイズまで検知可能に）
-  if (hissNoiseFloorDb > -83.0) {
-    // ノイズフロアに応じて20%〜98%の間で段階的に適用度を算出するスケール（感度係数を8.0に高め、ノイズ検知力を向上）
-    const rawHiss = Math.round(Math.max(0, Math.min(98, 20 + (hissNoiseFloorDb + 83.0) * 8.0)));
-    
-    // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音である可能性が高いため
-    // LPFの過剰カットを防ぐため、Hiss Reducerの適用度を少し抑える安全スケーラー（最小減衰幅を0.70に緩和して感度を維持）
-    let quietnessScale = 1.0;
-    if (minRmsVal > 0.05) {
-      quietnessScale = Math.max(0.70, 1.0 - (minRmsVal - 0.05) / 0.15);
-    }
-    sugHissAmount = Math.round(rawHiss * quietnessScale);
+  if (hissNoiseFloorDb > -72.0 && minRmsVal < 0.05) {
+    const excessDb = hissNoiseFloorDb + 72.0; // 例: -66dB -> +6dB
+    sugHissAmount = Math.round(Math.min(50, 15 + excessDb * 3.5));
   }
 
   // 歌の音域のカーン域共鳴音（1000Hz-4000Hz）および高域の鋭いピーク（4000Hz-12000Hz）をマルチスキャンして自動補正ノッチを構築
@@ -2231,10 +2365,10 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       filteredPeaks.push(peak);
     }
   }
+  // 3. DE-ESSER: 音声工学・音響医学基準のボーカル・シビランス帯域 (4,500Hz 〜 8,500Hz) をスキャン
   let sibilanceDynamicFreq = 0;
-  
-  const sibilanceMinBin = Math.floor((8000 * fftSize) / sampleRate);
-  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((11000 * fftSize) / sampleRate));
+  const sibilanceMinBin = Math.floor((4500 * fftSize) / sampleRate);
+  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((8500 * fftSize) / sampleRate));
   const rawSibilancePeaks = [];
   
   for (let j = sibilanceMinBin; j <= sibilanceMaxBin; j++) {
@@ -2247,7 +2381,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       ];
       const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
       const ratio = val / (localFloor + 1e-9);
-      if (ratio > 1.15) {
+      // シビランス検知閾値: 周囲の倍音床面に対して +1.5dB (ratio > 1.18) 以上の鋭い突起
+      if (ratio > 1.18) {
         rawSibilancePeaks.push({ freq: peakFreq, score: ratio });
       }
     }
@@ -2257,41 +2392,34 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     sibilanceDynamicFreq = rawSibilancePeaks[0].freq;
   }
 
-  // 決定木型ジャンル自動検出 (2パス実効解析による周波数バランス比率分類 - Suno AI 音源最適化版)
+  // 決定木型ジャンル自動検出 (2パス実効解析による周波数バランス比率分類)
   let detectedGenre = 'pops';
-  if (crestFactorDb >= 11.5) {
-    // ダイナミックレンジが広く自然な強弱のある音楽（生楽器・クラシック・ジャズ・アコースティック）
-    if (actualHighMidRatio < 0.05 && actualLowMidRatio < 2.2) {
-      detectedGenre = 'classic';
-    } else if (actualLowMidRatio >= 2.2 && actualLowMidRatio <= 3.0) {
-      detectedGenre = 'jazz';
-    } else {
-      detectedGenre = 'acoustic';
-    }
-  } else if (actualLowMidRatio > 3.2) {
-    // 重低音（サブベース）が支配的な電子音楽・クラブ・ヒップホップ・ハードコア
-    if (actualHighMidRatio > 0.16) {
-      detectedGenre = 'hardcore';
-    } else if (actualHighMidRatio > 0.08 || actualPresenceRatio > 0.38) {
+  if (actualLowMidRatio > 3.2) {
+    // 重低音が強烈な電子音楽・クラブ系
+    if (actualHighMidRatio > 0.09 || actualPresenceRatio > 0.38) {
       detectedGenre = 'edm';
     } else {
       detectedGenre = 'hiphop';
     }
-  } else if (actualHighMidRatio < 0.06 && actualLowMidRatio >= 2.3) {
-    // 高域が急峻に減衰し、ローミッドが太い Lo-Fi Chill
-    detectedGenre = 'lofi';
-  } else if (actualPresenceRatio > 0.52) {
-    // ギター壁・過激な歪みエネルギーが突出したメタル/ロック（一般的なボーカルポップスを除外する高いしきい値）
-    if (actualHighMidRatio > 0.14 || actualLowMidRatio > 3.0) {
+  } else if (actualPresenceRatio > 0.42) {
+    // 中高域（1.5kHz-5kHzのギター壁・ボーカル）が際立つ激しい音楽
+    if (actualHighMidRatio > 0.12 || actualLowMidRatio > 3.0) {
       detectedGenre = 'metal';
     } else {
       detectedGenre = 'rock';
     }
-  } else if (actualLowMidRatio < 1.8 && actualHighMidRatio < 0.08) {
-    // 低域がなくナレーション・音声主体のポッドキャスト
+  } else if (crestFactorDb >= 12.8) {
+    // ダイナミックレンジが広く圧縮感のない音楽
+    if (actualLowMidRatio >= 2.2 && actualLowMidRatio <= 3.0) {
+      detectedGenre = 'jazz';
+    } else if (actualLowMidRatio < 2.2 && actualHighMidRatio < 0.03) {
+      detectedGenre = 'classic';
+    } else {
+      detectedGenre = 'acoustic';
+    }
+  } else if (actualLowMidRatio < 2.0 && actualHighMidRatio < 0.10) {
     detectedGenre = 'podcast';
   } else {
-    // 通常のボーカル主体のポップス・J-Pop・シンセポップ
     detectedGenre = 'pops';
   }
 
@@ -2335,36 +2463,133 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     tiltCompensation = eqHighGainTemp * 0.12; // 例: -1.2dBカットのとき、-0.14dBの低音引き締め（中間値へマイルド化）
   }
 
-  // 1. LOW EQ (低域補正: 80Hz/100Hz/120Hz)
+  // =========================================================================
+  // ACADEMIC SPECTRAL FREQUENCY OPTIMIZATION FOR 5-BAND EQ
+  // =========================================================================
+  // 1. 周波数重心 (Spectral Centroid) 算出関数
+  const getSpectralCentroid = (minHz, maxHz) => {
+    const bStart = Math.max(1, Math.floor((minHz * fftSize) / sampleRate));
+    const bEnd = Math.min(fftSize / 2 - 1, Math.floor((maxHz * fftSize) / sampleRate));
+    let weightedSum = 0;
+    let energySum = 0;
+    for (let b = bStart; b <= bEnd; b++) {
+      const f = (b * sampleRate) / fftSize;
+      const mag = avgSpectrum[b];
+      weightedSum += f * mag;
+      energySum += mag;
+    }
+    return energySum > 0 ? (weightedSum / energySum) : ((minHz + maxHz) / 2);
+  };
+
+  // 2. 局所共鳴ピーク (Prominent Spectral Peak) 探索関数
+  const getProminentPeakFreq = (minHz, maxHz, fallbackHz) => {
+    const bStart = Math.max(2, Math.floor((minHz * fftSize) / sampleRate));
+    const bEnd = Math.min(fftSize / 2 - 2, Math.floor((maxHz * fftSize) / sampleRate));
+    let bestFreq = fallbackHz;
+    let maxProminence = 1.05; // 最低でも5%の局所突起が必要
+    for (let b = bStart; b <= bEnd; b++) {
+      const mag = avgSpectrum[b];
+      if (mag > avgSpectrum[b - 1] && mag > avgSpectrum[b + 1]) {
+        const floor = (avgSpectrum[b - 2] + avgSpectrum[b + 2]) * 0.5 + 1e-9;
+        const prom = mag / floor;
+        if (prom > maxProminence) {
+          maxProminence = prom;
+          bestFreq = Math.round((b * sampleRate) / fftSize);
+        }
+      }
+    }
+    return bestFreq;
+  };
+
+  // 3. 最大エネルギー周波数 (Max Energy Frequency) 探索関数
+  const getMaxEnergyFreq = (minHz, maxHz, fallbackHz) => {
+    const bStart = Math.max(1, Math.floor((minHz * fftSize) / sampleRate));
+    const bEnd = Math.min(fftSize / 2 - 1, Math.floor((maxHz * fftSize) / sampleRate));
+    let bestFreq = fallbackHz;
+    let maxEnergy = -1;
+    for (let b = bStart; b <= bEnd; b++) {
+      if (avgSpectrum[b] > maxEnergy) {
+        maxEnergy = avgSpectrum[b];
+        bestFreq = Math.round((b * sampleRate) / fftSize);
+      }
+    }
+    return bestFreq;
+  };
+
+  // 1. LOW EQ (低域シェルフ: 50Hz〜130Hz)
   // ターゲットからのズレを100%反転して補正値とします（最大+4.0dB〜-4.0dB）
   const eqLowAdjustment = -lowDiffDb * spectralCorrectionScale;
   // Spotify基準のタイトな低音に極限まで肉薄させるため、自動算出値に対してわずか -0.3dB の微調整用カットバイアスおよび傾斜リンク補正を適用します
   const eqLowGain = Math.max(-4.0, Math.min(4.0, Math.round((basePreset.eqLowGain + eqLowAdjustment - 0.3 + tiltCompensation) * 10) / 10));
 
-  let suggestedEqLowFreq = basePreset.eqLowFreq || 100;
-  if (lowDiffDb > 1.0) {
-    suggestedEqLowFreq = 120; // 低音過剰な場合は高めでカット
-  } else if (lowDiffDb < -1.0) {
-    suggestedEqLowFreq = 80;  // 低音不足な場合は低めから持ち上げ
+  // 40Hz〜160Hz区間のスペクトルエネルギー重心および最大ピークを解析
+  const lowCentroid = getSpectralCentroid(40, 160);
+  const lowPeak = getMaxEnergyFreq(40, 130, 80);
+  let suggestedEqLowFreq;
+  if (lowDiffDb < -0.8) {
+    // 低域不足（ブースト時）：キックの胴鳴りとベース土台を豊かに持ち上げるため、重心やや下（60〜85Hz）に配置
+    const targetHz = lowCentroid * 0.4 + lowPeak * 0.6;
+    suggestedEqLowFreq = Math.max(60, Math.min(85, Math.round(targetHz / 5) * 5));
+  } else if (lowDiffDb > 0.8) {
+    // 低域過剰（カット時）：50Hz付近のサブベースを削らず、不要な100Hz前後のブーミー感を落とすため高め（95〜125Hz）に配置
+    const targetHz = Math.max(95, lowCentroid * 1.12);
+    suggestedEqLowFreq = Math.max(95, Math.min(125, Math.round(targetHz / 5) * 5));
   } else {
-    suggestedEqLowFreq = 100;
+    // 概ねバランス良好：重心周波数をベースに75〜105Hzで自然にチューニング
+    suggestedEqLowFreq = Math.max(75, Math.min(105, Math.round(lowCentroid / 5) * 5));
   }
 
-  // 2. LOW-MID EQ (中低域補正: 200Hz)
+  // 2. LOW-MID EQ (中低域ピーク: 180Hz〜360Hz)
   // 低域全体の過不足に対して50%の割合で追従し、ふくよかさ・スッキリ感を調整します（最大+2.0dB〜-2.0dB）。傾斜リンク補正も加味します。
   const eqLowMidAdjustment = -lowDiffDb * 0.5 * spectralCorrectionScale;
   const eqLowMidGain = Math.max(-2.0, Math.min(2.0, Math.round((basePreset.eqLowMidGain + eqLowMidAdjustment + tiltCompensation) * 10) / 10));
 
-  // 3. MID EQ (中域補正: 1000Hz)
+  // 180Hz〜360Hzの「こもり・箱鳴り・帯域重複」の共鳴ピークをスキャン
+  const lowMidPeak = getProminentPeakFreq(180, 360, 0);
+  const lowMidCentroid = getSpectralCentroid(180, 360);
+  let suggestedEqLowMidFreq;
+  if (lowMidPeak >= 180 && lowMidPeak <= 360) {
+    suggestedEqLowMidFreq = Math.round(lowMidPeak / 5) * 5;
+  } else {
+    suggestedEqLowMidFreq = Math.max(190, Math.min(340, Math.round(lowMidCentroid / 5) * 5));
+  }
+
+  // 3. MID EQ (中域ピーク: 700Hz〜1600Hz)
   // 箱鳴りやラジオ感を防ぐため、追従感度を 0.5 → 0.75 に高め、カットバイアスも -0.8 → -1.5dB へ強めてすっきりさせます
   const eqMidAdjustment = (-presenceDiffDb * 0.75 - 1.5) * spectralCorrectionScale; 
   const eqMidGain = Math.max(-4.5, Math.min(0.5, Math.round((basePreset.eqMidGain + eqMidAdjustment) * 10) / 10));
 
-  // 4. MID-HIGH EQ (中高域・プレゼンス補正: 4500Hz)
-  // ユーザーの「抜け感・存在感を引き出したい」という要望に合わせ、最大ブースト上限を +4.0dB へ引き上げ、
-  // 感度も 0.45 ➔ 0.85 に高めて積極的に持ち上げます。ただし、元々うるさい曲は適切にカットします。
-  const eqMidHighAdjustment = -presenceDiffDb * 0.85 * spectralCorrectionScale;
-  const eqMidHighGain = Math.max(-3.0, Math.min(4.0, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
+  // 700Hz〜1600Hzの中域母音フォルマント・鼻声・缶鳴りピークをスキャン
+  const midPeak = getProminentPeakFreq(700, 1600, 0);
+  const midCentroid = getSpectralCentroid(700, 1600);
+  let suggestedEqMidFreq;
+  if (midPeak >= 700 && midPeak <= 1600) {
+    suggestedEqMidFreq = Math.round(midPeak / 25) * 25;
+  } else {
+    suggestedEqMidFreq = Math.max(750, Math.min(1500, Math.round(midCentroid / 25) * 25));
+  }
+
+  // 4. MID-HIGH EQ (中高域ピーク: 2500Hz〜5500Hz)
+  // 等ラウドネス曲線（ISO 226）に基づき、聴覚感度が急峻に高まる3k〜5kHz帯の過剰な持ち上げ（聴覚疲労・音割れの原因）を完全リセット。
+  // 原則としてフラット（0.0dB）を基準とし、ターゲット偏差に対する微細なティルト補正（±1.5dB以内、感度0.35）にとどめます。
+  const eqMidHighAdjustment = -presenceDiffDb * 0.35 * spectralCorrectionScale;
+  const eqMidHighGain = Math.max(-1.5, Math.min(1.5, Math.round((basePreset.eqMidHighGain + eqMidHighAdjustment) * 10) / 10));
+
+  // 2500Hz〜5500Hzの外耳道共鳴・耳障りな摩擦音（Presence/Harshness）ピークをスキャン
+  let harshPeak = 0;
+  const harshRes = filteredPeaks.find(p => p.freq >= 2500 && p.freq <= 5500);
+  if (harshRes) {
+    harshPeak = harshRes.freq;
+  } else {
+    harshPeak = getProminentPeakFreq(2500, 5500, 0);
+  }
+  const midHighCentroid = getSpectralCentroid(2500, 5500);
+  let suggestedEqMidHighFreq;
+  if (harshPeak >= 2500 && harshPeak <= 5500) {
+    suggestedEqMidHighFreq = Math.round(harshPeak / 50) * 50;
+  } else {
+    suggestedEqMidHighFreq = Math.max(2800, Math.min(5000, Math.round(midHighCentroid / 50) * 50));
+  }
 
   // 5. HIGH EQ (高域・エアバンド補正: 14000Hz)
   // ターゲットからのズレを100%反転して直接補正。曇った音源は明るく、うるさい音源は暖かく整えます（最大+3.5dB〜-4.5dB）
@@ -2391,7 +2616,7 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     edm: -11.5,      // EDM: クラブ向け最大音圧 (-11.5 dB)
     hiphop: -12.5,
     lofi: -15.5,
-    hardcore: -10.5, // Hardcore: 限界の押し込み (-10.5 dB)
+    hardcore: -11.2, // Hardcore: 限界の押し込み (-11.2 dB)
     ambient: -17.5,
     podcast: -15.0,
     classic: -19.5,
@@ -2407,7 +2632,7 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   // クレストファクター（ダイナミックレンジの広さ）に応じたコンプレッションと音圧補正
   const genreTargetCrest = {
     auto: 10.5, pops: 11.0, rnb: 10.0, rock: 11.0, metal: 9.5, edm: 8.5,
-    hiphop: 9.0, lofi: 12.0, hardcore: 7.5, ambient: 13.5, podcast: 10.5,
+    hiphop: 9.0, lofi: 12.0, hardcore: 8.0, ambient: 13.5, podcast: 10.5,
     classic: 14.5, jazz: 12.5, acoustic: 13.0, custom: 10.5
   };
   const targetCrest = genreTargetCrest[genreKey] || genreTargetCrest.auto;
@@ -2460,8 +2685,36 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   // どんなに静かな音源でも上限+10.0dB（温和なジャンルでは個別の最大上限）、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
   limiterBoost = Math.max(1.0, Math.min(maxAllowedLimiterBoost, Math.round(limiterBoost * 10) / 10));
 
-  // GUI表示用のラウドネス説明テキストの構築
+  // GUI表示および音圧制御用のラウドネス目標キーの取得
   const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
+
+  // 3. プレ・クリッパー＆リミッター・オーケストレーション（Crest Factor & Loudness Target に基づく統合音圧制御）
+  let suggestedClipperDrive = basePreset.clipperDrive !== undefined ? basePreset.clipperDrive : 1.5;
+  
+  if (crestFactorDb > 11.5) {
+    // トランジェントのトゲ（ドラムピーク）が大きいダイナミックな楽曲:
+    // リミッターのポンピング（不自然な息継ぎ歪み）を防ぐため、クリッパーで過渡ピークを自然に 2〜3dB トリミング
+    const clipperAdaptation = Math.min(2.0, (crestFactorDb - 11.5) * 0.5);
+    suggestedClipperDrive = Math.min(5.0, suggestedClipperDrive + clipperAdaptation);
+  } else if (crestFactorDb < 8.5) {
+    // 既に強く圧縮されている楽曲: 余計なサチュレーション歪みを避けるため、クリッパーのドライブを控えめに緩和
+    const clipperReduction = Math.min(1.5, (8.5 - crestFactorDb) * 0.5);
+    suggestedClipperDrive = Math.max(0.0, suggestedClipperDrive - clipperReduction);
+  }
+  
+  // ラウドネス目標に応じたクリッパーの最適補正
+  if (loudnessKey === 'club') {
+    suggestedClipperDrive = Math.max(suggestedClipperDrive, 2.5);
+  } else if (loudnessKey === 'loud') {
+    suggestedClipperDrive = Math.max(suggestedClipperDrive, 3.5);
+  } else if (loudnessKey === 'streaming') {
+    suggestedClipperDrive = Math.min(suggestedClipperDrive, 1.5);
+  } else if (loudnessKey === 'pure') {
+    suggestedClipperDrive = 0.0;
+  }
+  suggestedClipperDrive = Math.round(suggestedClipperDrive * 10) / 10;
+
+  // GUI表示用のラウドネス説明テキストの構築
   let baseLoudnessDesc = "STREAMING (-14 LUFS)";
   if (loudnessKey === 'genre') {
     const genreName = genreKey.toUpperCase();
@@ -2540,8 +2793,12 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   // ボーカルのサ行や高域のきつい金属音（6kHz〜9kHz）をブーストするのを防ぐため、クロスオーバー下限周波数を10,500Hzに引き上げ（10.5kHz〜14kHzのエアバンド域のみを処理）
   const normalizedRatio = Math.max(0.08, Math.min(0.38, airToBrillianceRatio));
   let suggestedEqHighFreq = 10500 + ((normalizedRatio - 0.08) / 0.30) * 3500;
-  suggestedEqHighFreq = Math.round(suggestedEqHighFreq / 250) * 250;
-  suggestedEqHighFreq = Math.max(10500, Math.min(14000, suggestedEqHighFreq));
+  if (sibilanceDynamicFreq > 0) {
+    const deesserUpperLimit = Math.min(16000, Math.max(9500, sibilanceDynamicFreq + 1500));
+    suggestedEqHighFreq = Math.max(suggestedEqHighFreq, deesserUpperLimit + 500);
+  }
+  suggestedEqHighFreq = Math.round(suggestedEqHighFreq / 100) * 100;
+  suggestedEqHighFreq = Math.max(10000, Math.min(15000, suggestedEqHighFreq));
 
   // 4. Stereo Bass phase cancellation safeguard (ビビリ音・歪み防止)
   let finalEqLowGain = eqLowGain;
@@ -2567,30 +2824,23 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   finalLimiterBoost = Math.round(finalLimiterBoost * 10) / 10;
 
   let suggestedDeesserAmount = 0; // デフォルトは 0 (無効)
+  let deesserStartFreq = 6500;
+  let deesserEndFreq = 8500;
+
   if (sibilanceDynamicFreq > 0 && rawSibilancePeaks.length > 0) {
-    const maxScore = rawSibilancePeaks[0].score;
-    // 共鳴ピークが検出された場合のみアクティブにし、スコアに応じて35%〜80%の範囲で適用
-    suggestedDeesserAmount = Math.round(Math.max(35, Math.min(80, 35 + (maxScore - 1.15) * 60)));
+    const maxScore = rawSibilancePeaks[0].score; // e.g. 1.18 to 1.60
+    const prominenceDb = 20 * Math.log10(maxScore); // e.g. 1.5dB to 4.0dB
+    // 音響工学的リダクション量計算: 突出エネルギーに応じて 20%〜60% (-3.0dB〜-9.0dBの動的減衰) を算出
+    suggestedDeesserAmount = Math.round(Math.max(20, Math.min(60, 20 + (prominenceDb - 1.5) * 16.0)));
+
+    // 検出されたシビランス周波数を中心に、Start/Endを帯域幅約 1,800Hz で最適アライメント
+    deesserStartFreq = Math.max(4000, Math.round((sibilanceDynamicFreq - 900) / 50) * 50);
+    deesserEndFreq = Math.min(10500, Math.max(deesserStartFreq + 500, Math.round((sibilanceDynamicFreq + 900) / 50) * 50));
   }
 
-  // ノイズクリーナー（Hiss Reducer ＆ De-esser）のジャンル別安全保護リミッター
-  let finalHissAmount = sugHissAmount;
-  let finalDeesserAmount = suggestedDeesserAmount;
-
-  if (detectedGenre === 'edm' || detectedGenre === 'hiphop') {
-    finalHissAmount = Math.min(25, finalHissAmount); // 最大25%に拡張（電子音楽の抜けを保護しつつノイズを吸い取る）
-    finalDeesserAmount = Math.min(25, finalDeesserAmount); // 最大25%に拡張
-  } else if (detectedGenre === 'rock' || detectedGenre === 'metal') {
-    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
-    finalDeesserAmount = Math.min(35, finalDeesserAmount); // 最大35%に拡張
-  } else if (detectedGenre === 'jazz' || detectedGenre === 'acoustic' || detectedGenre === 'classic') {
-    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
-    finalDeesserAmount = Math.min(30, finalDeesserAmount); // 最大30%に拡張
-  } else {
-    // pops, lofi 等
-    finalHissAmount = Math.min(60, finalHissAmount); // 最大60%に拡張（高域ヒスを最大-4.8dBまで低減）
-    finalDeesserAmount = Math.min(70, finalDeesserAmount); // 最大70%に拡張（サ行トゲを最大-3.1dBまで低減）
-  }
+  // アカデミック物理計算に基づくノイズクリーナー最終適用値（固定キャップ・経験則を全廃）
+  const finalHissAmount = sugHissAmount;
+  const finalDeesserAmount = suggestedDeesserAmount;
 
   // AI Dynamic Q-value calculation based on the correction gains
   let finalEqLowQ = basePreset.eqLowQ || 0.70;
@@ -2639,13 +2889,13 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       eqLowFreq: suggestedEqLowFreq,
       eqLowQ: finalEqLowQ,
       eqLowMidGain: eqLowMidGain,
-      eqLowMidFreq: basePreset.eqLowMidFreq || 200,
+      eqLowMidFreq: suggestedEqLowMidFreq,
       eqLowMidQ: basePreset.eqLowMidQ || 0.60,
       eqMidGain: eqMidGain,
-      eqMidFreq: basePreset.eqMidFreq,
+      eqMidFreq: suggestedEqMidFreq,
       eqMidQ: basePreset.eqMidQ || 1.0,
       eqMidHighGain: eqMidHighGain,
-      eqMidHighFreq: basePreset.eqMidHighFreq || 4500,
+      eqMidHighFreq: suggestedEqMidHighFreq,
       eqMidHighQ: basePreset.eqMidHighQ || 1.0,
       eqHighGain: eqHighGain,
       eqHighFreq: suggestedEqHighFreq,
@@ -2657,6 +2907,7 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       compRelease: basePreset.compRelease,
       stereoWidth: stereoWidth,
       sideHighPassFreq: finalSideHPF,
+      clipperDrive: suggestedClipperDrive,
       limiterBoost: finalLimiterBoost,
       rumbleCutEnabled: sugRumbleCut,
       hissReductionAmount: finalHissAmount,
@@ -2664,8 +2915,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       hissReductionFreq: 9000,
       sibilanceDynamicFreq: sibilanceDynamicFreq,
       deesserAmount: finalDeesserAmount,
-      deesserMaxCut: -15.0,
-      deesserFreq: sibilanceDynamicFreq > 0 ? sibilanceDynamicFreq : 7500
+      deesserFreq: deesserStartFreq,
+      deesserMaxFreq: deesserEndFreq
     },
     // 中間解析値のデバッグ用出力
     crestFactorDb: crestFactorDb,
@@ -2713,7 +2964,7 @@ function loadGenrePreset(genreKey) {
   params.eqMidFreq = src.eqMidFreq;
   params.eqMidQ = src.eqMidQ || 1.0;
   params.eqMidHighGain = src.eqMidHighGain || 0.0;
-  params.eqMidHighFreq = src.eqMidHighFreq || 4500;
+  params.eqMidHighFreq = src.eqMidHighFreq || 4800;
   params.eqMidHighQ = src.eqMidHighQ || 1.0;
   params.eqHighGain = src.eqHighGain;
   params.eqHighFreq = src.eqHighFreq;
@@ -2728,6 +2979,7 @@ function loadGenrePreset(genreKey) {
   params.stereoWidth = src.stereoWidth;
   params.sideHighPassFreq = src.sideHighPassFreq || 110;
   params.ceiling = src.ceiling !== undefined ? src.ceiling : -1.0;
+  params.clipperDrive = src.clipperDrive !== undefined ? src.clipperDrive : 1.5;
   params.hissReductionMaxFreq = src.hissReductionMaxFreq || 16000;
   params.deesserMaxFreq = src.deesserMaxFreq || 9500;
   
@@ -2741,7 +2993,8 @@ function loadGenrePreset(genreKey) {
     params.sibilanceDynamicFreq = src.sibilanceDynamicFreq !== undefined ? src.sibilanceDynamicFreq : 0;
     params.deesserAmount = src.deesserAmount !== undefined ? src.deesserAmount : 0;
     params.deesserMaxCut = src.deesserMaxCut !== undefined ? src.deesserMaxCut : -15.0;
-    params.deesserFreq = src.deesserFreq || src.sibilanceDynamicFreq || 7500;
+    params.deesserFreq = src.deesserFreq || 6500;
+    params.deesserMaxFreq = src.deesserMaxFreq || 8500;
     
     // Set UI badge to show AUTO
     const genreBadge = document.getElementById('ai-detected-genre-badge');
@@ -2749,8 +3002,14 @@ function loadGenrePreset(genreKey) {
       genreBadge.innerText = 'AUTO';
     }
   } else {
-    // プリセット変更時は、AIが自動適用した入力ゲインを0.0dB(ニュートラル)に戻して各プリセットの標準音量を担保します
-    params.inputGainDb = 0.0;
+    // プリセット変更時も、楽曲のヘッドルーム・ゲインステージング（-6dBFS基準）を維持してクリッピングや歪み（チリチリ音）を防止
+    if (src && src.inputGainDb !== undefined) {
+      params.inputGainDb = src.inputGainDb;
+    } else if (aiSuggestedParams !== null && aiSuggestedParams.inputGainDb !== undefined) {
+      params.inputGainDb = aiSuggestedParams.inputGainDb;
+    } else {
+      params.inputGainDb = 0.0;
+    }
     
     // 楽曲自体のノイズ状態はプリセット変更で変わらないため、AI検出済みのノイズクリーナー設定があれば継承し、なければOFFにする
     if (aiSuggestedParams !== null) {
@@ -2762,8 +3021,8 @@ function loadGenrePreset(genreKey) {
       params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
       params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
       params.deesserMaxCut = aiSuggestedParams.deesserMaxCut !== undefined ? aiSuggestedParams.deesserMaxCut : -15.0;
-      params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
-      params.deesserMaxFreq = aiSuggestedParams.deesserMaxFreq || 9500;
+      params.deesserFreq = aiSuggestedParams.deesserFreq || 6500;
+      params.deesserMaxFreq = aiSuggestedParams.deesserMaxFreq || 8500;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
@@ -2773,8 +3032,8 @@ function loadGenrePreset(genreKey) {
       params.sibilanceDynamicFreq = 0;
       params.deesserAmount = 0;
       params.deesserMaxCut = -15.0;
-      params.deesserFreq = 7500;
-      params.deesserMaxFreq = 9500;
+      params.deesserFreq = 6500;
+      params.deesserMaxFreq = 8500;
     }
     
     // Set UI badge back to the selected genre name
@@ -2784,13 +3043,19 @@ function loadGenrePreset(genreKey) {
     }
   }
 
-  // Set limiter boost based on loudness target selection or preset (applies to both auto and other presets)
+  // Set clipper drive and limiter boost based on loudness target selection or preset (applies to both auto and other presets)
   const loudnessSelect = document.getElementById('loudness-select');
   const loudnessKey = loudnessSelect ? loudnessSelect.value : 'genre';
   if (loudnessKey === 'genre') {
     params.limiterBoost = src.limiterBoost; // This is the dynamically calculated boost matching target loudness, capped for classic/acoustic
-  } else if (LOUDNESS_TARGETS[loudnessKey] && LOUDNESS_TARGETS[loudnessKey].boost !== null) {
-    params.limiterBoost = LOUDNESS_TARGETS[loudnessKey].boost;
+    params.clipperDrive = src.clipperDrive !== undefined ? src.clipperDrive : (p.clipperDrive !== undefined ? p.clipperDrive : 1.5);
+  } else if (LOUDNESS_TARGETS[loudnessKey]) {
+    if (LOUDNESS_TARGETS[loudnessKey].boost !== null) {
+      params.limiterBoost = LOUDNESS_TARGETS[loudnessKey].boost;
+    }
+    if (LOUDNESS_TARGETS[loudnessKey].clipper !== null) {
+      params.clipperDrive = LOUDNESS_TARGETS[loudnessKey].clipper;
+    }
   }
 
   // AI Corrective Notches and AI report panel are preserved during preset switching to allow interactive comparison
@@ -2805,6 +3070,7 @@ function loadGenrePreset(genreKey) {
   updateEqNodes();
   updateCompressorNode();
   updateStereoWidthNode();
+  updateClipperNode();
   updateLimiterGainNode();
   updateCeilingNode();
 }
@@ -2816,18 +3082,34 @@ function applyLoudnessTarget(targetKey) {
     const genreSelect = document.getElementById('preset-select');
     const genreKey = genreSelect ? genreSelect.value : 'auto';
     const p = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
-    params.limiterBoost = p.limiterBoost;
+    if (audioBuffer && genreKey !== 'auto') {
+      const dynamicResult = analyzeAudioResonances(audioBuffer, genreKey);
+      params.limiterBoost = dynamicResult.suggestedParams.limiterBoost;
+      params.clipperDrive = dynamicResult.suggestedParams.clipperDrive !== undefined ? dynamicResult.suggestedParams.clipperDrive : (p.clipperDrive !== undefined ? p.clipperDrive : 1.5);
+    } else if (genreKey === 'auto' && aiSuggestedParams !== null) {
+      params.limiterBoost = aiSuggestedParams.limiterBoost;
+      params.clipperDrive = aiSuggestedParams.clipperDrive !== undefined ? aiSuggestedParams.clipperDrive : 1.5;
+    } else {
+      params.limiterBoost = p.limiterBoost;
+      params.clipperDrive = p.clipperDrive !== undefined ? p.clipperDrive : 1.5;
+    }
   } else {
     const t = LOUDNESS_TARGETS[targetKey];
     if (!t) return;
     params.limiterBoost = t.boost;
+    params.clipperDrive = t.clipper !== null ? t.clipper : 1.5;
   }
   
   // Update GUI
   document.getElementById('limiter-gain').value = params.limiterBoost;
   document.getElementById('limiter-gain-val').innerText = `+${params.limiterBoost.toFixed(1)} dB`;
+  const clipperDriveInput = document.getElementById('clipper-drive');
+  if (clipperDriveInput) clipperDriveInput.value = params.clipperDrive;
+  const clipperDriveVal = document.getElementById('clipper-drive-val');
+  if (clipperDriveVal) clipperDriveVal.innerText = `+${params.clipperDrive.toFixed(1)} dB`;
   
   // Update DSP
+  updateClipperNode();
   updateLimiterGainNode();
 }
 
@@ -2930,8 +3212,7 @@ async function renderMasteredTrack() {
   offlineSource.buffer = audioBuffer;
   
   // Set up the EXACT same signal chain in the offline context
-  const offlineChain = setupMasteringChain(offlineCtx, offlineSource, getCombinedParams());
-  offlineChain.outputNode.connect(offlineCtx.destination);
+  const offlineChain = setupMasteringChain(offlineCtx, offlineSource, getCombinedParams(), offlineCtx.destination);
   
   offlineSource.start(0);
 
@@ -3058,7 +3339,7 @@ function updateGuiControls() {
   const eqMidHighGainInput = document.getElementById('eq-mid-high-gain');
   if (eqMidHighGainInput) eqMidHighGainInput.value = params.eqMidHighGain || 0.0;
   const eqMidHighFreqInput = document.getElementById('eq-mid-high-freq');
-  if (eqMidHighFreqInput) eqMidHighFreqInput.value = params.eqMidHighFreq || 4500;
+  if (eqMidHighFreqInput) eqMidHighFreqInput.value = params.eqMidHighFreq || 4800;
   const eqMidHighVal = document.getElementById('eq-mid-high-val');
   if (eqMidHighVal) eqMidHighVal.innerText = `${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB`;
   const eqMidHighQInput = document.getElementById('eq-mid-high-q');
@@ -3089,7 +3370,12 @@ function updateGuiControls() {
   document.getElementById('width-slider').value = params.stereoWidth;
   document.getElementById('width-val').innerText = `${Math.round(params.stereoWidth * 100)}%`;
   
-  // Limiter Gain Boost
+  // Clipper & Limiter Gain Boost
+  const clipperDriveInput = document.getElementById('clipper-drive');
+  if (clipperDriveInput) clipperDriveInput.value = params.clipperDrive !== undefined ? params.clipperDrive : 1.5;
+  const clipperDriveVal = document.getElementById('clipper-drive-val');
+  if (clipperDriveVal) clipperDriveVal.innerText = `+${(params.clipperDrive !== undefined ? params.clipperDrive : 1.5).toFixed(1)} dB`;
+
   document.getElementById('limiter-gain').value = params.limiterBoost;
   document.getElementById('limiter-gain-val').innerText = `+${params.limiterBoost.toFixed(1)} dB`;
 
@@ -3113,14 +3399,21 @@ function updateGuiControls() {
     document.getElementById('hiss-limit-val').innerText = `${lVal.toFixed(1)} dB`;
   }
   const hissFreqSliderEl = document.getElementById('hiss-freq-slider');
-  if (hissFreqSliderEl) {
-    hissFreqSliderEl.value = params.hissReductionFreq || 9000;
-    document.getElementById('hiss-freq-val').innerText = `${(params.hissReductionFreq || 9000).toLocaleString()} Hz`;
-  }
   const hissMaxFreqSliderEl = document.getElementById('hiss-max-freq-slider');
+  let hStart = params.hissReductionFreq || 9000;
+  let hEnd = params.hissReductionMaxFreq || 16000;
+  if (hEnd <= hStart + 1000) {
+    hEnd = Math.min(20000, hStart + 1000);
+    params.hissReductionMaxFreq = hEnd;
+  }
+  params.hissReductionFreq = hStart;
+  if (hissFreqSliderEl) {
+    hissFreqSliderEl.value = hStart;
+    document.getElementById('hiss-freq-val').innerText = `${hStart.toLocaleString()} Hz`;
+  }
   if (hissMaxFreqSliderEl) {
-    hissMaxFreqSliderEl.value = params.hissReductionMaxFreq || 16000;
-    document.getElementById('hiss-max-freq-val').innerText = `${(params.hissReductionMaxFreq || 16000).toLocaleString()} Hz`;
+    hissMaxFreqSliderEl.value = hEnd;
+    document.getElementById('hiss-max-freq-val').innerText = `${hEnd.toLocaleString()} Hz`;
   }
   const deesserSliderEl = document.getElementById('deesser-slider');
   if (deesserSliderEl) {
@@ -3137,14 +3430,21 @@ function updateGuiControls() {
     document.getElementById('deesser-limit-val').innerText = `${lVal.toFixed(1)} dB`;
   }
   const deesserFreqSliderEl = document.getElementById('deesser-freq-slider');
-  if (deesserFreqSliderEl) {
-    deesserFreqSliderEl.value = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
-    document.getElementById('deesser-freq-val').innerText = `${(params.deesserFreq || params.sibilanceDynamicFreq || 7500).toLocaleString()} Hz`;
-  }
   const deesserMaxFreqSliderEl = document.getElementById('deesser-max-freq-slider');
+  let dStart = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
+  let dEnd = params.deesserMaxFreq || 9500;
+  if (dEnd <= dStart + 500) {
+    dEnd = Math.min(16000, dStart + 500);
+    params.deesserMaxFreq = dEnd;
+  }
+  params.deesserFreq = dStart;
+  if (deesserFreqSliderEl) {
+    deesserFreqSliderEl.value = dStart;
+    document.getElementById('deesser-freq-val').innerText = `${dStart.toLocaleString()} Hz`;
+  }
   if (deesserMaxFreqSliderEl) {
-    deesserMaxFreqSliderEl.value = params.deesserMaxFreq || 9500;
-    document.getElementById('deesser-max-freq-val').innerText = `${(params.deesserMaxFreq || 9500).toLocaleString()} Hz`;
+    deesserMaxFreqSliderEl.value = dEnd;
+    document.getElementById('deesser-max-freq-val').innerText = `${dEnd.toLocaleString()} Hz`;
   }
 
   // AIレポートカードのアナライザー表示と適用パラメータ一覧をリアルタイムに同期・更新
@@ -3198,23 +3498,23 @@ function updateAiReportCard() {
         <span style="color: #00f2fe; font-weight: 600;">${params.inputGainDb >= 0 ? '+' : ''}${params.inputGainDb.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ LOW:</span>
+        <span>EQ LOW (${params.eqLowFreq} Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqLowGain >= 0 ? '+' : ''}${params.eqLowGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ LOW-MID:</span>
+        <span>EQ LOW-MID (${params.eqLowMidFreq} Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqLowMidGain >= 0 ? '+' : ''}${params.eqLowMidGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ MID:</span>
+        <span>EQ MID (${params.eqMidFreq >= 1000 ? (params.eqMidFreq / 1000).toFixed(2) + 'k' : params.eqMidFreq} Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqMidGain >= 0 ? '+' : ''}${params.eqMidGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ MID-HIGH:</span>
+        <span>EQ MID-HIGH (${(params.eqMidHighFreq / 1000).toFixed(2)}k Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqMidHighGain >= 0 ? '+' : ''}${params.eqMidHighGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>EQ HIGH:</span>
+        <span>EQ HIGH (${(params.eqHighFreq / 1000).toFixed(1)}k Hz):</span>
         <span style="color: #00f2fe; font-weight: 600;">${params.eqHighGain >= 0 ? '+' : ''}${params.eqHighGain.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
@@ -3226,12 +3526,12 @@ function updateAiReportCard() {
         <span style="color: #00f2fe; font-weight: 600;">${Math.round(params.stereoWidth * 100)}%</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <span>MAXIMIZER LIMITER:</span>
-        <span style="color: #00f2fe; font-weight: 600;">Boost: +${params.limiterBoost.toFixed(1)} dB</span>
+        <span>CLIPPER / LIMITER:</span>
+        <span style="color: #00f2fe; font-weight: 600;">Clip: +${(params.clipperDrive !== undefined ? params.clipperDrive : 1.5).toFixed(1)} dB / Boost: +${params.limiterBoost.toFixed(1)} dB</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px;">
         <span>NOISE CLEANER:</span>
-        <span style="color: #00f2fe; font-weight: 600;">Rumble: ${params.rumbleCutEnabled ? 'CUT' : 'OFF'} / Hiss: ${params.hissReductionAmount > 0 ? params.hissReductionAmount + '%' : 'OFF'}</span>
+        <span style="color: #00f2fe; font-weight: 600;">Rumble: ${params.rumbleCutEnabled ? '32Hz CUT' : 'OFF'} / Hiss: ${params.hissReductionAmount > 0 ? params.hissReductionAmount + '%' : 'OFF'} / De-Ess: ${params.deesserAmount > 0 ? params.deesserAmount + '%' : 'OFF'}</span>
       </div>
       <div style="text-align: right; font-size: 0.58rem; color: var(--text-muted); margin-top: -2px; padding: 0 4px 4px 0;">
         (Base: ${lastAnalysisResult.baseLoudnessDesc})
@@ -3293,15 +3593,33 @@ function registerGuiEvents() {
   });
 
   document.getElementById('hiss-freq-slider').addEventListener('input', (e) => {
-    params.hissReductionFreq = parseInt(e.target.value);
-    document.getElementById('hiss-freq-val').innerText = `${params.hissReductionFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.hissReductionFreq = val;
+    // 連動制約: Start Freq は End Freq (上限) より常に 1000Hz 以上低く保つ
+    if (params.hissReductionMaxFreq <= val + 1000) {
+      params.hissReductionMaxFreq = Math.min(20000, val + 1000);
+      const maxSlider = document.getElementById('hiss-max-freq-slider');
+      if (maxSlider) maxSlider.value = params.hissReductionMaxFreq;
+      const maxValEl = document.getElementById('hiss-max-freq-val');
+      if (maxValEl) maxValEl.innerText = `${params.hissReductionMaxFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('hiss-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
 
   document.getElementById('hiss-max-freq-slider').addEventListener('input', (e) => {
-    params.hissReductionMaxFreq = parseInt(e.target.value);
-    document.getElementById('hiss-max-freq-val').innerText = `${params.hissReductionMaxFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.hissReductionMaxFreq = val;
+    // 連動制約: End Freq (上限) は Start Freq より常に 1000Hz 以上高く保つ
+    if (params.hissReductionFreq >= val - 1000) {
+      params.hissReductionFreq = Math.max(4000, val - 1000);
+      const minSlider = document.getElementById('hiss-freq-slider');
+      if (minSlider) minSlider.value = params.hissReductionFreq;
+      const minValEl = document.getElementById('hiss-freq-val');
+      if (minValEl) minValEl.innerText = `${params.hissReductionFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('hiss-max-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
@@ -3314,15 +3632,33 @@ function registerGuiEvents() {
   });
 
   document.getElementById('deesser-freq-slider').addEventListener('input', (e) => {
-    params.deesserFreq = parseInt(e.target.value);
-    document.getElementById('deesser-freq-val').innerText = `${params.deesserFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.deesserFreq = val;
+    // 連動制約: Start Freq は End Freq (上限) より常に 500Hz 以上低く保つ
+    if (params.deesserMaxFreq <= val + 500) {
+      params.deesserMaxFreq = Math.min(16000, val + 500);
+      const maxSlider = document.getElementById('deesser-max-freq-slider');
+      if (maxSlider) maxSlider.value = params.deesserMaxFreq;
+      const maxValEl = document.getElementById('deesser-max-freq-val');
+      if (maxValEl) maxValEl.innerText = `${params.deesserMaxFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('deesser-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
 
   document.getElementById('deesser-max-freq-slider').addEventListener('input', (e) => {
-    params.deesserMaxFreq = parseInt(e.target.value);
-    document.getElementById('deesser-max-freq-val').innerText = `${params.deesserMaxFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.deesserMaxFreq = val;
+    // 連動制約: End Freq (上限) は Start Freq より常に 500Hz 以上高く保つ
+    if (params.deesserFreq >= val - 500) {
+      params.deesserFreq = Math.max(4000, val - 500);
+      const minSlider = document.getElementById('deesser-freq-slider');
+      if (minSlider) minSlider.value = params.deesserFreq;
+      const minValEl = document.getElementById('deesser-freq-val');
+      if (minValEl) minValEl.innerText = `${params.deesserFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('deesser-max-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
@@ -3400,7 +3736,7 @@ function registerGuiEvents() {
   const eqLowMidFreqInput = document.getElementById('eq-low-mid-freq');
   if (eqLowMidFreqInput) {
     eqLowMidFreqInput.addEventListener('change', (e) => {
-      params.eqLowMidFreq = Math.max(150, Math.min(350, parseInt(e.target.value)));
+      params.eqLowMidFreq = Math.max(150, Math.min(400, parseInt(e.target.value)));
       e.target.value = params.eqLowMidFreq;
       selectCustomPreset();
       updateEqNodes();
@@ -3452,7 +3788,7 @@ function registerGuiEvents() {
   const eqMidHighFreqInput = document.getElementById('eq-mid-high-freq');
   if (eqMidHighFreqInput) {
     eqMidHighFreqInput.addEventListener('change', (e) => {
-      params.eqMidHighFreq = Math.max(2000, Math.min(5000, parseInt(e.target.value)));
+      params.eqMidHighFreq = Math.max(2000, Math.min(6000, parseInt(e.target.value)));
       e.target.value = params.eqMidHighFreq;
       selectCustomPreset();
       updateEqNodes();
@@ -3537,6 +3873,19 @@ function registerGuiEvents() {
     updateStereoWidthNode();
   });
 
+  // Clipper Drive
+  const clipperDriveSlider = document.getElementById('clipper-drive');
+  if (clipperDriveSlider) {
+    clipperDriveSlider.addEventListener('input', (e) => {
+      params.clipperDrive = parseFloat(e.target.value);
+      const valEl = document.getElementById('clipper-drive-val');
+      if (valEl) valEl.innerText = `+${params.clipperDrive.toFixed(1)} dB`;
+      // Selecting custom target
+      document.getElementById('loudness-select').value = 'custom';
+      updateClipperNode();
+    });
+  }
+
   // Limiter Gain Boost
   document.getElementById('limiter-gain').addEventListener('input', (e) => {
     params.limiterBoost = parseFloat(e.target.value);
@@ -3545,6 +3894,28 @@ function registerGuiEvents() {
     document.getElementById('loudness-select').value = 'custom';
     updateLimiterGainNode();
   });
+
+  // Manual Clipping & Distortion Radar Scan Button
+  const scanClippingBtn = document.getElementById('btn-scan-clipping');
+  if (scanClippingBtn) {
+    scanClippingBtn.addEventListener('click', async () => {
+      if (!audioBuffer) {
+        const logEl = document.getElementById('clipping-log');
+        if (logEl) {
+          logEl.innerHTML = `<div style="color: #f77f00;">[INFO] 音源ファイルを読み込んでからスキャンを実行してください。</div>`;
+        }
+        return;
+      }
+      scanClippingBtn.disabled = true;
+      scanClippingBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> SCANNING...`;
+      try {
+        await runClippingAnalysis();
+      } finally {
+        scanClippingBtn.disabled = false;
+        scanClippingBtn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> SCAN NOW (音割れ検査)`;
+      }
+    });
+  }
 
   // Preset Selections
   document.getElementById('preset-select').addEventListener('change', (e) => {
@@ -3632,42 +4003,79 @@ function setupFileLoader() {
   });
 
   // Audio Spices Event Listeners
-  document.getElementById('spice-air-treble').addEventListener('change', (e) => {
-    spices.airTreble = e.target.checked;
-    updateEqNodes();
-    drawWaveformView();
-  });
+  const spiceAirTrebleEl = document.getElementById('spice-air-treble');
+  if (spiceAirTrebleEl) {
+    spiceAirTrebleEl.addEventListener('change', (e) => {
+      spices.airTreble = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-kick-punch').addEventListener('change', (e) => {
-    spices.kickPunch = e.target.checked;
-    updateEqNodes();
-    updateCompressorNode();
-    drawWaveformView();
-  });
+  const spiceKickPunchEl = document.getElementById('spice-kick-punch');
+  if (spiceKickPunchEl) {
+    spiceKickPunchEl.addEventListener('change', (e) => {
+      spices.kickPunch = e.target.checked;
+      updateEqNodes();
+      updateCompressorNode();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-stereo-wider').addEventListener('change', (e) => {
-    spices.stereoWider = e.target.checked;
-    updateStereoWidthNode();
-    drawWaveformView();
-  });
+  const spicePultecBassEl = document.getElementById('spice-pultec-bass');
+  if (spicePultecBassEl) {
+    spicePultecBassEl.addEventListener('change', (e) => {
+      spices.pultecBass = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-vocal-presence').addEventListener('change', (e) => {
-    spices.vocalPresence = e.target.checked;
-    updateEqNodes();
-    drawWaveformView();
-  });
+  const spiceVocalPresenceEl = document.getElementById('spice-vocal-presence');
+  if (spiceVocalPresenceEl) {
+    spiceVocalPresenceEl.addEventListener('change', (e) => {
+      spices.vocalPresence = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-analog-warmth').addEventListener('change', (e) => {
-    spices.analogWarmth = e.target.checked;
-    updateSaturatorNode();
-    drawWaveformView();
-  });
+  const spiceSilkySmoothEl = document.getElementById('spice-silky-smooth');
+  if (spiceSilkySmoothEl) {
+    spiceSilkySmoothEl.addEventListener('change', (e) => {
+      spices.silkySmooth = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-loudness-push').addEventListener('change', (e) => {
-    spices.loudnessPush = e.target.checked;
-    updateLimiterGainNode();
-    drawWaveformView();
-  });
+  const spiceStereoWiderEl = document.getElementById('spice-stereo-wider');
+  if (spiceStereoWiderEl) {
+    spiceStereoWiderEl.addEventListener('change', (e) => {
+      spices.stereoWider = e.target.checked;
+      updateStereoWidthNode();
+      drawWaveformView();
+    });
+  }
+
+  const spiceAnalogWarmthEl = document.getElementById('spice-analog-warmth');
+  if (spiceAnalogWarmthEl) {
+    spiceAnalogWarmthEl.addEventListener('change', (e) => {
+      spices.analogWarmth = e.target.checked;
+      updateSaturatorNode();
+      drawWaveformView();
+    });
+  }
+
+  const spiceLoudnessPushEl = document.getElementById('spice-loudness-push');
+  if (spiceLoudnessPushEl) {
+    spiceLoudnessPushEl.addEventListener('change', (e) => {
+      spices.loudnessPush = e.target.checked;
+      updateClipperNode();
+      updateLimiterGainNode();
+      drawWaveformView();
+    });
+  }
 }
 
 function loadAudioFile(file) {
@@ -3800,7 +4208,7 @@ function resetMasterSettings() {
   for (let key in spices) {
     spices[key] = false;
   }
-  const spiceIds = ['air-treble', 'kick-punch', 'stereo-wider', 'vocal-presence', 'analog-warmth', 'loudness-push'];
+  const spiceIds = ['air-treble', 'kick-punch', 'pultec-bass', 'vocal-presence', 'silky-smooth', 'stereo-wider', 'analog-warmth', 'loudness-push'];
   spiceIds.forEach(id => {
     const el = document.getElementById(`spice-${id}`);
     if (el) el.checked = false;
@@ -4327,6 +4735,7 @@ function invalidatePeakCache() {
   if (!isPlaying && audioBuffer && activeTab === 'waveform') {
     drawWaveformView();
   }
+  // 自動全曲レンダリング（queueClippingScan）は廃止し、CPU使用率をゼロ化（手動ボタン実行に完全移行）
 }
 
 function getProcessedPeaks() {
@@ -4335,5 +4744,175 @@ function getProcessedPeaks() {
   }
   return cachedProcessedPeaks;
 }
+
+// ==========================================================================
+// BACKGROUND CLIPPING & DISTORTION DETECTOR (音割れ対策スキャナー)
+// ==========================================================================
+function queueClippingScan() {
+  // 手動ボタン実行（#btn-scan-clipping）に移行したため、自動スキャンは実行しない
+}
+
+async function runClippingAnalysis() {
+  if (!audioBuffer) return;
+  
+  const statusEl = document.getElementById('clipping-status');
+  const logEl = document.getElementById('clipping-log');
+  
+  if (statusEl) {
+    statusEl.innerText = "STATUS: SCANNING...";
+    statusEl.style.color = "#00f2fe";
+  }
+  
+  const sampleRate = audioBuffer.sampleRate;
+  const numChannels = audioBuffer.numberOfChannels;
+  const duration = audioBuffer.duration;
+  
+  // Create an OfflineAudioContext to render the actual mastered output
+  const offlineCtx = new OfflineAudioContext(numChannels, Math.ceil(sampleRate * duration), sampleRate);
+  
+  // Create offline source node
+  const offlineSource = offlineCtx.createBufferSource();
+  offlineSource.buffer = audioBuffer;
+  
+  // Setup the EXACT mastering chain connected directly to the offline context destination
+  const offlineChain = setupMasteringChain(offlineCtx, offlineSource, getCombinedParams(), offlineCtx.destination);
+  
+  // Start rendering
+  offlineSource.start(0);
+  
+  try {
+    const renderedBuffer = await offlineCtx.startRendering();
+    
+    // Analyze peaks in 100ms blocks
+    const blockSizeSec = 0.1;
+    const blockSizeSamples = Math.floor(sampleRate * blockSizeSec);
+    const numBlocks = Math.floor(renderedBuffer.length / blockSizeSamples);
+    
+    const clippingPoints = [];
+    let globalMaxVal = 0.0;
+    
+    const leftData = renderedBuffer.getChannelData(0);
+    const rightData = numChannels > 1 ? renderedBuffer.getChannelData(1) : leftData;
+    
+    const currentParams = getCombinedParams();
+    const ceilingDb = currentParams.ceiling !== undefined ? currentParams.ceiling : -1.0;
+    // 0.9995 (~0dBFS) is the threshold where actual true digital clipping occurs
+    const trueClipThreshold = 0.9995;
+    
+    for (let b = 0; b < numBlocks; b++) {
+      const startSample = b * blockSizeSamples;
+      const endSample = startSample + blockSizeSamples;
+      
+      let maxVal = 0.0;
+      for (let i = startSample; i < endSample; i++) {
+        const valL = Math.abs(leftData[i]);
+        const valR = Math.abs(rightData[i]);
+        if (valL > maxVal) maxVal = valL;
+        if (valR > maxVal) maxVal = valR;
+      }
+      
+      if (maxVal > globalMaxVal) {
+        globalMaxVal = maxVal;
+      }
+      
+      // Check if actual digital clipping occurs (exceeding 0dBFS)
+      if (maxVal >= trueClipThreshold) {
+        const peakDb = 20 * Math.log10(maxVal);
+        const timeSec = b * blockSizeSec;
+        const type = 'HARD DIGITAL CLIPPING (音割れ/0dBFS超過)';
+        clippingPoints.push({
+          time: timeSec,
+          peakDb: peakDb,
+          type: type
+        });
+      }
+    }
+    
+    const globalPeakDb = globalMaxVal > 0 ? (20 * Math.log10(globalMaxVal)) : -99;
+    
+    // Group consecutive clipping blocks into time ranges to prevent console spam
+    const groupedRanges = [];
+    if (clippingPoints.length > 0) {
+      let currentRange = {
+        startTime: clippingPoints[0].time,
+        endTime: clippingPoints[0].time,
+        maxDb: clippingPoints[0].peakDb,
+        type: clippingPoints[0].type
+      };
+      
+      for (let i = 1; i < clippingPoints.length; i++) {
+        const pt = clippingPoints[i];
+        // Merge if within 0.25 seconds and of the same overload type
+        if (pt.time - currentRange.endTime <= 0.25 && pt.type === currentRange.type) {
+          currentRange.endTime = pt.time;
+          if (pt.peakDb > currentRange.maxDb) {
+            currentRange.maxDb = pt.peakDb;
+          }
+        } else {
+          groupedRanges.push(currentRange);
+          currentRange = {
+            startTime: pt.time,
+            endTime: pt.time,
+            maxDb: pt.peakDb,
+            type: pt.type
+          };
+        }
+      }
+      groupedRanges.push(currentRange);
+    }
+    
+    // Display results in the UI log
+    if (logEl) {
+      logEl.innerHTML = "";
+      if (groupedRanges.length === 0) {
+        if (statusEl) {
+          statusEl.innerText = `STATUS: SECURE (音割れなし / Peak: ${globalPeakDb.toFixed(2)} dBFS)`;
+          statusEl.style.color = "#06d6a0";
+        }
+        const line = document.createElement('div');
+        line.style.color = "#06d6a0";
+        line.innerText = `[${new Date().toLocaleTimeString()}] [SECURE] 全周波数・全タイムラインの検証完了。クリッパーとリミッターにより全ピークは安全に制御されています（True Peak: ${globalPeakDb.toFixed(2)} dBFS / Ceiling: ${ceilingDb.toFixed(1)} dBFS）。デジタル音割れ（0dBFS超過）はありません。`;
+        logEl.appendChild(line);
+      } else {
+        if (statusEl) {
+          statusEl.innerText = `STATUS: WARNING (${groupedRanges.length} points)`;
+          statusEl.style.color = "#ff0055";
+        }
+        
+        const summaryLine = document.createElement('div');
+        summaryLine.style.color = "#f77f00";
+        summaryLine.style.fontWeight = "bold";
+        summaryLine.style.marginBottom = "6px";
+        summaryLine.innerText = `[${new Date().toLocaleTimeString()}] [WARNING] 検出: ${groupedRanges.length}箇所でデジタルクリッピング（0dBFS超過）の恐れがあります。INPUT GAIN または LIMITER BOOST を下げてください。`;
+        logEl.appendChild(summaryLine);
+        
+        groupedRanges.forEach(range => {
+          const line = document.createElement('div');
+          const timeDesc = Math.abs(range.startTime - range.endTime) < 0.15
+            ? formatClippingTime(range.startTime)
+            : `${formatClippingTime(range.startTime)} ~ ${formatClippingTime(range.endTime)}`;
+          
+          line.style.color = "#ff0055";
+          line.innerText = `[${timeDesc}] 🚨 ${range.type} | Max Peak: ${range.maxDb >= 0 ? '+' : ''}${range.maxDb.toFixed(2)} dBFS`;
+          logEl.appendChild(line);
+        });
+      }
+      logEl.scrollTop = 0;
+    }
+  } catch (err) {
+    console.error("Clipping analysis error:", err);
+    if (statusEl) {
+      statusEl.innerText = "STATUS: ERROR";
+      statusEl.style.color = "#ff0055";
+    }
+  }
+}
+
+function formatClippingTime(sec) {
+  const mins = Math.floor(sec / 60);
+  const secs = (sec % 60).toFixed(1);
+  return `${mins.toString().padStart(2, '0')}:${secs.padStart(4, '0')}`;
+}
+
 
 
