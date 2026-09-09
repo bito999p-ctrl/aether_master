@@ -283,14 +283,14 @@ export const GENRE_PRESETS = {
     stereoWidth: 0.92, clipperDrive: 1.0, limiterBoost: 2.8, sideHighPassFreq: 110
   },
   hardcore: {
-    satEnabled: true, satType: 'hardcore', satDrive: 28, satMix: 22, satLpfFreq: 16000,
+    satEnabled: true, satType: 'hardcore', satDrive: 22, satMix: 16, satLpfFreq: 12000,
     eqLowGain: 1.5, eqLowFreq: 80, eqLowQ: 0.55,
     eqLowMidGain: -0.8, eqLowMidFreq: 200, eqLowMidQ: 0.55,
     eqMidGain: -1.2, eqMidFreq: 800, eqMidQ: 0.70,
     eqMidHighGain: 0.0, eqMidHighFreq: 4500, eqMidHighQ: 0.70,
     eqHighGain: -0.3, eqHighFreq: 12000, eqHighQ: 0.50,
     compEnabled: true, compThreshold: -8.5, compRatio: 1.45, compAttack: 0.015, compRelease: 0.10,
-    stereoWidth: 1.38, clipperDrive: 4.0, limiterBoost: 4.2, sideHighPassFreq: 150
+    stereoWidth: 1.30, clipperDrive: 3.2, limiterBoost: 4.2, sideHighPassFreq: 150
   },
   ambient: {
     satEnabled: true, satType: 'tube', satDrive: 8, satMix: 6, satLpfFreq: 12000,
@@ -432,13 +432,12 @@ function generateSaturatorCurve(type, drive) {
       curve[i] = Math.tanh(k * x) / Math.tanh(k);
     }
   } else if (type === 'hardcore') {
-    // Hard clipping / Overdrive
-    const k = 1.0 + (drive / 100) * 14.0; // gain factor
+    // Aggressive Solid-State Console Drive (Punchy odd harmonics with smooth analog saturation, zero digital hard clamp)
+    const k = 0.8 + (drive / 100) * 4.5; // range 0.8 to 5.3
     for (let i = 0; i < n_samples; ++i) {
       const x = (i * 2) / n_samples - 1;
-      const val = x * k;
-      // Hard clamp with soft knee transition
-      curve[i] = Math.max(-0.82, Math.min(0.82, val));
+      // Symmetric BJT solid-state transfer curve: smooth saturation without flat square-wave fuzz
+      curve[i] = Math.tanh(k * x) / Math.tanh(k);
     }
   } else {
     // Linear (Bypass)
@@ -2596,7 +2595,7 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     edm: -11.5,      // EDM: クラブ向け最大音圧 (-11.5 dB)
     hiphop: -12.5,
     lofi: -15.5,
-    hardcore: -10.5, // Hardcore: 限界の押し込み (-10.5 dB)
+    hardcore: -11.2, // Hardcore: 限界の押し込み (-11.2 dB)
     ambient: -17.5,
     podcast: -15.0,
     classic: -19.5,
@@ -2612,7 +2611,7 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   // クレストファクター（ダイナミックレンジの広さ）に応じたコンプレッションと音圧補正
   const genreTargetCrest = {
     auto: 10.5, pops: 11.0, rnb: 10.0, rock: 11.0, metal: 9.5, edm: 8.5,
-    hiphop: 9.0, lofi: 12.0, hardcore: 7.5, ambient: 13.5, podcast: 10.5,
+    hiphop: 9.0, lofi: 12.0, hardcore: 8.0, ambient: 13.5, podcast: 10.5,
     classic: 14.5, jazz: 12.5, acoustic: 13.0, custom: 10.5
   };
   const targetCrest = genreTargetCrest[genreKey] || genreTargetCrest.auto;
