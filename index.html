@@ -631,6 +631,16 @@
             </select>
           </div>
         </div>
+        <div class="control-group" style="flex: 1; min-width: 180px;">
+          <label for="export-sample-rate">SAMPLE RATE <span class="help-icon" data-tooltip="出力サンプリングレートです。配信やCD標準の「44.1 kHz」や、元音源そのままの「ORIGINAL」、動画標準の「48.0 kHz」を選択できます。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <div class="select-wrapper">
+            <select id="export-sample-rate">
+              <option value="44100" selected>44.1 kHz (CD / Standard)</option>
+              <option value="original">ORIGINAL (Source Sample Rate)</option>
+              <option value="48000">48.0 kHz (Video / Hi-Res)</option>
+            </select>
+          </div>
+        </div>
         <div class="export-actions" style="flex: 2; min-width: 250px;">
           <button id="btn-export" class="action-btn export-btn" disabled>
             <i class="fa-solid fa-circle-down"></i> RENDER & DOWNLOAD MASTERED AUDIO

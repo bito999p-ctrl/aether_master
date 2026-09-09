@@ -2927,6 +2927,17 @@ async function renderMasteredTrack() {
   if (!audioBuffer) return;
   
   const format = document.getElementById('export-format').value;
+  const sampleRateSelect = document.getElementById('export-sample-rate');
+  const sampleRateSetting = sampleRateSelect ? sampleRateSelect.value : '44100';
+  
+  let targetSampleRate = audioBuffer.sampleRate;
+  if (sampleRateSetting === '44100' || format.includes('44100')) {
+    targetSampleRate = 44100;
+  } else if (sampleRateSetting === '48000' || format.includes('48000')) {
+    targetSampleRate = 48000;
+  } else if (sampleRateSetting === 'original') {
+    targetSampleRate = audioBuffer.sampleRate;
+  }
   
   // Show UI progress
   const exportBtn = document.getElementById('btn-export');
@@ -2939,12 +2950,12 @@ async function renderMasteredTrack() {
   progressFill.style.width = '0%';
   progressPercent.innerText = '0%';
 
-  const sampleRate = audioBuffer.sampleRate;
   const numChannels = audioBuffer.numberOfChannels;
   const duration = audioBuffer.duration;
+  const totalRenderSamples = Math.ceil(duration * targetSampleRate);
   
-  // Create offline context matching the source file
-  const offlineCtx = new OfflineAudioContext(numChannels, sampleRate * duration, sampleRate);
+  // Create offline context matching target sample rate
+  const offlineCtx = new OfflineAudioContext(numChannels, totalRenderSamples, targetSampleRate);
   
   // Create offline buffer source
   const offlineSource = offlineCtx.createBufferSource();
@@ -2987,13 +2998,13 @@ async function renderMasteredTrack() {
         fileBlob = bufferToWav(renderedBuffer);
         fileExtension = 'wav';
       } else {
-        const bitrate = format === 'mp3-320' ? 320 : 192;
-        logToUI(`Encoding to MP3 (${bitrate} kbps)...`, "info");
+        const bitrate = format.includes('320') ? 320 : 192;
+        logToUI(`Encoding to MP3 (${bitrate} kbps, ${renderedBuffer.sampleRate} Hz)...`, "info");
         fileBlob = bufferToMp3(renderedBuffer, bitrate);
         fileExtension = 'mp3';
       }
     } else {
-      logToUI("Encoding to WAV (16-bit PCM)...", "info");
+      logToUI(`Encoding to WAV (16-bit PCM, ${renderedBuffer.sampleRate} Hz)...`, "info");
       fileBlob = bufferToWav(renderedBuffer);
       fileExtension = 'wav';
     }
