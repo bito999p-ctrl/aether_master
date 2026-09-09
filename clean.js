@@ -521,7 +521,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Rumble Filter (HPF)
   const rumbleFilter = context.createBiquadFilter();
   rumbleFilter.type = 'highpass';
-  rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 90.0 : 18.0, context.currentTime); // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
+  rumbleFilter.frequency.setValueAtTime(parameters.rumbleCutEnabled ? 32.0 : 18.0, context.currentTime); // 32Hz mastering HPF when enabled, 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
   rumbleFilter.Q.setValueAtTime(0.707, context.currentTime);
 
   // Dynamic Hiss Filter (VCF High Shelf - Lower bound)
@@ -1803,7 +1803,7 @@ function updateNoiseCutNodes() {
   invalidatePeakCache();
   if (activeNodes.rumbleFilter && activeNodes.hissFilter && activeNodes.hissAirFilter &&
       activeNodes.hissEnvelopeGain && activeNodes.hissAirEnvelopeGain) {
-    const targetRumbleFreq = params.rumbleCutEnabled ? 90.0 : 18.0; // 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
+    const targetRumbleFreq = params.rumbleCutEnabled ? 32.0 : 18.0; // 32Hz mastering HPF when enabled, 18Hz subsonic filter when disabled, protecting deep sub-bass while removing DC offset/infrasound mud.
     activeNodes.rumbleFilter.frequency.setTargetAtTime(targetRumbleFreq, audioContext.currentTime, 0.02);
     
     const hissAmount = params.hissReductionAmount || 0;
@@ -2252,8 +2252,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     }
   }
 
-  // Hiss estimation (amplitude average between 6kHz and 15kHz in the quietest block)
-  const binHissStart = Math.floor((6000 * fftSize) / sampleRate);
+  // Hiss estimation (amplitude average between 8kHz and 15kHz in the quietest block)
+  const binHissStart = Math.floor((8000 * fftSize) / sampleRate);
   const binHissEnd = Math.floor((15000 * fftSize) / sampleRate);
   let hissSum = 0;
   for (let j = binHissStart; j <= binHissEnd; j++) {
@@ -2262,9 +2262,10 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const hissNoiseFloor = hissSum / (binHissEnd - binHissStart + 1);
   const hissNoiseFloorDb = 20 * Math.log10(hissNoiseFloor + 1e-6) + 26.0; // Added FFT bin bandwidth gain correction factor (+26dB) to align bin average with broadband level
 
-  // Rumble estimation (amplitude average between 20Hz and 60Hz in the quietest block)
-  const binRumbleStart = Math.floor((20 * fftSize) / sampleRate);
-  const binRumbleEnd = Math.floor((60 * fftSize) / sampleRate);
+  // Rumble estimation (amplitude average between 15Hz and 35Hz in the quietest block)
+  // マスタリング音響工学基準: 50Hzのキック帯域を巻き込まず、真の超低周波インフラサウンド（15Hz〜35Hz）のみをスキャン
+  const binRumbleStart = Math.max(1, Math.floor((15 * fftSize) / sampleRate));
+  const binRumbleEnd = Math.floor((35 * fftSize) / sampleRate);
   let rumbleSum = 0;
   for (let j = binRumbleStart; j <= binRumbleEnd; j++) {
     rumbleSum += sliceSpectrums[minRmsIdx][j];
@@ -2272,26 +2273,18 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const rumbleNoiseFloor = rumbleSum / (binRumbleEnd - binRumbleStart + 1);
   const rumbleNoiseFloorDb = 20 * Math.log10(rumbleNoiseFloor + 1e-6) + 26.0; // Added FFT bin bandwidth gain correction factor (+26dB) to align bin average with broadband level
 
-  // Suggested values (ノイズ検出時にのみONにし、ノイズ未検出時は完全にOFFのままにする仕様へ復元)
+  // Suggested values:
+  // 1. RUMBLE CUT: 真の超低周波ノイズ（空調・マイク吹かれ・DCオフセット）が -58dBFS を超える場合のみ 32Hz HPF を発動
   let sugRumbleCut = false;
-  // しきい値を-58dBから-65dBに引き下げ、微小な超低音ノイズに対しても過敏に反応してカットできるように感度を向上
-  if (rumbleNoiseFloorDb > -65.0) {
+  if (rumbleNoiseFloorDb > -58.0 && minRmsVal < 0.08) {
     sugRumbleCut = true;
   }
 
+  // 2. HISS REDUCER: モニター環境で知覚可能な高域サー音（-72dBFS超過）が存在する場合のみ発動（アコースティック等の通常余韻を誤検知しない設計）
   let sugHissAmount = 0;
-  // しきい値を-78dBから-83dBに引き下げ（ヘッドホン等で聞こえる微小なアナログサー音やヒスノイズまで検知可能に）
-  if (hissNoiseFloorDb > -83.0) {
-    // ノイズフロアに応じて20%〜98%の間で段階的に適用度を算出するスケール（感度係数を8.0に高め、ノイズ検知力を向上）
-    const rawHiss = Math.round(Math.max(0, Math.min(98, 20 + (hissNoiseFloorDb + 83.0) * 8.0)));
-    
-    // 静寂区間（最も静かな1秒間）のRMS音量が比較的高い場合、それはヒスではなく楽曲の音である可能性が高いため
-    // LPFの過剰カットを防ぐため、Hiss Reducerの適用度を少し抑える安全スケーラー（最小減衰幅を0.70に緩和して感度を維持）
-    let quietnessScale = 1.0;
-    if (minRmsVal > 0.05) {
-      quietnessScale = Math.max(0.70, 1.0 - (minRmsVal - 0.05) / 0.15);
-    }
-    sugHissAmount = Math.round(rawHiss * quietnessScale);
+  if (hissNoiseFloorDb > -72.0 && minRmsVal < 0.05) {
+    const excessDb = hissNoiseFloorDb + 72.0; // 例: -66dB -> +6dB
+    sugHissAmount = Math.round(Math.min(50, 15 + excessDb * 3.5));
   }
 
   // 歌の音域のカーン域共鳴音（1000Hz-4000Hz）および高域の鋭いピーク（4000Hz-12000Hz）をマルチスキャンして自動補正ノッチを構築
@@ -2352,10 +2345,10 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       filteredPeaks.push(peak);
     }
   }
+  // 3. DE-ESSER: 音声工学・音響医学基準のボーカル・シビランス帯域 (4,500Hz 〜 8,500Hz) をスキャン
   let sibilanceDynamicFreq = 0;
-  
-  const sibilanceMinBin = Math.floor((8000 * fftSize) / sampleRate);
-  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((11000 * fftSize) / sampleRate));
+  const sibilanceMinBin = Math.floor((4500 * fftSize) / sampleRate);
+  const sibilanceMaxBin = Math.min(fftSize / 2 - 1, Math.floor((8500 * fftSize) / sampleRate));
   const rawSibilancePeaks = [];
   
   for (let j = sibilanceMinBin; j <= sibilanceMaxBin; j++) {
@@ -2368,7 +2361,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       ];
       const localFloor = localBins.reduce((sum, v) => sum + v, 0) / localBins.length;
       const ratio = val / (localFloor + 1e-9);
-      if (ratio > 1.15) {
+      // シビランス検知閾値: 周囲の倍音床面に対して +1.5dB (ratio > 1.18) 以上の鋭い突起
+      if (ratio > 1.18) {
         rawSibilancePeaks.push({ freq: peakFreq, score: ratio });
       }
     }
@@ -2810,30 +2804,23 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   finalLimiterBoost = Math.round(finalLimiterBoost * 10) / 10;
 
   let suggestedDeesserAmount = 0; // デフォルトは 0 (無効)
+  let deesserStartFreq = 6500;
+  let deesserEndFreq = 8500;
+
   if (sibilanceDynamicFreq > 0 && rawSibilancePeaks.length > 0) {
-    const maxScore = rawSibilancePeaks[0].score;
-    // 共鳴ピークが検出された場合のみアクティブにし、スコアに応じて35%〜80%の範囲で適用
-    suggestedDeesserAmount = Math.round(Math.max(35, Math.min(80, 35 + (maxScore - 1.15) * 60)));
+    const maxScore = rawSibilancePeaks[0].score; // e.g. 1.18 to 1.60
+    const prominenceDb = 20 * Math.log10(maxScore); // e.g. 1.5dB to 4.0dB
+    // 音響工学的リダクション量計算: 突出エネルギーに応じて 20%〜60% (-3.0dB〜-9.0dBの動的減衰) を算出
+    suggestedDeesserAmount = Math.round(Math.max(20, Math.min(60, 20 + (prominenceDb - 1.5) * 16.0)));
+
+    // 検出されたシビランス周波数を中心に、Start/Endを帯域幅約 1,800Hz で最適アライメント
+    deesserStartFreq = Math.max(4000, Math.round((sibilanceDynamicFreq - 900) / 50) * 50);
+    deesserEndFreq = Math.min(10500, Math.max(deesserStartFreq + 500, Math.round((sibilanceDynamicFreq + 900) / 50) * 50));
   }
 
-  // ノイズクリーナー（Hiss Reducer ＆ De-esser）のジャンル別安全保護リミッター
-  let finalHissAmount = sugHissAmount;
-  let finalDeesserAmount = suggestedDeesserAmount;
-
-  if (detectedGenre === 'edm' || detectedGenre === 'hiphop') {
-    finalHissAmount = Math.min(25, finalHissAmount); // 最大25%に拡張（電子音楽の抜けを保護しつつノイズを吸い取る）
-    finalDeesserAmount = Math.min(25, finalDeesserAmount); // 最大25%に拡張
-  } else if (detectedGenre === 'rock' || detectedGenre === 'metal') {
-    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
-    finalDeesserAmount = Math.min(35, finalDeesserAmount); // 最大35%に拡張
-  } else if (detectedGenre === 'jazz' || detectedGenre === 'acoustic' || detectedGenre === 'classic') {
-    finalHissAmount = Math.min(35, finalHissAmount); // 最大35%に拡張
-    finalDeesserAmount = Math.min(30, finalDeesserAmount); // 最大30%に拡張
-  } else {
-    // pops, lofi 等
-    finalHissAmount = Math.min(60, finalHissAmount); // 最大60%に拡張（高域ヒスを最大-4.8dBまで低減）
-    finalDeesserAmount = Math.min(70, finalDeesserAmount); // 最大70%に拡張（サ行トゲを最大-3.1dBまで低減）
-  }
+  // アカデミック物理計算に基づくノイズクリーナー最終適用値（固定キャップ・経験則を全廃）
+  const finalHissAmount = sugHissAmount;
+  const finalDeesserAmount = suggestedDeesserAmount;
 
   // AI Dynamic Q-value calculation based on the correction gains
   let finalEqLowQ = basePreset.eqLowQ || 0.70;
@@ -2908,9 +2895,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       hissReductionFreq: 9000,
       sibilanceDynamicFreq: sibilanceDynamicFreq,
       deesserAmount: finalDeesserAmount,
-      deesserMaxCut: -15.0,
-      deesserFreq: sibilanceDynamicFreq > 0 ? Math.min(10000, sibilanceDynamicFreq) : 7500,
-      deesserMaxFreq: sibilanceDynamicFreq > 0 ? Math.min(16000, Math.max(9500, sibilanceDynamicFreq + 1500)) : 9500
+      deesserFreq: deesserStartFreq,
+      deesserMaxFreq: deesserEndFreq
     },
     // 中間解析値のデバッグ用出力
     crestFactorDb: crestFactorDb,
@@ -2987,7 +2973,8 @@ function loadGenrePreset(genreKey) {
     params.sibilanceDynamicFreq = src.sibilanceDynamicFreq !== undefined ? src.sibilanceDynamicFreq : 0;
     params.deesserAmount = src.deesserAmount !== undefined ? src.deesserAmount : 0;
     params.deesserMaxCut = src.deesserMaxCut !== undefined ? src.deesserMaxCut : -15.0;
-    params.deesserFreq = src.deesserFreq || src.sibilanceDynamicFreq || 7500;
+    params.deesserFreq = src.deesserFreq || 6500;
+    params.deesserMaxFreq = src.deesserMaxFreq || 8500;
     
     // Set UI badge to show AUTO
     const genreBadge = document.getElementById('ai-detected-genre-badge');
@@ -3008,8 +2995,8 @@ function loadGenrePreset(genreKey) {
       params.sibilanceDynamicFreq = aiSuggestedParams.sibilanceDynamicFreq || 0;
       params.deesserAmount = aiSuggestedParams.deesserAmount || 0;
       params.deesserMaxCut = aiSuggestedParams.deesserMaxCut !== undefined ? aiSuggestedParams.deesserMaxCut : -15.0;
-      params.deesserFreq = aiSuggestedParams.deesserFreq || aiSuggestedParams.sibilanceDynamicFreq || 7500;
-      params.deesserMaxFreq = aiSuggestedParams.deesserMaxFreq || 9500;
+      params.deesserFreq = aiSuggestedParams.deesserFreq || 6500;
+      params.deesserMaxFreq = aiSuggestedParams.deesserMaxFreq || 8500;
     } else {
       params.rumbleCutEnabled = false;
       params.hissReductionAmount = 0;
@@ -3019,8 +3006,8 @@ function loadGenrePreset(genreKey) {
       params.sibilanceDynamicFreq = 0;
       params.deesserAmount = 0;
       params.deesserMaxCut = -15.0;
-      params.deesserFreq = 7500;
-      params.deesserMaxFreq = 9500;
+      params.deesserFreq = 6500;
+      params.deesserMaxFreq = 8500;
     }
     
     // Set UI badge back to the selected genre name
@@ -3509,7 +3496,7 @@ function updateAiReportCard() {
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 2px; padding: 2px 4px;">
         <span>NOISE CLEANER:</span>
-        <span style="color: #00f2fe; font-weight: 600;">Rumble: ${params.rumbleCutEnabled ? 'CUT' : 'OFF'} / Hiss: ${params.hissReductionAmount > 0 ? params.hissReductionAmount + '%' : 'OFF'}</span>
+        <span style="color: #00f2fe; font-weight: 600;">Rumble: ${params.rumbleCutEnabled ? '32Hz CUT' : 'OFF'} / Hiss: ${params.hissReductionAmount > 0 ? params.hissReductionAmount + '%' : 'OFF'} / De-Ess: ${params.deesserAmount > 0 ? params.deesserAmount + '%' : 'OFF'}</span>
       </div>
       <div style="text-align: right; font-size: 0.58rem; color: var(--text-muted); margin-top: -2px; padding: 0 4px 4px 0;">
         (Base: ${lastAnalysisResult.baseLoudnessDesc})
