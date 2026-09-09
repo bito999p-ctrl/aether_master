@@ -525,9 +525,12 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   rumbleFilter.Q.setValueAtTime(0.707, context.currentTime);
 
   // Dynamic Hiss Filter (VCF High Shelf - Lower bound)
+  const safeHissStart = Math.min(parameters.hissReductionFreq || 9000.0, (parameters.hissReductionMaxFreq || 16000.0) - 1000.0);
+  const safeHissEnd = Math.max(parameters.hissReductionMaxFreq || 16000.0, safeHissStart + 1000.0);
+
   const hissFilter = context.createBiquadFilter();
   hissFilter.type = 'highshelf';
-  hissFilter.frequency.setValueAtTime(parameters.hissReductionFreq || 9000.0, context.currentTime); // Dynamic hiss cutoff frequency
+  hissFilter.frequency.setValueAtTime(safeHissStart, context.currentTime); // Dynamic hiss cutoff frequency
   hissFilter.Q.setValueAtTime(0.707, context.currentTime);
   
   const hissAmount = parameters.hissReductionAmount || 0;
@@ -539,7 +542,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dynamic Hiss Air Filter (VCF High Shelf - Upper bound to preserve air band)
   const hissAirFilter = context.createBiquadFilter();
   hissAirFilter.type = 'highshelf';
-  hissAirFilter.frequency.setValueAtTime(parameters.hissReductionMaxFreq || 16000.0, context.currentTime); // Dynamic hiss max cutoff frequency
+  hissAirFilter.frequency.setValueAtTime(safeHissEnd, context.currentTime); // Dynamic hiss max cutoff frequency
   hissAirFilter.Q.setValueAtTime(0.707, context.currentTime);
   // 相殺ゲインはプラスの値。ベースゲインの逆符号を設定することで上限周波数以上の帯域をフラットに戻す
   hissAirFilter.gain.setValueAtTime(-baseGain, context.currentTime);
@@ -672,11 +675,10 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   // Dedicated Dynamic Sibilance Notch (9000Hz De-esser)
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
-  const fStart = parameters.deesserFreq || parameters.sibilanceDynamicFreq || 7500;
-  const fEnd = parameters.deesserMaxFreq || 9500;
-  const fEndValid = fEnd > fStart ? fEnd : fStart + 1000;
-  const deesserCenterFreq = Math.sqrt(fStart * fEndValid);
-  const deesserQ = deesserCenterFreq / (fEndValid - fStart);
+  const safeDeesserStart = Math.min(parameters.deesserFreq || parameters.sibilanceDynamicFreq || 7500, (parameters.deesserMaxFreq || 9500) - 500);
+  const safeDeesserEnd = Math.max(parameters.deesserMaxFreq || 9500, safeDeesserStart + 500);
+  const deesserCenterFreq = Math.sqrt(safeDeesserStart * safeDeesserEnd);
+  const deesserQ = deesserCenterFreq / (safeDeesserEnd - safeDeesserStart);
   sibilanceNotch.frequency.setValueAtTime(deesserCenterFreq, context.currentTime);
   sibilanceNotch.Q.setValueAtTime(deesserQ, context.currentTime); // dynamically calculated Q based on frequency band span
   sibilanceNotch.gain.setValueAtTime(0.0, context.currentTime); // default neutral
@@ -1808,12 +1810,14 @@ function updateNoiseCutNodes() {
     const maxCut = params.hissReductionMaxCut !== undefined ? params.hissReductionMaxCut : -16.0;
     // ベースゲインはマイナスの値（減衰）
     const baseGain = maxCut * (hissAmount / 100.0);
+    const safeHissStart = Math.min(params.hissReductionFreq || 9000.0, (params.hissReductionMaxFreq || 16000.0) - 1000.0);
+    const safeHissEnd = Math.max(params.hissReductionMaxFreq || 16000.0, safeHissStart + 1000.0);
     activeNodes.hissFilter.gain.setTargetAtTime(baseGain, audioContext.currentTime, 0.02);
-    activeNodes.hissFilter.frequency.setTargetAtTime(params.hissReductionFreq || 9000.0, audioContext.currentTime, 0.02);
+    activeNodes.hissFilter.frequency.setTargetAtTime(safeHissStart, audioContext.currentTime, 0.02);
     
     // Hiss Air Filter (相殺ゲインはプラスの値、ベースゲインの逆符号)
     activeNodes.hissAirFilter.gain.setTargetAtTime(-baseGain, audioContext.currentTime, 0.02);
-    activeNodes.hissAirFilter.frequency.setTargetAtTime(params.hissReductionMaxFreq || 16000.0, audioContext.currentTime, 0.02);
+    activeNodes.hissAirFilter.frequency.setTargetAtTime(safeHissEnd, audioContext.currentTime, 0.02);
     
     // 楽曲演奏時には減衰量を打ち消してフラットにするため、正のゲインを封入
     const maxEnvGain = -baseGain;
@@ -1828,11 +1832,10 @@ function updateNoiseCutNodes() {
       // シャリシャリ（サ行等のシビランス）を強力に吸い取るため、最大減衰量を調整可能にして除去力を向上
       const dynamicCut = deesserMax * (amount / 100.0);
       
-      const fStart = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
-      const fEnd = params.deesserMaxFreq || 9500;
-      const fEndValid = fEnd > fStart ? fEnd : fStart + 1000;
-      const deesserCenterFreq = Math.sqrt(fStart * fEndValid);
-      const deesserQ = deesserCenterFreq / (fEndValid - fStart);
+      const safeDeesserStart = Math.min(params.deesserFreq || params.sibilanceDynamicFreq || 7500, (params.deesserMaxFreq || 9500) - 500);
+      const safeDeesserEnd = Math.max(params.deesserMaxFreq || 9500, safeDeesserStart + 500);
+      const deesserCenterFreq = Math.sqrt(safeDeesserStart * safeDeesserEnd);
+      const deesserQ = deesserCenterFreq / (safeDeesserEnd - safeDeesserStart);
       
       activeNodes.sibilanceNotch.frequency.setTargetAtTime(deesserCenterFreq, audioContext.currentTime, 0.02);
       activeNodes.sibilanceNotch.Q.setTargetAtTime(deesserQ, audioContext.currentTime, 0.02);
@@ -2805,7 +2808,8 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
       sibilanceDynamicFreq: sibilanceDynamicFreq,
       deesserAmount: finalDeesserAmount,
       deesserMaxCut: -15.0,
-      deesserFreq: sibilanceDynamicFreq > 0 ? sibilanceDynamicFreq : 7500
+      deesserFreq: sibilanceDynamicFreq > 0 ? Math.min(10000, sibilanceDynamicFreq) : 7500,
+      deesserMaxFreq: sibilanceDynamicFreq > 0 ? Math.min(16000, Math.max(9500, sibilanceDynamicFreq + 1500)) : 9500
     },
     // 中間解析値のデバッグ用出力
     crestFactorDb: crestFactorDb,
@@ -3272,14 +3276,21 @@ function updateGuiControls() {
     document.getElementById('hiss-limit-val').innerText = `${lVal.toFixed(1)} dB`;
   }
   const hissFreqSliderEl = document.getElementById('hiss-freq-slider');
-  if (hissFreqSliderEl) {
-    hissFreqSliderEl.value = params.hissReductionFreq || 9000;
-    document.getElementById('hiss-freq-val').innerText = `${(params.hissReductionFreq || 9000).toLocaleString()} Hz`;
-  }
   const hissMaxFreqSliderEl = document.getElementById('hiss-max-freq-slider');
+  let hStart = params.hissReductionFreq || 9000;
+  let hEnd = params.hissReductionMaxFreq || 16000;
+  if (hEnd <= hStart + 1000) {
+    hEnd = Math.min(20000, hStart + 1000);
+    params.hissReductionMaxFreq = hEnd;
+  }
+  params.hissReductionFreq = hStart;
+  if (hissFreqSliderEl) {
+    hissFreqSliderEl.value = hStart;
+    document.getElementById('hiss-freq-val').innerText = `${hStart.toLocaleString()} Hz`;
+  }
   if (hissMaxFreqSliderEl) {
-    hissMaxFreqSliderEl.value = params.hissReductionMaxFreq || 16000;
-    document.getElementById('hiss-max-freq-val').innerText = `${(params.hissReductionMaxFreq || 16000).toLocaleString()} Hz`;
+    hissMaxFreqSliderEl.value = hEnd;
+    document.getElementById('hiss-max-freq-val').innerText = `${hEnd.toLocaleString()} Hz`;
   }
   const deesserSliderEl = document.getElementById('deesser-slider');
   if (deesserSliderEl) {
@@ -3296,14 +3307,21 @@ function updateGuiControls() {
     document.getElementById('deesser-limit-val').innerText = `${lVal.toFixed(1)} dB`;
   }
   const deesserFreqSliderEl = document.getElementById('deesser-freq-slider');
-  if (deesserFreqSliderEl) {
-    deesserFreqSliderEl.value = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
-    document.getElementById('deesser-freq-val').innerText = `${(params.deesserFreq || params.sibilanceDynamicFreq || 7500).toLocaleString()} Hz`;
-  }
   const deesserMaxFreqSliderEl = document.getElementById('deesser-max-freq-slider');
+  let dStart = params.deesserFreq || params.sibilanceDynamicFreq || 7500;
+  let dEnd = params.deesserMaxFreq || 9500;
+  if (dEnd <= dStart + 500) {
+    dEnd = Math.min(16000, dStart + 500);
+    params.deesserMaxFreq = dEnd;
+  }
+  params.deesserFreq = dStart;
+  if (deesserFreqSliderEl) {
+    deesserFreqSliderEl.value = dStart;
+    document.getElementById('deesser-freq-val').innerText = `${dStart.toLocaleString()} Hz`;
+  }
   if (deesserMaxFreqSliderEl) {
-    deesserMaxFreqSliderEl.value = params.deesserMaxFreq || 9500;
-    document.getElementById('deesser-max-freq-val').innerText = `${(params.deesserMaxFreq || 9500).toLocaleString()} Hz`;
+    deesserMaxFreqSliderEl.value = dEnd;
+    document.getElementById('deesser-max-freq-val').innerText = `${dEnd.toLocaleString()} Hz`;
   }
 
   // AIレポートカードのアナライザー表示と適用パラメータ一覧をリアルタイムに同期・更新
@@ -3452,15 +3470,33 @@ function registerGuiEvents() {
   });
 
   document.getElementById('hiss-freq-slider').addEventListener('input', (e) => {
-    params.hissReductionFreq = parseInt(e.target.value);
-    document.getElementById('hiss-freq-val').innerText = `${params.hissReductionFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.hissReductionFreq = val;
+    // 連動制約: Start Freq は End Freq (上限) より常に 1000Hz 以上低く保つ
+    if (params.hissReductionMaxFreq <= val + 1000) {
+      params.hissReductionMaxFreq = Math.min(20000, val + 1000);
+      const maxSlider = document.getElementById('hiss-max-freq-slider');
+      if (maxSlider) maxSlider.value = params.hissReductionMaxFreq;
+      const maxValEl = document.getElementById('hiss-max-freq-val');
+      if (maxValEl) maxValEl.innerText = `${params.hissReductionMaxFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('hiss-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
 
   document.getElementById('hiss-max-freq-slider').addEventListener('input', (e) => {
-    params.hissReductionMaxFreq = parseInt(e.target.value);
-    document.getElementById('hiss-max-freq-val').innerText = `${params.hissReductionMaxFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.hissReductionMaxFreq = val;
+    // 連動制約: End Freq (上限) は Start Freq より常に 1000Hz 以上高く保つ
+    if (params.hissReductionFreq >= val - 1000) {
+      params.hissReductionFreq = Math.max(4000, val - 1000);
+      const minSlider = document.getElementById('hiss-freq-slider');
+      if (minSlider) minSlider.value = params.hissReductionFreq;
+      const minValEl = document.getElementById('hiss-freq-val');
+      if (minValEl) minValEl.innerText = `${params.hissReductionFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('hiss-max-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
@@ -3473,15 +3509,33 @@ function registerGuiEvents() {
   });
 
   document.getElementById('deesser-freq-slider').addEventListener('input', (e) => {
-    params.deesserFreq = parseInt(e.target.value);
-    document.getElementById('deesser-freq-val').innerText = `${params.deesserFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.deesserFreq = val;
+    // 連動制約: Start Freq は End Freq (上限) より常に 500Hz 以上低く保つ
+    if (params.deesserMaxFreq <= val + 500) {
+      params.deesserMaxFreq = Math.min(16000, val + 500);
+      const maxSlider = document.getElementById('deesser-max-freq-slider');
+      if (maxSlider) maxSlider.value = params.deesserMaxFreq;
+      const maxValEl = document.getElementById('deesser-max-freq-val');
+      if (maxValEl) maxValEl.innerText = `${params.deesserMaxFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('deesser-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
 
   document.getElementById('deesser-max-freq-slider').addEventListener('input', (e) => {
-    params.deesserMaxFreq = parseInt(e.target.value);
-    document.getElementById('deesser-max-freq-val').innerText = `${params.deesserMaxFreq.toLocaleString()} Hz`;
+    let val = parseInt(e.target.value);
+    params.deesserMaxFreq = val;
+    // 連動制約: End Freq (上限) は Start Freq より常に 500Hz 以上高く保つ
+    if (params.deesserFreq >= val - 500) {
+      params.deesserFreq = Math.max(4000, val - 500);
+      const minSlider = document.getElementById('deesser-freq-slider');
+      if (minSlider) minSlider.value = params.deesserFreq;
+      const minValEl = document.getElementById('deesser-freq-val');
+      if (minValEl) minValEl.innerText = `${params.deesserFreq.toLocaleString()} Hz`;
+    }
+    document.getElementById('deesser-max-freq-val').innerText = `${val.toLocaleString()} Hz`;
     selectCustomPreset();
     updateNoiseCutNodes();
   });
