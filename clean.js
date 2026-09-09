@@ -461,8 +461,8 @@ function generateSoftClipCurve() {
     } else {
       const sign = Math.sign(x);
       const u = (absX - threshold) / (1.0 - threshold);
-      // C2 continuous soft knee with horizontal tangent at 1.0 (zero slope, zero crackle)
-      const y = threshold + (1.0 - threshold) * (u - u * u + (u * u * u) / 3.0);
+      // C1 continuous Hermite cubic saturation knee: seamless slope match at threshold, horizontal tangent reaching exactly 1.0 at 1.0
+      const y = threshold + (1.0 - threshold) * (u + u * u - u * u * u);
       curve[i] = sign * y;
     }
   }
@@ -500,8 +500,8 @@ function generateMasteringClipCurve(driveDb = 0.0) {
     } else {
       const sign = Math.sign(x);
       const u = (absX - T) / (1.0 - T);
-      // C2 continuous smooth saturation: slope reaches exactly 0.0 at x = 1.0 (no hard clamp kink, no crackle)
-      const y = T + (1.0 - T) * (u - u * u + (u * u * u) / 3.0);
+      // C1 continuous Hermite cubic saturation: slope reaches exactly 0.0 with smooth horizontal tangent reaching 1.0 at x = 1.0 (zero crackle, bit transparent)
+      const y = T + (1.0 - T) * (u + u * u - u * u * u);
       curve[i] = sign * y;
     }
   }
@@ -2982,8 +2982,14 @@ function loadGenrePreset(genreKey) {
       genreBadge.innerText = 'AUTO';
     }
   } else {
-    // プリセット変更時は、AIが自動適用した入力ゲインを0.0dB(ニュートラル)に戻して各プリセットの標準音量を担保します
-    params.inputGainDb = 0.0;
+    // プリセット変更時も、楽曲のヘッドルーム・ゲインステージング（-6dBFS基準）を維持してクリッピングや歪み（チリチリ音）を防止
+    if (src && src.inputGainDb !== undefined) {
+      params.inputGainDb = src.inputGainDb;
+    } else if (aiSuggestedParams !== null && aiSuggestedParams.inputGainDb !== undefined) {
+      params.inputGainDb = aiSuggestedParams.inputGainDb;
+    } else {
+      params.inputGainDb = 0.0;
+    }
     
     // 楽曲自体のノイズ状態はプリセット変更で変わらないため、AI検出済みのノイズクリーナー設定があれば継承し、なければOFFにする
     if (aiSuggestedParams !== null) {
@@ -3056,8 +3062,17 @@ function applyLoudnessTarget(targetKey) {
     const genreSelect = document.getElementById('preset-select');
     const genreKey = genreSelect ? genreSelect.value : 'auto';
     const p = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
-    params.limiterBoost = p.limiterBoost;
-    params.clipperDrive = p.clipperDrive !== undefined ? p.clipperDrive : 1.5;
+    if (audioBuffer && genreKey !== 'auto') {
+      const dynamicResult = analyzeAudioResonances(audioBuffer, genreKey);
+      params.limiterBoost = dynamicResult.suggestedParams.limiterBoost;
+      params.clipperDrive = dynamicResult.suggestedParams.clipperDrive !== undefined ? dynamicResult.suggestedParams.clipperDrive : (p.clipperDrive !== undefined ? p.clipperDrive : 1.5);
+    } else if (genreKey === 'auto' && aiSuggestedParams !== null) {
+      params.limiterBoost = aiSuggestedParams.limiterBoost;
+      params.clipperDrive = aiSuggestedParams.clipperDrive !== undefined ? aiSuggestedParams.clipperDrive : 1.5;
+    } else {
+      params.limiterBoost = p.limiterBoost;
+      params.clipperDrive = p.clipperDrive !== undefined ? p.clipperDrive : 1.5;
+    }
   } else {
     const t = LOUDNESS_TARGETS[targetKey];
     if (!t) return;
