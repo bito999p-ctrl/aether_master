@@ -63,6 +63,7 @@ let activeNodes = {
   kickPeaking: null,
   eqMid: null,
   eqHigh: null,
+  airShelf: null,
   eqCorrective1: null, // AI corrective EQ notch filter 1
   eqCorrective2: null, // AI corrective EQ notch filter 2
   eqCorrective3: null, // AI corrective EQ notch filter 3
@@ -172,8 +173,10 @@ let lastAnalysisResult = null;
 const spices = {
   airTreble: false,
   kickPunch: false,
-  stereoWider: false,
+  pultecBass: false,
   vocalPresence: false,
+  silkySmooth: false,
+  stereoWider: false,
   analogWarmth: false,
   loudnessPush: false
 };
@@ -185,16 +188,20 @@ function getCombinedParams() {
     satEnabled: params.satEnabled || spices.analogWarmth,
     satDrive: Math.max(0, Math.min(100, params.satDrive + (spices.analogWarmth ? 15 : 0))),
     satMix: Math.max(0, Math.min(100, params.satMix + (spices.analogWarmth ? 18 : 0))),
-    eqLowGain: params.eqLowGain, // No low shelf boost for kickPunch (prevents bass guitar mud)
+    eqLowGain: params.eqLowGain + (spices.pultecBass ? 1.2 : 0.0),
+    eqLowMidGain: (params.eqLowMidGain || 0.0) + (spices.pultecBass ? -1.0 : 0.0),
     kickPeakingGain: spices.kickPunch ? 3.0 : 0.0, // Dedicated narrow 55Hz kick thump peaking boost
-    eqMidGain: params.eqMidGain + (spices.vocalPresence ? 1.2 : 0.0),
-    eqHighGain: params.eqHighGain + (spices.airTreble ? 1.5 : 0.0),
+    eqMidGain: params.eqMidGain, // Keep neutral so mixes don't get honky/nasal
+    eqMidHighGain: (params.eqMidHighGain || 0.0) + (spices.vocalPresence ? 1.0 : 0.0) + (spices.silkySmooth ? -1.0 : 0.0),
+    eqHighGain: params.eqHighGain, // Keep high shelf neutral
+    airShelfGain: spices.airTreble ? 1.8 : 0.0, // Dedicated ultra-high 15kHz air shelf
     compEnabled: params.compEnabled || spices.kickPunch,
     compThreshold: params.compThreshold, // No aggressive threshold lowering to prevent pumping
     compRatio: params.compRatio,         // Keep ratio natural and transparent
     compAttack: Math.max(0.001, Math.min(0.5, params.compAttack + (spices.kickPunch ? 0.030 : 0.0))), // Let transient punch pop out
     compRelease: params.compRelease,
-    stereoWidth: Math.max(0.0, Math.min(2.0, params.stereoWidth + (spices.stereoWider ? 0.45 : 0.0))),
+    stereoWidth: Math.max(0.0, Math.min(2.0, params.stereoWidth + (spices.stereoWider ? 0.18 : 0.0))),
+    sideHighPassFreq: (params.sideHighPassFreq || 110) + (spices.stereoWider ? 30 : 0),
     clipperDrive: Math.max(0.0, Math.min(6.0, (params.clipperDrive !== undefined ? params.clipperDrive : 0.0) + (spices.loudnessPush ? 1.5 : 0.0))),
     limiterBoost: Math.max(0.0, Math.min(15.0, params.limiterBoost + (spices.loudnessPush ? 1.5 : 0.0)))
   };
@@ -672,6 +679,13 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   eqHigh.gain.setValueAtTime(parameters.eqHighGain, context.currentTime);
   eqHigh.Q.setValueAtTime(parameters.eqHighQ || 0.70, context.currentTime);
 
+  // Dedicated Ultra-High Air Shelf for Air Treble (15kHz)
+  const airShelf = context.createBiquadFilter();
+  airShelf.type = 'highshelf';
+  airShelf.frequency.setValueAtTime(15000, context.currentTime);
+  airShelf.gain.setValueAtTime(parameters.airShelfGain || 0.0, context.currentTime);
+  airShelf.Q.setValueAtTime(0.707, context.currentTime);
+
   // Dedicated Dynamic Sibilance Notch (9000Hz De-esser)
   const sibilanceNotch = context.createBiquadFilter();
   sibilanceNotch.type = 'peaking';
@@ -749,7 +763,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   kickPeaking.connect(eqMid);
   eqMid.connect(eqMidHigh);
   eqMidHigh.connect(eqHigh);
-  eqHigh.connect(sibilanceNotch);
+  eqHigh.connect(airShelf);
+  airShelf.connect(sibilanceNotch);
   sibilanceNotch.connect(eqCorrective1);
   eqCorrective1.connect(eqCorrective2);
   eqCorrective2.connect(eqCorrective3);
@@ -910,6 +925,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     eqMid,
     eqMidHigh,
     eqHigh,
+    airShelf,
     sibilanceNotch,
     sibilanceNotchDynamicGain,
     eqCorrective1,
@@ -1064,6 +1080,7 @@ function startPlayback() {
   activeNodes.eqMid = chain.eqMid;
   activeNodes.eqMidHigh = chain.eqMidHigh;
   activeNodes.eqHigh = chain.eqHigh;
+  activeNodes.airShelf = chain.airShelf;
   activeNodes.sibilanceNotch = chain.sibilanceNotch;
   activeNodes.sibilanceNotchDynamicGain = chain.sibilanceNotchDynamicGain;
   activeNodes.eqCorrective1 = chain.eqCorrective1;
@@ -1895,6 +1912,9 @@ function updateEqNodes() {
     activeNodes.eqHigh.frequency.setTargetAtTime(p.eqHighFreq, audioContext.currentTime, 0.01);
     activeNodes.eqHigh.gain.setTargetAtTime(p.eqHighGain, audioContext.currentTime, 0.01);
     activeNodes.eqHigh.Q.setTargetAtTime(p.eqHighQ || 0.70, audioContext.currentTime, 0.01);
+  }
+  if (activeNodes.airShelf) {
+    activeNodes.airShelf.gain.setTargetAtTime(p.airShelfGain || 0.0, audioContext.currentTime, 0.01);
   }
 }
 
@@ -3983,43 +4003,79 @@ function setupFileLoader() {
   });
 
   // Audio Spices Event Listeners
-  document.getElementById('spice-air-treble').addEventListener('change', (e) => {
-    spices.airTreble = e.target.checked;
-    updateEqNodes();
-    drawWaveformView();
-  });
+  const spiceAirTrebleEl = document.getElementById('spice-air-treble');
+  if (spiceAirTrebleEl) {
+    spiceAirTrebleEl.addEventListener('change', (e) => {
+      spices.airTreble = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-kick-punch').addEventListener('change', (e) => {
-    spices.kickPunch = e.target.checked;
-    updateEqNodes();
-    updateCompressorNode();
-    drawWaveformView();
-  });
+  const spiceKickPunchEl = document.getElementById('spice-kick-punch');
+  if (spiceKickPunchEl) {
+    spiceKickPunchEl.addEventListener('change', (e) => {
+      spices.kickPunch = e.target.checked;
+      updateEqNodes();
+      updateCompressorNode();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-stereo-wider').addEventListener('change', (e) => {
-    spices.stereoWider = e.target.checked;
-    updateStereoWidthNode();
-    drawWaveformView();
-  });
+  const spicePultecBassEl = document.getElementById('spice-pultec-bass');
+  if (spicePultecBassEl) {
+    spicePultecBassEl.addEventListener('change', (e) => {
+      spices.pultecBass = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-vocal-presence').addEventListener('change', (e) => {
-    spices.vocalPresence = e.target.checked;
-    updateEqNodes();
-    drawWaveformView();
-  });
+  const spiceVocalPresenceEl = document.getElementById('spice-vocal-presence');
+  if (spiceVocalPresenceEl) {
+    spiceVocalPresenceEl.addEventListener('change', (e) => {
+      spices.vocalPresence = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-analog-warmth').addEventListener('change', (e) => {
-    spices.analogWarmth = e.target.checked;
-    updateSaturatorNode();
-    drawWaveformView();
-  });
+  const spiceSilkySmoothEl = document.getElementById('spice-silky-smooth');
+  if (spiceSilkySmoothEl) {
+    spiceSilkySmoothEl.addEventListener('change', (e) => {
+      spices.silkySmooth = e.target.checked;
+      updateEqNodes();
+      drawWaveformView();
+    });
+  }
 
-  document.getElementById('spice-loudness-push').addEventListener('change', (e) => {
-    spices.loudnessPush = e.target.checked;
-    updateClipperNode();
-    updateLimiterGainNode();
-    drawWaveformView();
-  });
+  const spiceStereoWiderEl = document.getElementById('spice-stereo-wider');
+  if (spiceStereoWiderEl) {
+    spiceStereoWiderEl.addEventListener('change', (e) => {
+      spices.stereoWider = e.target.checked;
+      updateStereoWidthNode();
+      drawWaveformView();
+    });
+  }
+
+  const spiceAnalogWarmthEl = document.getElementById('spice-analog-warmth');
+  if (spiceAnalogWarmthEl) {
+    spiceAnalogWarmthEl.addEventListener('change', (e) => {
+      spices.analogWarmth = e.target.checked;
+      updateSaturatorNode();
+      drawWaveformView();
+    });
+  }
+
+  const spiceLoudnessPushEl = document.getElementById('spice-loudness-push');
+  if (spiceLoudnessPushEl) {
+    spiceLoudnessPushEl.addEventListener('change', (e) => {
+      spices.loudnessPush = e.target.checked;
+      updateClipperNode();
+      updateLimiterGainNode();
+      drawWaveformView();
+    });
+  }
 }
 
 function loadAudioFile(file) {
@@ -4152,7 +4208,7 @@ function resetMasterSettings() {
   for (let key in spices) {
     spices[key] = false;
   }
-  const spiceIds = ['air-treble', 'kick-punch', 'stereo-wider', 'vocal-presence', 'analog-warmth', 'loudness-push'];
+  const spiceIds = ['air-treble', 'kick-punch', 'pultec-bass', 'vocal-presence', 'silky-smooth', 'stereo-wider', 'analog-warmth', 'loudness-push'];
   spiceIds.forEach(id => {
     const el = document.getElementById(`spice-${id}`);
     if (el) el.checked = false;
