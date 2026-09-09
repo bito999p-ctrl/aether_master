@@ -165,9 +165,9 @@ const params = {
 };
 
 // Audio Suggested Parameters baseline (holds dynamically calculated parameters for the AUTO preset)
-let aiSuggestedParams = null;
-let aiDetectedGenre = null;
-let lastAnalysisResult = null;
+export let aiSuggestedParams = null;
+export let aiDetectedGenre = null;
+export let lastAnalysisResult = null;
 
 // Audio Spices State Configuration
 const spices = {
@@ -182,7 +182,7 @@ const spices = {
 };
 
 // Compute combined parameters (original sliders + spice offsets)
-function getCombinedParams() {
+export function getCombinedParams() {
   return {
     ...params,
     satEnabled: params.satEnabled || spices.analogWarmth,
@@ -515,7 +515,7 @@ function generateMasteringClipCurve(driveDb = 0.0) {
 // ==========================================================================
 // SIGNAL CHAIN CREATION FUNCTION
 // ==========================================================================
-function setupMasteringChain(context, sourceNode, parameters, customDestination = null) {
+export function setupMasteringChain(context, sourceNode, parameters, customDestination = null) {
   const dest = customDestination || context.destination;
 
   // 1. Input Gain Node
@@ -896,7 +896,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
 
   // 9. Ceiling Gain Node
   const ceilingGain = context.createGain();
-  ceilingGain.gain.setValueAtTime(Math.pow(10, parameters.ceiling / 20), context.currentTime);
+  const ceilingDb = parameters.ceiling !== undefined ? parameters.ceiling : -1.0;
+  ceilingGain.gain.setValueAtTime(Math.pow(10, ceilingDb / 20), context.currentTime);
 
   safetyClipper.connect(ceilingGain);
   ceilingGain.connect(dest);
@@ -2667,6 +2668,13 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     limiterBoost = Math.max(baselineLimiterBoost - 1.0, limiterBoost - bassOverloadPenalty);
   }
 
+  // 低域EQや高域EQのブーストが合算されている場合、リミッター入力でのヘッドルーム過負荷を防ぐためブースト量を引き締める
+  const totalEqBoost = Math.max(0, eqLowGain) + Math.max(0, eqHighGainTemp);
+  if (totalEqBoost > 2.5) {
+    const eqHeadroomCompensation = Math.min(1.5, (totalEqBoost - 2.5) * 0.4);
+    limiterBoost = Math.max(baselineLimiterBoost, limiterBoost - eqHeadroomCompensation);
+  }
+
   // 温和なアコースティック・クラシック系ジャンルでは、リミッターによる強烈な圧縮歪みやビビリ音を防ぎ、
   // 原音の広いダイナミクスを保護するために、マキシマイザーブースト（limiterBoost）の最大上限値を控えめに制限します。
   let maxAllowedLimiterBoost = 10.0;
@@ -2677,6 +2685,12 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   } else if (detectedGenre === 'jazz' || detectedGenre === 'ambient' || detectedGenre === 'podcast' ||
              basePresetKey === 'jazz' || basePresetKey === 'ambient' || basePresetKey === 'podcast') {
     maxAllowedLimiterBoost = 5.5;
+  } else if (detectedGenre === 'pops' && crestFactorDb > 11.5) {
+    // 静かなイントロとサビの落差が大きいPOPSでは、サビ部でのリミッター飽和・過渡歪みを防ぐため上限を3.8dBに保護
+    maxAllowedLimiterBoost = 3.8;
+  } else if (crestFactorDb > 12.5) {
+    // 一般の楽曲でも強弱差（クレストファクター）が非常に大きい場合は、大音量部でのリミッター過負荷を防ぐため上限を4.0dBに制限
+    maxAllowedLimiterBoost = 4.0;
   }
 
   // どんなに静かな音源でも上限+10.0dB（温和なジャンルでは個別の最大上限）、元の音が大きい音源でも最小+1.0dB（のり効果）の範囲で調整
@@ -2690,13 +2704,19 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   
   if (crestFactorDb > 11.5) {
     // トランジェントのトゲ（ドラムピーク）が大きいダイナミックな楽曲:
-    // リミッターのポンピング（不自然な息継ぎ歪み）を防ぐため、クリッパーで過渡ピークを自然に 2〜3dB トリミング
-    const clipperAdaptation = Math.min(2.0, (crestFactorDb - 11.5) * 0.5);
-    suggestedClipperDrive = Math.min(5.0, suggestedClipperDrive + clipperAdaptation);
+    // リミッターのポンピング（不自然な息継ぎ歪み）を防ぐため、クリッパーで過渡ピークを自然にトリミング
+    const clipperAdaptation = Math.min(1.0, (crestFactorDb - 11.5) * 0.3);
+    suggestedClipperDrive = Math.min(3.0, suggestedClipperDrive + clipperAdaptation);
   } else if (crestFactorDb < 8.5) {
     // 既に強く圧縮されている楽曲: 余計なサチュレーション歪みを避けるため、クリッパーのドライブを控えめに緩和
     const clipperReduction = Math.min(1.5, (8.5 - crestFactorDb) * 0.5);
     suggestedClipperDrive = Math.max(0.0, suggestedClipperDrive - clipperReduction);
+  }
+
+  // サ行（シビランス）が目立つ楽曲や、強弱差（クレストファクター）が大きい楽曲では、
+  // プレ・クリッパーでの過度な歪み・チリチリ音を防ぐためドライブを最大1.2dBに制限
+  if (sibilanceDynamicFreq > 0 || crestFactorDb > 11.5) {
+    suggestedClipperDrive = Math.min(1.2, suggestedClipperDrive);
   }
   
   // ラウドネス目標に応じたクリッパーの最適補正
