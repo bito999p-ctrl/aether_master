@@ -402,15 +402,16 @@ function generateSaturatorCurve(type, drive) {
   const curve = new Float32Array(n_samples);
   
   if (type === 'tube') {
-    // Asymmetric soft distortion (vacuum tube even harmonics)
-    const k = 0.5 + (drive / 100) * 8.5; // range 0.5 to 9.0
-    const offset = 0.12; // asymmetry offset
+    // Asymmetric triode tube saturation (musical 2nd-order even harmonics for 3D analog warmth)
+    const k = 0.6 + (drive / 100) * 3.4; // range 0.6 to 4.0 (audiophile mastering grade)
+    const offset = 0.06; // subtle tube triode grid bias for musical 2nd harmonic
+    const dcCenter = Math.tanh(k * offset);
     for (let i = 0; i < n_samples; ++i) {
       const x = (i * 2) / n_samples - 1;
       const x_off = x + offset;
       const y = Math.tanh(k * x_off);
-      // Subtract DC offset to keep zero-crossing centered
-      curve[i] = y - Math.tanh(k * offset);
+      // Subtract DC offset to keep zero-crossing perfectly centered
+      curve[i] = y - dcCenter;
     }
     
     // 範囲[-1.0, 1.0]に正規化し、デジタルクリッピングノイズを防ぐ
