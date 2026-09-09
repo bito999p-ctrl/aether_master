@@ -450,18 +450,19 @@ function generateSaturatorCurve(type, drive) {
 }
 
 function generateSoftClipCurve() {
-  const n_samples = 44100;
+  const n_samples = 65536;
   const curve = new Float32Array(n_samples);
-  const threshold = 0.96; // Linear up to 0.96 amplitude (~ -0.35 dBFS) to prevent low-end intermodulation distortion
+  const threshold = 0.85; // Linear up to 0.85 (-1.4 dBFS) to preserve bit transparency
   for (let i = 0; i < n_samples; ++i) {
-    const x = (i * 2) / n_samples - 1;
+    const x = (i * 2) / (n_samples - 1) - 1;
     const absX = Math.abs(x);
     if (absX <= threshold) {
       curve[i] = x;
     } else {
       const sign = Math.sign(x);
-      const excess = (absX - threshold) / (1.0 - threshold);
-      const y = threshold + (1.0 - threshold) * (-Math.pow(excess, 3) + Math.pow(excess, 2) + excess);
+      const u = (absX - threshold) / (1.0 - threshold);
+      // C2 continuous soft knee with horizontal tangent at 1.0 (zero slope, zero crackle)
+      const y = threshold + (1.0 - threshold) * (u - u * u + (u * u * u) / 3.0);
       curve[i] = sign * y;
     }
   }
@@ -478,21 +479,30 @@ function generateAbsoluteValCurve() {
   return curve;
 }
 
-// Pre-Limiter Mastering Soft Clipper Curve
-function generateMasteringClipCurve() {
+// Pre-Limiter Mastering Soft Clipper Curve (Smooth C2 continuous saturation with variable drive)
+function generateMasteringClipCurve(driveDb = 0.0) {
   const n_samples = 65536; // high resolution for mastering precision
   const curve = new Float32Array(n_samples);
-  const knee = 0.85; // Linear up to 0.85 (-1.4 dBFS), then smooth analog tape/tube transition up to 1.0
+  if (!driveDb || driveDb <= 0.05) {
+    // Pure 100% bit-transparent bypass
+    for (let i = 0; i < n_samples; ++i) {
+      curve[i] = (i * 2) / (n_samples - 1) - 1;
+    }
+    return curve;
+  }
+  // Knee threshold dynamically scales with clipperDrive (0dB: 1.0 -> 6dB: 0.65)
+  const T = Math.max(0.60, 1.0 - (driveDb / 6.0) * 0.35);
   for (let i = 0; i < n_samples; ++i) {
     const x = (i * 2) / (n_samples - 1) - 1;
     const absX = Math.abs(x);
-    if (absX <= knee) {
+    if (absX <= T) {
       curve[i] = x;
     } else {
       const sign = Math.sign(x);
-      const excess = (absX - knee) / (1.0 - knee);
-      const y = knee + (1.0 - knee) * Math.tanh(excess);
-      curve[i] = sign * Math.min(1.0, y);
+      const u = (absX - T) / (1.0 - T);
+      // C2 continuous smooth saturation: slope reaches exactly 0.0 at x = 1.0 (no hard clamp kink, no crackle)
+      const y = T + (1.0 - T) * (u - u * u + (u * u * u) / 3.0);
+      curve[i] = sign * y;
     }
   }
   return curve;
@@ -824,29 +834,21 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   leftSum.connect(merger, 0, 0);
   rightDiff.connect(merger, 0, 1);
 
-  // 6. Maximizer Gain Stage (Loudness Boost to Target)
+  // 6. Pre-Limiter Mastering Soft Clipper (Tames transient peaks without digital clipping)
+  const clipperDrive = parameters.clipperDrive !== undefined ? parameters.clipperDrive : 0.0;
+  const preClipper = context.createWaveShaper();
+  preClipper.curve = generateMasteringClipCurve(clipperDrive);
+  preClipper.oversample = '2x';
+
+  // 7. Maximizer Gain Stage (Loudness Boost to Target)
   const limiterGain = context.createGain();
   limiterGain.gain.setValueAtTime(Math.pow(10, parameters.limiterBoost / 20), context.currentTime);
 
-  // 7. Pre-Limiter Mastering Soft Clipper (Transient Peak Control & Density Enhancement)
-  const clipperDrive = parameters.clipperDrive !== undefined ? parameters.clipperDrive : 0.0;
-  const preClipperGain = context.createGain();
-  preClipperGain.gain.setValueAtTime(Math.pow(10, clipperDrive / 20), context.currentTime);
-
-  const preClipper = context.createWaveShaper();
-  preClipper.curve = generateMasteringClipCurve();
-  preClipper.oversample = '2x';
-
-  const preClipperMakeup = context.createGain();
-  preClipperMakeup.gain.setValueAtTime(Math.pow(10, -clipperDrive / 20), context.currentTime);
-
   // Pro Mastering Pipeline:
-  // (1) M/S Merger -> Maximizer Gain (Boosts audio to target LUFS sound pressure)
-  merger.connect(limiterGain);
-  // (2) Maximizer Gain -> Pre-Limiter Soft Clipper (Shaves giant transient peaks before limiter)
-  limiterGain.connect(preClipperGain);
-  preClipperGain.connect(preClipper);
-  preClipper.connect(preClipperMakeup);
+  // (1) M/S Merger (audio <= 1.0) -> Pre-Clipper (Curve rounds peaks smoothly without C++ engine clamp)
+  merger.connect(preClipper);
+  // (2) Pre-Clipper -> Maximizer Boost (raises loudness cleanly)
+  preClipper.connect(limiterGain);
 
   // 8. Brickwall Limiter (DynamicsCompressorNode)
   // Receives already peak-tamed audio, eliminating transient overshoot & pumping
@@ -868,8 +870,8 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
   limiter.attack.setValueAtTime(initialAttack, context.currentTime);
   limiter.release.setValueAtTime(initialRelease, context.currentTime);
 
-  // (3) Pre-Clipper Makeup -> Limiter
-  preClipperMakeup.connect(limiter);
+  // (3) Maximizer Boost -> Limiter
+  limiterGain.connect(limiter);
 
   // 8b. Safety Soft Clipper (WaveShaper Node)
   const safetyClipper = context.createWaveShaper();
@@ -920,9 +922,7 @@ function setupMasteringChain(context, sourceNode, parameters, customDestination 
     midGain,
     sideGain,
     sideHighPass,
-    preClipperGain,
     preClipper,
-    preClipperMakeup,
     limiterGain,
     limiter,
     safetyClipper,
@@ -1076,9 +1076,7 @@ function startPlayback() {
   activeNodes.midGain = chain.midGain;
   activeNodes.sideGain = chain.sideGain;
   activeNodes.sideHighPass = chain.sideHighPass;
-  activeNodes.preClipperGain = chain.preClipperGain;
   activeNodes.preClipper = chain.preClipper;
-  activeNodes.preClipperMakeup = chain.preClipperMakeup;
   activeNodes.limiterGain = chain.limiterGain;
   activeNodes.limiter = chain.limiter;
   activeNodes.safetyClipper = chain.safetyClipper;
@@ -1613,19 +1611,22 @@ function calculateProcessedPeaks() {
       min = min * (1.0 - blend) + satMin * blend;
     }
 
-    // 1. Boost into Maximizer Stage (Raises loudness to target)
+    // 1. Pre-Limiter Soft Clipper simulation (shaves transient peaks gently without engine clamping)
+    if (p.clipperDrive > 0) {
+      const T = Math.max(0.60, 1.0 - (p.clipperDrive / 6.0) * 0.35);
+      const clipFunc = (v) => {
+        const absV = Math.abs(v);
+        if (absV <= T) return v;
+        const u = Math.min(1.0, (absV - T) / (1.0 - T));
+        return Math.sign(v) * (T + (1.0 - T) * (u - u * u + (u * u * u) / 3.0));
+      };
+      max = clipFunc(max);
+      min = clipFunc(min);
+    }
+
+    // 2. Boost into Maximizer Stage (Raises loudness to target)
     max *= limitG;
     min *= limitG;
-
-    // 2. Pre-Limiter Soft Clipper simulation (shaves giant transient peaks)
-    if (p.clipperDrive > 0) {
-      const clipG = Math.pow(10, p.clipperDrive / 20);
-      const clipMakeup = 1.0 / clipG;
-      const cMax = max * clipG;
-      const cMin = min * clipG;
-      max = softLimit(cMax) * clipMakeup;
-      min = softLimit(cMin) * clipMakeup;
-    }
 
     // 3. Limiter dynamic control (receives peak-tamed audio, zero pumping)
     max = softLimit(max);
@@ -1975,13 +1976,10 @@ function updateLimiterGainNode() {
 
 function updateClipperNode() {
   invalidatePeakCache();
-  if (activeNodes.preClipperGain && activeNodes.preClipperMakeup) {
+  if (activeNodes.preClipper) {
     const p = getCombinedParams();
     const drive = p.clipperDrive !== undefined ? p.clipperDrive : 0.0;
-    const inGain = Math.pow(10, drive / 20);
-    const outGain = Math.pow(10, -drive / 20);
-    activeNodes.preClipperGain.gain.setTargetAtTime(inGain, audioContext.currentTime, 0.01);
-    activeNodes.preClipperMakeup.gain.setTargetAtTime(outGain, audioContext.currentTime, 0.01);
+    activeNodes.preClipper.curve = generateMasteringClipCurve(drive);
   }
 }
 
@@ -3720,6 +3718,28 @@ function registerGuiEvents() {
     updateLimiterGainNode();
   });
 
+  // Manual Clipping & Distortion Radar Scan Button
+  const scanClippingBtn = document.getElementById('btn-scan-clipping');
+  if (scanClippingBtn) {
+    scanClippingBtn.addEventListener('click', async () => {
+      if (!audioBuffer) {
+        const logEl = document.getElementById('clipping-log');
+        if (logEl) {
+          logEl.innerHTML = `<div style="color: #f77f00;">[INFO] 音源ファイルを読み込んでからスキャンを実行してください。</div>`;
+        }
+        return;
+      }
+      scanClippingBtn.disabled = true;
+      scanClippingBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> SCANNING...`;
+      try {
+        await runClippingAnalysis();
+      } finally {
+        scanClippingBtn.disabled = false;
+        scanClippingBtn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> SCAN NOW (音割れ検査)`;
+      }
+    });
+  }
+
   // Preset Selections
   document.getElementById('preset-select').addEventListener('change', (e) => {
     loadGenrePreset(e.target.value);
@@ -4502,7 +4522,7 @@ function invalidatePeakCache() {
   if (!isPlaying && audioBuffer && activeTab === 'waveform') {
     drawWaveformView();
   }
-  queueClippingScan();
+  // 自動全曲レンダリング（queueClippingScan）は廃止し、CPU使用率をゼロ化（手動ボタン実行に完全移行）
 }
 
 function getProcessedPeaks() {
@@ -4516,11 +4536,7 @@ function getProcessedPeaks() {
 // BACKGROUND CLIPPING & DISTORTION DETECTOR (音割れ対策スキャナー)
 // ==========================================================================
 function queueClippingScan() {
-  if (!audioBuffer) return;
-  if (clippingScanTimeout) {
-    clearTimeout(clippingScanTimeout);
-  }
-  clippingScanTimeout = setTimeout(runClippingAnalysis, 1000);
+  // 手動ボタン実行（#btn-scan-clipping）に移行したため、自動スキャンは実行しない
 }
 
 async function runClippingAnalysis() {

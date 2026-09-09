@@ -664,11 +664,14 @@
 
       <section class="panel console-panel full-width" id="clipping-radar-panel" style="margin-top: 20px;">
         <div class="panel-header">
-          <h2 class="panel-title" style="color: #f77f00;"><i class="fa-solid fa-triangle-exclamation"></i> CLIPPING & DISTORTION RADAR (音割れ検知モニター) <span class="help-icon" data-tooltip="つまみ調整の1秒後にバックグラウンドで曲全体を自動スキャンし、音割れ（クリップや歪み）が生じている箇所とピークdBをログ形式で一覧表示します。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <div style="font-family: var(--font-tech); font-size: 0.7rem; font-weight: 700; color: #a4a3b8;" id="clipping-status">STATUS: READY</div>
+          <h2 class="panel-title" style="color: #f77f00;"><i class="fa-solid fa-triangle-exclamation"></i> CLIPPING & DISTORTION RADAR (音割れ検知モニター) <span class="help-icon" data-tooltip="「SCAN NOW」ボタンを押すとバックグラウンドで曲全体をスキャンし、音割れ（0dBFS超過）が生じている箇所とピークdBを一覧表示します。普段のつまみ調整時はCPUを一切消費しません。"><i class="fa-regular fa-circle-question"></i></span></h2>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-family: var(--font-tech); font-size: 0.7rem; font-weight: 700; color: #a4a3b8;" id="clipping-status">STATUS: READY</div>
+            <button id="btn-scan-clipping" class="tab-btn" style="display: flex; align-items: center; gap: 6px; color: #00f2fe; border-color: rgba(0, 242, 254, 0.4); font-weight: 600; cursor: pointer;"><i class="fa-solid fa-magnifying-glass"></i> SCAN NOW (音割れ検査)</button>
+          </div>
         </div>
         <div class="console-log-content" id="clipping-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8; word-wrap: break-word; word-break: break-all; white-space: pre-wrap;">
-          <div class="log-line info" style="color: #a4a3b8;">[SYSTEM] Clipping Monitor Initialized. Upload audio file and adjust settings to trigger auto-scanning.</div>
+          <div class="log-line info" style="color: #a4a3b8;">[SYSTEM] 音割れモニター待機中。「SCAN NOW」ボタンを押すと、現在のマスタリング設定で曲全体の音割れ（0dBFS超過）を検査します。</div>
         </div>
       </section>
 
