@@ -201,15 +201,14 @@
           </div>
         </div>
         <div class="control-group">
-          <label for="loudness-select">LOUDNESS TARGET <span class="help-icon" data-tooltip="配信先に合わせた音量（音圧）の目標値です。「YouTube（Streaming）」や「CD用（Loud）」などを選ぶと、最適な音量感に補正されます。"><i class="fa-regular fa-circle-question"></i></span></label>
+          <label for="loudness-select">LOUDNESS TARGET <span class="help-icon" data-tooltip="配信先やリスニング環境に合わせた目標音圧です。「STREAMING (-14 LUFS)」がYouTubeやSpotify等の世界標準・推奨値です。"><i class="fa-regular fa-circle-question"></i></span></label>
           <div class="select-wrapper">
             <select id="loudness-select">
-              <option value="genre" selected>💿 GENRE DEFAULT (Recommended)</option>
-              <option value="streaming">STREAMING (-14 LUFS / Safe)</option>
-              <option value="club">CLUB/MODERN (-9 LUFS / Punchy)</option>
-              <option value="loud">LOUD (-7 LUFS / Intense)</option>
-              <option value="pure">PURE (-18 LUFS / High Dynamic)</option>
-              <option value="custom">CUSTOM (Manual / AI Adjusted)</option>
+              <option value="streaming" selected>🌐 STREAMING (-14 LUFS / Recommended)</option>
+              <option value="club">🔊 CLUB/MODERN (-9 LUFS / Punchy)</option>
+              <option value="loud">🔥 MAX LOUD (-7 LUFS / Intense)</option>
+              <option value="natural">🍃 NATURAL (-16 LUFS / Acoustic & Classical)</option>
+              <option value="custom">🎛️ CUSTOM (Manual / AI Adjusted)</option>
             </select>
           </div>
         </div>

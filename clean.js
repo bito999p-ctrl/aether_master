@@ -49,7 +49,7 @@ let playbackOffset = 0; // Current time position in track
 // Downsampled peaks for waveform compare
 let originalPeaks = null;
 let cachedProcessedPeaks = null;
-let baseLoudnessTarget = 'genre';
+let baseLoudnessTarget = 'streaming';
 let clippingScanTimeout = null;
 const PEAK_POINTS = 800;
 
@@ -382,11 +382,11 @@ export const GENRE_TARGETS = {
 
 // Loudness Targets
 const LOUDNESS_TARGETS = {
-  genre: { boost: null, clipper: null },     // Genre Default (follows selected preset)
-  streaming: { boost: 4.0, clipper: 1.2 },  // Standard Streaming -14 LUFS target
-  club: { boost: 7.0, clipper: 2.5 },       // Standard Club -9 LUFS target
-  loud: { boost: 10.0, clipper: 3.5 },      // Standard Heavy -7 LUFS target
-  pure: { boost: 0.0, clipper: 0.0 }        // High Dynamic Range -18 LUFS target
+  streaming: { targetRms: -14.0, boost: 2.8, clipper: 1.0 },  // Standard Streaming -14 LUFS target (Recommended)
+  club:      { targetRms: -10.5, boost: 5.5, clipper: 2.0 },  // Standard Club -9 LUFS target
+  loud:      { targetRms: -8.5,  boost: 7.5, clipper: 3.0 },  // Standard Heavy -7 LUFS target
+  natural:   { targetRms: -16.5, boost: 1.5, clipper: 0.0 },  // Acoustic & Classical -16 LUFS target
+  pure:      { targetRms: -18.0, boost: 0.8, clipper: 0.0 }   // High Dynamic Range -18 LUFS target
 };
 
 // Level meter decay values
@@ -2614,25 +2614,28 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   const avgRmsDb = 20 * Math.log10(avgRMS + 1e-6);
   const rmsAfterGainDb = avgRmsDb + suggestedInputGainDb;
 
-  // ジャンル別目標平均音量（RMS dB FS。-14LUFSターゲットに準拠）
-  const genreTargetRmsDb = {
-    auto: -14.5,
-    pops: -14.0,     // Pops/J-POP: 標準ストリーミング (-14 LUFS相当)
-    rnb: -13.5,
-    rock: -13.0,
-    metal: -12.5,    // Metal: 迫力ある音圧壁 (-12.5 dB)
-    edm: -11.5,      // EDM: クラブ向け最大音圧 (-11.5 dB)
-    hiphop: -12.5,
-    lofi: -15.5,
-    hardcore: -11.2, // Hardcore: 限界の押し込み (-11.2 dB)
-    ambient: -17.5,
-    podcast: -15.0,
-    classic: -19.5,
-    jazz: -16.0,
-    acoustic: -16.5,
-    custom: -14.5
-  };
-  const targetRmsDb = genreTargetRmsDb[genreKey] || genreTargetRmsDb.auto;
+  // GUI表示および音圧制御用のラウドネス目標キーの取得（デフォルト: streaming -14 LUFS）
+  const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'streaming');
+
+  // 目標平均音量（STREAMING -14 LUFS を世界標準の基本基準値として設定）
+  let targetRmsDb = -14.0;
+  if (loudnessKey === 'club') {
+    targetRmsDb = -10.5; // クラブ向け（パンチ力重視）
+  } else if (loudnessKey === 'loud') {
+    targetRmsDb = -8.5;  // 限界音圧（激しいジャンル）
+  } else if (loudnessKey === 'natural' || loudnessKey === 'pure') {
+    targetRmsDb = -16.5; // アコースティック・クラシック（生演奏ダイナミクス保護）
+  } else {
+    // STREAMING (-14 LUFS / Standard & Recommended)
+    // ただし、クラシックやアコースティック等、極端にダイナミックな楽曲は自然な音圧に配慮
+    if (detectedGenre === 'classic' || basePresetKey === 'classic') {
+      targetRmsDb = -18.0;
+    } else if (detectedGenre === 'acoustic' || basePresetKey === 'acoustic') {
+      targetRmsDb = -16.0;
+    } else {
+      targetRmsDb = -14.0;
+    }
+  }
 
   // 目標ラウドネスまでに不足しているゲイン量（dB）
   let requiredBoost = targetRmsDb - rmsAfterGainDb;
@@ -2705,30 +2708,35 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
     limiterBoost = Math.max(0.8, limiterBoost - eqHeadroomCompensation);
   }
 
-  // 温和なアコースティック・クラシック系ジャンルでは、リミッターによる強烈な圧縮歪みやビビリ音を防ぎ、
-  // 原音の広いダイナミクスを保護するために、マキシマイザーブースト（limiterBoost）の最大上限値を控えめに制限
+  // ラウドネス目標および温和なジャンルでの最大リミッターブースト制限
   let maxAllowedLimiterBoost = 4.2;
-  if (detectedGenre === 'classic' || basePresetKey === 'classic') {
+  if (loudnessKey === 'club') {
+    maxAllowedLimiterBoost = 6.5;
+  } else if (loudnessKey === 'loud') {
+    maxAllowedLimiterBoost = 8.5;
+  } else if (loudnessKey === 'natural' || loudnessKey === 'pure') {
     maxAllowedLimiterBoost = 2.5;
-  } else if (detectedGenre === 'acoustic' || basePresetKey === 'acoustic') {
-    maxAllowedLimiterBoost = 3.2;
-  } else if (detectedGenre === 'jazz' || detectedGenre === 'ambient' || detectedGenre === 'podcast' ||
-             basePresetKey === 'jazz' || basePresetKey === 'ambient' || basePresetKey === 'podcast') {
-    maxAllowedLimiterBoost = 3.6;
-  } else if (detectedGenre === 'pops' && crestFactorDb > 11.5) {
-    maxAllowedLimiterBoost = 3.2;
-  } else if (crestFactorDb > 12.5) {
-    maxAllowedLimiterBoost = 3.5;
+  } else {
+    // STREAMING (-14 LUFS / Standard & Recommended)
+    if (detectedGenre === 'classic' || basePresetKey === 'classic') {
+      maxAllowedLimiterBoost = 2.5;
+    } else if (detectedGenre === 'acoustic' || basePresetKey === 'acoustic') {
+      maxAllowedLimiterBoost = 3.2;
+    } else if (detectedGenre === 'jazz' || detectedGenre === 'ambient' || detectedGenre === 'podcast' ||
+               basePresetKey === 'jazz' || basePresetKey === 'ambient' || basePresetKey === 'podcast') {
+      maxAllowedLimiterBoost = 3.6;
+    } else if (detectedGenre === 'pops' && crestFactorDb > 11.5) {
+      maxAllowedLimiterBoost = 3.2;
+    } else if (crestFactorDb > 12.5) {
+      maxAllowedLimiterBoost = 3.5;
+    }
   }
 
   // どんなに静かな音源でも上限（爆音化防止）、元の音が大きい音源でも最低+0.8dB（シーリング保護）の範囲で調整
   limiterBoost = Math.max(0.8, Math.min(maxAllowedLimiterBoost, Math.round(limiterBoost * 10) / 10));
 
-  // GUI表示および音圧制御用のラウドネス目標キーの取得
-  const loudnessKey = typeof baseLoudnessTarget !== 'undefined' ? baseLoudnessTarget : (document.getElementById('loudness-select')?.value || 'genre');
-
-  // 3. プレ・クリッパー＆リミッター・オーケストレーション（Crest Factor & Loudness Target に基づく統合音圧制御）
-  let suggestedClipperDrive = basePreset.clipperDrive !== undefined ? basePreset.clipperDrive : 1.5;
+  // 4. プレ・クリッパー＆リミッター・オーケストレーション（Crest Factor & Loudness Target に基づく統合音圧制御）
+  let suggestedClipperDrive = basePreset.clipperDrive !== undefined ? basePreset.clipperDrive : 1.0;
   
   if (crestFactorDb > 11.5) {
     // トランジェントのトゲ（ドラムピーク）が大きいダイナミックな楽曲:
@@ -2749,29 +2757,28 @@ export function analyzeAudioResonances(buffer, userPresetKey) {
   
   // ラウドネス目標に応じたクリッパーの最適補正
   if (loudnessKey === 'club') {
-    suggestedClipperDrive = Math.max(suggestedClipperDrive, 2.5);
+    suggestedClipperDrive = Math.max(suggestedClipperDrive, 2.0);
   } else if (loudnessKey === 'loud') {
-    suggestedClipperDrive = Math.max(suggestedClipperDrive, 3.5);
+    suggestedClipperDrive = Math.max(suggestedClipperDrive, 3.0);
   } else if (loudnessKey === 'streaming') {
-    suggestedClipperDrive = Math.min(suggestedClipperDrive, 1.5);
-  } else if (loudnessKey === 'pure') {
+    suggestedClipperDrive = Math.min(suggestedClipperDrive, 1.0);
+  } else if (loudnessKey === 'natural' || loudnessKey === 'pure') {
     suggestedClipperDrive = 0.0;
   }
   suggestedClipperDrive = Math.round(suggestedClipperDrive * 10) / 10;
 
   // GUI表示用のラウドネス説明テキストの構築
   let baseLoudnessDesc = "STREAMING (-14 LUFS)";
-  if (loudnessKey === 'genre') {
-    const genreName = genreKey.toUpperCase();
-    baseLoudnessDesc = `GENRE DEFAULT (${genreName})`;
-  } else if (LOUDNESS_TARGETS[loudnessKey]) {
-    const targetNames = {
-      streaming: "STREAMING (-14 LUFS)",
-      club: "CLUB/MODERN (-9 LUFS)",
-      loud: "LOUD (-7 LUFS)",
-      pure: "PURE (-18 LUFS)"
-    };
-    baseLoudnessDesc = targetNames[loudnessKey] || `TARGET (${loudnessKey})`;
+  if (loudnessKey === 'streaming') {
+    baseLoudnessDesc = "STREAMING (-14 LUFS / Recommended)";
+  } else if (loudnessKey === 'club') {
+    baseLoudnessDesc = "CLUB/MODERN (-9 LUFS)";
+  } else if (loudnessKey === 'loud') {
+    baseLoudnessDesc = "MAX LOUD (-7 LUFS)";
+  } else if (loudnessKey === 'natural') {
+    baseLoudnessDesc = "NATURAL (-16 LUFS)";
+  } else if (loudnessKey === 'pure') {
+    baseLoudnessDesc = "PURE (-18 LUFS)";
   } else {
     baseLoudnessDesc = "CUSTOM";
   }
@@ -3089,19 +3096,8 @@ function loadGenrePreset(genreKey) {
   }
 
   // Set clipper drive and limiter boost based on loudness target selection or preset (applies to both auto and other presets)
-  const loudnessSelect = document.getElementById('loudness-select');
-  const loudnessKey = loudnessSelect ? loudnessSelect.value : 'genre';
-  if (loudnessKey === 'genre') {
-    params.limiterBoost = src.limiterBoost; // This is the dynamically calculated boost matching target loudness, capped for classic/acoustic
-    params.clipperDrive = src.clipperDrive !== undefined ? src.clipperDrive : (p.clipperDrive !== undefined ? p.clipperDrive : 1.5);
-  } else if (LOUDNESS_TARGETS[loudnessKey]) {
-    if (LOUDNESS_TARGETS[loudnessKey].boost !== null) {
-      params.limiterBoost = LOUDNESS_TARGETS[loudnessKey].boost;
-    }
-    if (LOUDNESS_TARGETS[loudnessKey].clipper !== null) {
-      params.clipperDrive = LOUDNESS_TARGETS[loudnessKey].clipper;
-    }
-  }
+  params.limiterBoost = src.limiterBoost;
+  params.clipperDrive = src.clipperDrive !== undefined ? src.clipperDrive : (p.clipperDrive !== undefined ? p.clipperDrive : 1.0);
 
   // AI Corrective Notches and AI report panel are preserved during preset switching to allow interactive comparison
 
@@ -3123,26 +3119,19 @@ function loadGenrePreset(genreKey) {
 function applyLoudnessTarget(targetKey) {
   if (targetKey === 'custom') return;
   
-  if (targetKey === 'genre') {
-    const genreSelect = document.getElementById('preset-select');
-    const genreKey = genreSelect ? genreSelect.value : 'auto';
-    const p = GENRE_PRESETS[genreKey] || GENRE_PRESETS.auto;
-    if (audioBuffer && genreKey !== 'auto') {
-      const dynamicResult = analyzeAudioResonances(audioBuffer, genreKey);
-      params.limiterBoost = dynamicResult.suggestedParams.limiterBoost;
-      params.clipperDrive = dynamicResult.suggestedParams.clipperDrive !== undefined ? dynamicResult.suggestedParams.clipperDrive : (p.clipperDrive !== undefined ? p.clipperDrive : 1.5);
-    } else if (genreKey === 'auto' && aiSuggestedParams !== null) {
-      params.limiterBoost = aiSuggestedParams.limiterBoost;
-      params.clipperDrive = aiSuggestedParams.clipperDrive !== undefined ? aiSuggestedParams.clipperDrive : 1.5;
-    } else {
-      params.limiterBoost = p.limiterBoost;
-      params.clipperDrive = p.clipperDrive !== undefined ? p.clipperDrive : 1.5;
-    }
+  const genreSelect = document.getElementById('preset-select');
+  const genreKey = genreSelect ? genreSelect.value : 'auto';
+  
+  if (audioBuffer) {
+    // 楽曲がロードされている場合は、選択されたラウドネス目標に基づき動的AI解析を瞬時に再実行
+    const dynamicResult = analyzeAudioResonances(audioBuffer, genreKey);
+    params.limiterBoost = dynamicResult.suggestedParams.limiterBoost;
+    params.clipperDrive = dynamicResult.suggestedParams.clipperDrive !== undefined ? dynamicResult.suggestedParams.clipperDrive : 1.0;
   } else {
-    const t = LOUDNESS_TARGETS[targetKey];
-    if (!t) return;
+    // 楽曲未ロード時のテンプレート値
+    const t = LOUDNESS_TARGETS[targetKey] || LOUDNESS_TARGETS.streaming;
     params.limiterBoost = t.boost;
-    params.clipperDrive = t.clipper !== null ? t.clipper : 1.5;
+    params.clipperDrive = t.clipper !== null ? t.clipper : 1.0;
   }
   
   // Update GUI
@@ -4200,8 +4189,8 @@ function loadAudioFile(file) {
         document.getElementById('status-indicator').className = 'status-indicator online';
 
         // Load default AUTO preset
-        baseLoudnessTarget = 'genre';
-        document.getElementById('loudness-select').value = 'genre';
+        baseLoudnessTarget = 'streaming';
+        document.getElementById('loudness-select').value = 'streaming';
         document.getElementById('preset-select').value = 'auto';
         loadGenrePreset('auto');
 
@@ -4245,9 +4234,9 @@ function resetMasterSettings() {
   logToUI("Resetting mastering parameters to AI Auto...", "info");
   
   // 1. Reset dropdown selections
-  baseLoudnessTarget = 'genre';
+  baseLoudnessTarget = 'streaming';
   document.getElementById('preset-select').value = 'auto';
-  document.getElementById('loudness-select').value = 'genre';
+  document.getElementById('loudness-select').value = 'streaming';
   
   // Reset spices
   for (let key in spices) {
