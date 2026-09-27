@@ -200,6 +200,14 @@ export function diagnose(L, R, fs, onProgress = () => {}) {
 
   out.fixedPeaks = fixedPeaks(spec, tot, loud, freqs, maxBin);
   out.hfLoud = hfLoud(M, fs);
+  // loud-frame spectrum in 1/6-octave bands (each frame normalised), to predict what a tone move does
+  out.loudSpec = { hz: [], db: [] };
+  for (let c = 25; c < 16000; c *= 2 ** (1 / 6)) {
+    const k0 = Math.ceil(c * 2 ** (-1 / 12) / freqs[1]), k1 = Math.min(maxBin, Math.ceil(c * 2 ** (1 / 12) / freqs[1]) - 1);
+    let s = 0;
+    for (const t of loud) { let e = 0; for (let k = k0; k <= k1; k++) e += spec[t * (maxBin + 1) + k]; s += e / 10 ** (tot[t] / 10); }
+    out.loudSpec.hz.push(Math.round(c)); out.loudSpec.db.push(+db(s / Math.max(1, loud.length)).toFixed(2));
+  }
 
   // tempo from spectral-flux autocorrelation (70-180 BPM)
   const fr = fs / hop;

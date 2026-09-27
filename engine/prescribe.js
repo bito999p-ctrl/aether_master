@@ -1,6 +1,7 @@
 // Diagnosis -> slider settings ("処方箋"). 2-mix port of chain_j.auto_prescription:
 // same rules and lessons, with stem-specific moves replaced by mix-level ones.
 import { DEFAULTS } from './chain.js';
+import { design } from './filters.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const REF_LUFS = -14; // the chain works on audio trimmed to this level
@@ -20,13 +21,10 @@ export function prescribe(d) {
   const spread = pct(sec, 95) - pct(sec, 5);
   const ballad = d.crestDb >= 15 && spread >= 6;
   const sparseDrums = d.lowOnsetRate < 0.6;
-  // Already mastered / dense source (loud and little crest; Suno 2-mixes sit around -11..-14 LUFS,
-  // crest 14-16 dB). The 2-mix recipe's fixed moves (broad -4.5 dB top shelf, bass lifts, tape,
-  // room) turn such a master muddy, so its tone is corrected from the measurement instead.
-  // A finished master also has its 9-10 kHz tamed (loud-block share: majors ~-28.5 dB, approved
-  // J masters -30.7..-33.9); raw Suno sits at -25..-28.5 even when it is loud and dense.
-  const hf = d.hfLoud || {};
-  const mastered = d.lufs > -10.5 && d.crestDb < 12.5 && !(hf.band9kDb > -29);
+  // No "already mastered?" verdict: sources may carry a poor master, so every source is taken to
+  // the same measured targets. Density (little crest left; Suno 2-mixes have 14-16 dB) only
+  // scales the additive moves (kick, tape, room, bass lift) so a squashed source stays clear.
+  const dense = d.crestDb < 12.5;
   const growthHigh = Math.max(...Object.entries(d.growth).filter(([k]) => +k.split('-')[0] >= 4500).map(([, v]) => v));
 
   const p = structuredClone(DEFAULTS);
@@ -47,15 +45,15 @@ export function prescribe(d) {
   p.hpfHz = is808 ? 25 : 32;
   why('hpfHz', is808 ? `ベースの最低音が低い（p10 ${bp.f0p10} Hz）→ HPF を 25 Hz まで下げて最低音を残す` : '32 Hz 以下の不要な超低域をカット');
   p.lowHz = Math.round(d.lowPeakHz);
-  p.lowDb = movingBass || sparseDrums || mastered ? 0 : 1.0;
+  p.lowDb = movingBass || sparseDrums || dense ? 0 : 1.0;
   why('lowDb', p.lowDb ? `低域の芯（${p.lowHz} Hz）を +1 dB` : (movingBass ? 'ベースの音程が大きく動く → 固定ベルは音ごとのムラになるので入れない' : 'ドラムが少ない → 低域ベルなし'));
   p.mudHz = 280; p.mudDb = -1.0;
   why('mudDb', '250〜300 Hz のこもりを常に -1 dB（マスタリングでよく使う定番の処理）');
 
   // punch (kick-band transient) and tightness (stands in for kick-keyed bass ducking)
-  if (mastered) {
+  if (dense) {
     p.punchDb = 1.5; p.tightDb = -0.5; p.lowGainDb = 0;
-    why('punchDb', 'マスタリング済みの密な音源 → キックの強調は控えめ（低域を膨らませない）');
+    why('punchDb', `すでに密な音源（クレスト ${d.crestDb.toFixed(1)} dB）→ キックの強調は控えめ（低域を膨らませない）`);
   } else if (sparseDrums || ballad) {
     p.punchDb = 1.5; p.tightDb = 0; p.lowGainDb = 0;
     why('punchDb', 'ドラムがまばら／バラード → キックのアタックは控えめ、低域ダッキングなし');
@@ -67,32 +65,31 @@ export function prescribe(d) {
     why('punchDb', '150 Hz 以下だけアタックを強調（スネア・シンバルは硬くしない）＋余韻を少し締めてキックを前に');
   }
 
-  // highs: the J masters sit ~4-5 dB darker than a 2-mix above 3 kHz (fit over 4 songs:
-  // broad shelf 4.3 kHz / -4.7 dB). The stem chain got there with de-essers, loud-only
-  // bells and suppressors; on a 2-mix a broad shelf is the closest single move.
+  // highs: solve the broad 4.3 kHz shelf so the loud parts' >5 kHz share lands on the major-label
+  // median (6 majors, 2026-09-28: -16.9 dB; their 9-10 kHz follows at ~12.5 dB below). Predicted
+  // from the loud-frame spectrum; HF_OFFSET is what the loud-only bells / colour / limiter add
+  // on top (fitted on renders). Ballads keep their approved darker balance (白夜); dark non-ballads are brought up to the target.
   p.highHz = 4300;
-  if (mastered) {
-    // already mastered: move toward a master's balance (lowHighRatio ~12.5) by what it measures
-    const e = 12.5 - d.lowHighRatioDb;
-    p.highShelfDb = +clamp(-0.7 * e, -4, 1.5).toFixed(1);
-    p.bassDb = +clamp(0.3 * e, -1.5, 1).toFixed(1);
-    p.airDb = p.highShelfDb < -1 ? 1.0 : 0;
-    why('highShelfDb', `マスタリング済みの音源（${d.lufs.toFixed(1)} LUFS、クレスト ${d.crestDb.toFixed(1)} dB）→ 高域は測定したバランスから補正: 4.3 kHz 以上 ${p.highShelfDb} dB`
-      + (Math.abs(p.highShelfDb) < 0.5 ? '（ほぼそのまま）' : p.highShelfDb < 0 ? '（高域が強め）' : '（こもり気味なので少し明るく）'));
-    why('bassDb', `低域シェルフ ${p.bassDb > 0 ? '+' : ''}${p.bassDb} dB（測定したバランスから）`);
-  } else {
-  p.highShelfDb = veryDark ? -3.0 : -4.5;
-  why('highShelfDb', veryDark ? '暗めの音源 → 4.3 kHz 以上を -3 dB だけ（空気感は残す）'
-    : `4.3 kHz 以上をなだらかに ${p.highShelfDb} dB（市販マスターの高域バランスに合わせる。仕上がったマスターは生の 2mix より高域が落ち着いている）`);
-  p.bassDb = is808 ? 0 : 1.0;
-  why('bassDb', is808 ? '808 の低域はそのまま' : '90 Hz 以下をシェルフで +1 dB（市販マスター並みの低域の厚み）');
   p.airDb = 2.0; // 16 kHz shelf: puts back the top octave the broad shelf takes
-  if (p.airDb) why('airDb', '16 kHz 以上を +2 dB（広いシェルフで落ちすぎる最上域を戻して艶を残す）');
+  const hf = d.hfLoud;
+  if (ballad || !hf || !d.loudSpec) {
+    p.highShelfDb = veryDark ? -3.0 : -4.5;
+    why('highShelfDb', ballad ? 'バラード → 4.3 kHz 以上は控えめに（空気感は残す）' : veryDark ? '暗めの音源 → 4.3 kHz 以上を -3 dB だけ（空気感は残す）' : '4.3 kHz 以上をなだらかに -4.5 dB');
+  } else {
+    const at = (g) => hf.above5kDb + hfShift(d.loudSpec, p.highHz, g, p.airDb) + HF_OFFSET;
+    let lo = -8, hi = 4; // brighten at most +4 dB (dark masters; more would lift MP3 artefacts)
+    for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (at(m) > HF_TARGET) hi = m; else lo = m; }
+    p.highShelfDb = +((lo + hi) / 2).toFixed(1);
+    why('highShelfDb', `大きい場面の 5 kHz 以上の比率 ${hf.above5kDb.toFixed(1)} dB（9〜10 kHz ${hf.band9kDb.toFixed(1)} dB）→ 市販メジャー曲の中央値 ${HF_TARGET} dB に合わせて 4.3 kHz 以上を ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB`);
   }
+  if (p.highShelfDb > -2) p.airDb = 1.0;
+  why('airDb', `16 kHz 以上を +${p.airDb} dB（広いシェルフで落ちすぎる最上域を戻して艶を残す）`);
+  p.bassDb = is808 || dense ? 0 : 1.0;
+  why('bassDb', is808 ? '808 の低域はそのまま' : dense ? 'すでに密な音源 → 低域シェルフはそのまま' : '90 Hz 以下をシェルフで +1 dB（市販マスター並みの低域の厚み）');
 
   // dynamic bells (loud-moment only)
   const dyn = [];
-  if (!veryDark) {
+  if (!ballad) {
     const depth = brightSource ? 1.0 : 2.0;
     dyn.push({ id: 'dyn8k', label: '高域の刺さり抑え (8k)', hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 120, on: true });
     why('dyn8k', `大きい瞬間だけ 8 kHz 帯を ${depth} dB 抑える（痛さ対策、普段は触らない）`);
@@ -109,7 +106,7 @@ export function prescribe(d) {
     why('res', `鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ市販マスター並み（+3 dB 以内）まで抑える`
       + (soft ? '。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を' : ''));
   }
-  if (growthHigh >= 6 && !veryDark) {
+  if (growthHigh >= 6 && !ballad) {
     d.harshBins.forEach((b, i) => {
       dyn.push({ id: `harsh${i}`, label: `刺さり ${b.hz} Hz`, hz: b.hz, q: 3, depth: 2.0, ratio: 4, att: 3, rel: 100, on: true });
     });
@@ -117,10 +114,10 @@ export function prescribe(d) {
   }
   // Suno "shimmer": metallic hash centred around 9-10 kHz (cymbals / vocal air). Narrow and
   // loud-only, so the top end keeps its sheen the rest of the time.
-  const shimDepth = veryDark ? 0 : brightSource ? 2.0 : 1.0;
+  const shimDepth = ballad ? 0 : brightSource ? 2.0 : 1.0;
   dyn.push({ id: 'shimmer', label: 'シャリシャリ抑え (9.5k)', hz: 9500, q: 2, depth: shimDepth, ratio: 3, att: 2, rel: 80, on: shimDepth > 0 });
   why('shimmer', shimDepth ? `Suno 特有のシャリシャリ（9〜10 kHz）を大きい瞬間だけ ${shimDepth} dB 抑える` : '非常に暗い音源 → シャリシャリ処理なし');
-  const sibDepth = veryDark || brightSource ? 0 : 1.5;
+  const sibDepth = ballad || brightSource ? 0 : 1.5;
   dyn.push({ id: 'deess', label: '歯擦音', hz: 7000, q: 2, depth: sibDepth, ratio: 3, att: 1, rel: 50, on: sibDepth > 0 });
   why('deess', sibDepth ? '歯擦音（6〜8 kHz）を速いアタックで軽く抑える' : '明るい／暗い音源なので歯擦音処理はオフ（艶を守る）');
   p.dyn = dyn;
@@ -135,18 +132,40 @@ export function prescribe(d) {
   p.glueThr = -20; p.glueRatio = 1.25; p.glueAttack = 30;
   p.glueRelPeak = +(beat / 4).toFixed(1); p.glueRelRms = +(beat / 2).toFixed(1);
   why('glue', `1.25:1 のゆるいグルー、リリースは ${bpm.toFixed(1)} BPM に同期（${p.glueRelPeak} / ${p.glueRelRms} ms）`);
-  if (mastered) p.glueRatio = 1.1;
-  p.colorDrive = mastered ? 1.0 : 2.5;
-  why('colorDrive', mastered ? 'マスタリング済み → テープ倍音はごく軽く（1.0、にじみ防止）' : 'テープ系の倍音を軽く（ドライブ 2.5、音量は自動で合わせる）');
-  p.spaceMix = mastered ? 1.0 : 3.5; p.spacePredelay = +(beat / 4).toFixed(1); p.spaceDecay = ballad ? 1.8 : 1.2;
+  if (dense) p.glueRatio = 1.1;
+  p.colorDrive = dense ? 1.0 : 2.5;
+  why('colorDrive', dense ? 'すでに密な音源 → テープ倍音はごく軽く（1.0、にじみ防止）' : 'テープ系の倍音を軽く（ドライブ 2.5、音量は自動で合わせる）');
+  p.spaceMix = dense ? 1.0 : 3.5; p.spacePredelay = +(beat / 4).toFixed(1); p.spaceDecay = ballad ? 1.8 : 1.2;
   why('spaceMix', `ごく薄い空間 ${p.spaceMix}%（プリディレイ 16 分音符 = ${p.spacePredelay} ms）`);
 
-  // a master is not pushed louder than it already is (it is already limited)
-  if (mastered && p.targetLufs > d.lufs) { p.targetLufs = +d.lufs.toFixed(1); why('targetLufs', `マスタリング済み → 元の音量 ${p.targetLufs} LUFS より上げない（二重に潰さない）`); }
-
-  const decisions = { bpm: +bpm.toFixed(1), is808, mastered, movingBass, subBass, brightSource, veryDark, ballad, sparseDrums,
+  const decisions = { bpm: +bpm.toFixed(1), is808, dense, movingBass, subBass, brightSource, veryDark, ballad, sparseDrums,
     highGrowthDb: +growthHigh.toFixed(1), sectionSpreadDb: +spread.toFixed(1) };
   return { params: p, reasons, decisions };
+}
+
+const HF_TARGET = -16.9;
+const HF_OFFSET = -1.25; // renders land ~1.25 dB darker than the static prediction (fit on 5 v2 renders)
+
+// Change (dB) in the >5 kHz share of a loud-frame spectrum when the high shelf (Q 0.45) is set
+// to g dB and the 16 kHz air shelf to air dB.
+function hfShift(spec, hz, g, air) {
+  const fs = 44100, sh = [design('highshelf', fs, hz, 0.45, g), design('highshelf', fs, 16000, 0.7071, air)];
+  const share = (fl) => {
+    let hi = 0, all = 0;
+    spec.hz.forEach((f, i) => {
+      let e = 10 ** (spec.db[i] / 10);
+      if (fl) for (const c of sh) e *= mag2(c, f, fs);
+      all += e; if (f >= 5000) hi += e;
+    });
+    return 10 * Math.log10(hi / all);
+  };
+  return share(true) - share(false);
+}
+function mag2(c, f, fs) {
+  const w = 2 * Math.PI * f / fs, cs = Math.cos(w), sn = Math.sin(w), c2 = Math.cos(2 * w), s2 = Math.sin(2 * w);
+  const nr = c.b0 + c.b1 * cs + c.b2 * c2, ni = -(c.b1 * sn + c.b2 * s2);
+  const dr = 1 + c.a1 * cs + c.a2 * c2, di = -(c.a1 * sn + c.a2 * s2);
+  return (nr * nr + ni * ni) / (dr * dr + di * di);
 }
 
 function pct(a, p) {

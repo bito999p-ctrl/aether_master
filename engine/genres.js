@@ -52,10 +52,9 @@ export function genreDeltas(g, { diag, dec, p }) {
   // loudness: a very dynamic source is not pushed all the way to a loud genre's target
   let lufs = g.lufs;
   if (diag.crestDb >= 15 && lufs > -11) { lufs = -11; notes.push('抑揚がとても大きい曲なので、音圧は -11 LUFS までに留める（潰れ防止）'); }
-  if (dec.mastered && lufs > diag.lufs) { lufs = +diag.lufs.toFixed(1); notes.push(`マスタリング済みの音源なので、元の音量（${lufs} LUFS）より上げない`); }
   add('targetLufs', lufs - p.targetLufs);
-  // dense master: additive character (tape, room, kick) at half strength so it stays clear
-  if (dec.mastered) for (const k of ['colorDrive', 'spaceMix', 'punchDb']) if (out[k] > 0) out[k] = +(out[k] / 2).toFixed(2);
+  // dense source: additive character (tape, room, kick) at half strength so it stays clear
+  if (dec.dense) for (const k of ['colorDrive', 'spaceMix', 'punchDb']) if (out[k] > 0) out[k] = +(out[k] / 2).toFixed(2);
 
   // width: less for an already-wide song, more for a narrow one
   if (out.width > 0) {
