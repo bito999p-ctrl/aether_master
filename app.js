@@ -53,7 +53,7 @@ async function loadFile(file) {
 // ------------------------------------------------------------------ worker
 let solveBusy = false, solveQueued = false, solveTimer = 0, exportFormat = '';
 function onWorker(m) {
-  if (m.type === 'progress') return status(`${m.stage} ${Math.round(m.f * 100)}%`);
+  if (m.type === 'progress') { progress(m.f); return status(`${m.stage} ${Math.round(m.f * 100)}%`); }
   if (m.type === 'error') { console.error(m.message); status('エラー: ' + m.message.split('\n')[0]); solveBusy = false; return; }
   if (m.type === 'analyzed') {
     diag = m.diag; lastAuto = m.auto; rawAuto = m.auto.params; start = { ...m.params, off: {} }; cur = structuredClone(start); solvedAt = targetKey();
@@ -114,7 +114,7 @@ function setPlaying(on) {
   playing = on;
   if (on) ctx.resume();
   node.port.postMessage({ type: on ? 'play' : 'pause' });
-  $('play').textContent = on ? '❚❚' : '▶';
+  $('play').classList.toggle('on', on);
 }
 function sendBypass() {
   // plain bypass: the untouched source at its original level
@@ -124,7 +124,6 @@ function toggleAB() {
   bypass = !bypass;
   $('ab').classList.toggle('ab-on', bypass);
   spec.bypass = bypass;
-  $('ab').textContent = bypass ? 'B 原音' : 'A/B';
   $('mBig').classList.toggle('b', bypass);
   sendBypass();
 }
@@ -158,7 +157,8 @@ function onMeter(m) {
 }
 
 // ------------------------------------------------------------------ UI
-function status(t) { $('status').textContent = t; }
+function status(t) { $('status').textContent = t; $('status').parentElement.title = t; if (!/%$/.test(t)) progress(null); }
+function progress(f) { $('prog').style.width = f == null ? '0' : `${Math.round(f * 100)}%`; }
 
 // ------------------------------------------------------------------ detail rack
 // Each module is a card with its own colour, a live meter where there is one, and a reset.
@@ -487,13 +487,16 @@ function refreshPresets() {
   $('presetSel').innerHTML = '<option value="">プリセット…</option>' + Object.keys(ps).map((n) => `<option>${n}</option>`).join('');
 }
 $('presetSave').onclick = () => {
-  const name = prompt('プリセット名'); if (!name) return;
+  const name = $('presetName').value.trim();
+  if (!name) { $('presetName').focus(); return; }
   const ps = store.get('am5.presets', {});
   // song-specific values (bell frequencies, input trim) are left out
   ps[name] = Object.fromEntries(SLIDER_KEYS.filter((k) => !['lowHz', 'mudHz'].includes(k)).map((k) => [k, cur[k]]));
   ps[name].off = { ...cur.off };
-  store.set('am5.presets', ps); refreshPresets(); $('presetSel').value = name;
+  store.set('am5.presets', ps); refreshPresets(); $('presetSel').value = name; $('presetName').value = '';
+  spiceMsg(`プリセット「${name}」を保存しました`);
 };
+$('presetName').onkeydown = (e) => { if (e.key === 'Enter') $('presetSave').click(); };
 $('presetLoad').onclick = () => { const n = $('presetSel').value, p = store.get('am5.presets', {})[n]; if (!p) return; snapshot(); cur.off = { ...p.off }; setValues(p, Object.keys(p).filter((k) => k !== 'off')); spiceMsg(`プリセット「${n}」を読み込みました`); };
 $('presetDel').onclick = () => { const ps = store.get('am5.presets', {}); delete ps[$('presetSel').value]; store.set('am5.presets', ps); refreshPresets(); };
 $('forget').onclick = () => { if (confirm('学習した好みをリセットしますか？')) { store.set('am5.prefs', {}); status('好みの学習をリセットしました'); } };
@@ -514,13 +517,25 @@ function exportAs(format) {
   worker.postMessage({ type: 'render', params: cur, format, fs: +$('expRate').value });
 }
 $('expRate').value = store.get('am5.expRate', 44100);
-$('expRate').onchange = () => store.set('am5.expRate', +$('expRate').value);
-// presets popover in the deck
-$('presetBtn').onclick = (e) => { e.stopPropagation(); $('presetPop').classList.toggle('hidden'); };
-document.addEventListener('click', (e) => { if (!$('presetPop').contains(e.target)) $('presetPop').classList.add('hidden'); });
+for (const r of document.querySelectorAll('[name=expRate]')) {
+  r.checked = r.value === $('expRate').value;
+  r.onchange = () => { $('expRate').value = r.value; store.set('am5.expRate', +r.value); };
+}
+// deck popovers (presets / export); on phones they hang just below the button, full width
+// (the deck's backdrop-filter makes it the containing block of position: fixed, so the offset is deck-relative)
+const POPS = { presetBtn: 'presetPop', expBtn: 'expPop' };
+for (const [b, p] of Object.entries(POPS)) {
+  $(b).onclick = (e) => {
+    e.stopPropagation();
+    const open = $(p).classList.contains('hidden');
+    for (const q of Object.values(POPS)) $(q).classList.add('hidden');
+    if (open) { $(p).style.setProperty('--pop-top', `${$(b).getBoundingClientRect().bottom - $('deck').getBoundingClientRect().top + 8}px`); $(p).classList.remove('hidden'); }
+  };
+}
+document.addEventListener('click', (e) => { for (const q of Object.values(POPS)) if (!$(q).contains(e.target)) $(q).classList.add('hidden'); });
 $('learn').checked = store.get('am5.learn', true);
 $('learn').onchange = () => store.set('am5.learn', $('learn').checked);
-document.querySelectorAll('[data-export]').forEach((b) => { b.onclick = () => exportAs(b.dataset.export); });
+document.querySelectorAll('[data-export]').forEach((b) => { b.onclick = () => { $('expPop').classList.add('hidden'); exportAs(b.dataset.export); }; });
 
 function saveExport(L, R, format, fs) {
   let blob, ext;

@@ -49,42 +49,74 @@
   input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--text); border: 0; }
   input[type=range]:hover::-webkit-slider-thumb { background: var(--accent); }
 
-  /* ---------------------------------------------------------------- deck (always on top) */
-  #deck { position: sticky; top: 0; z-index: 10; background: var(--deck); border-bottom: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
-  .deck-in { max-width: 1200px; margin: 0 auto; padding: 8px 16px 10px; }
-  .topbar { display: flex; align-items: center; gap: 10px; min-height: 34px; }
-  .brand { font-weight: 700; letter-spacing: .14em; font-size: 12px; white-space: nowrap; }
-  .brand b { color: var(--accent); font-weight: 700; }
-  .brand small { color: var(--dim); letter-spacing: .05em; margin-left: 4px; font-weight: 500; }
-  #status { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-  .exp { display: flex; }
-  .exp button { border-radius: 0; margin-left: -1px; padding: 6px 10px; font-size: 12px; }
-  .exp button:first-of-type { border-radius: 6px 0 0 6px; margin-left: 0; }
-  .exp button:last-of-type { border-radius: 0 6px 6px 0; }
-  .exp .lbl { align-self: center; color: var(--muted); font-size: 10px; margin-right: 6px; letter-spacing: .12em; }
+  /* ---------------------------------------------------------------- site links (scroll away) */
+  body { background: radial-gradient(900px 380px at 12% -120px, rgba(255,176,59,.09), transparent 70%), radial-gradient(700px 320px at 95% -80px, rgba(88,196,255,.07), transparent 70%), var(--bg) no-repeat; }
+  .sitebar { max-width: 1200px; margin: 0 auto; padding: 10px 16px 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .sitebar a { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.025); color: var(--muted); font-size: 12px; font-weight: 500; text-decoration: none; transition: color .15s, border-color .15s, background .15s; }
+  .sitebar a:hover { color: var(--text); border-color: var(--line2); background: rgba(255,255,255,.05); }
+  .sitebar a svg { width: 14px; height: 14px; flex: none; }
+  .sitebar a.player { color: var(--cyan); border-color: rgba(88,196,255,.3); background: var(--cyan-soft); }
+  .sitebar a.player:hover { color: #9adcff; border-color: rgba(88,196,255,.55); }
 
-  .transport { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
-  #play { width: 42px; height: 34px; padding: 0; font-size: 15px; background: var(--accent); color: #1a1204; border-color: var(--accent); }
-  #play:hover { background: #ffc166; }
-  #ab { height: 34px; min-width: 70px; font-weight: 700; letter-spacing: .06em; }
-  #ab.ab-on { background: var(--cyan-soft); color: var(--cyan); border-color: var(--cyan); }
-  #pos { flex: 1; min-width: 80px; }
-  #pos::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(90deg, var(--accent) var(--p, 0%), var(--line2) var(--p, 0%)); }
-  #time { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
-  .lock { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; }
+  /* ---------------------------------------------------------------- deck (always on top) */
+  #deck { position: sticky; top: 0; z-index: 10; background: rgba(16,19,25,.86); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+  .deck-in { max-width: 1200px; margin: 0 auto; padding: 10px 16px 12px; }
+  .topbar { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; letter-spacing: .16em; font-size: 12px; white-space: nowrap; }
+  .brand .logo { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, #ffc15e, #ff7a3d); box-shadow: 0 0 18px rgba(255,150,60,.35), inset 0 1px 0 rgba(255,255,255,.35); color: #1a1204; }
+  .brand .logo svg { width: 16px; height: 16px; }
+  .brand b { color: var(--accent); font-weight: 800; }
+  .brand small { color: var(--dim); letter-spacing: .05em; margin-left: 2px; font-weight: 600; }
+  .statusbox { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.03); border: 1px solid var(--line); overflow: hidden; }
+  .statusbox::before { content: ""; width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  body.busy .statusbox::before { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+  #status { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  #prog { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: linear-gradient(90deg, var(--accent), #ff7a3d); transition: width .2s ease; }
+  .acts { display: flex; align-items: center; gap: 6px; flex: none; }
+  .dbtn { height: 32px; padding: 0 12px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid var(--line2); display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .dbtn svg { width: 14px; height: 14px; flex: none; }
+  .dbtn:hover:not(:disabled) { background: rgba(255,255,255,.08); border-color: #414859; }
+  .dbtn.go { background: linear-gradient(135deg, #ffc15e, #ff8f3b); border-color: transparent; color: #1a1204; box-shadow: 0 4px 14px rgba(255,150,50,.25); }
+  .dbtn.go:hover:not(:disabled) { background: linear-gradient(135deg, #ffcd7a, #ffa057); border-color: transparent; }
+  .dbtn .car { font-size: 8px; opacity: .7; }
+
+  .transport { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  #play { width: 40px; height: 40px; flex: none; padding: 0; border-radius: 50%; border: 0; display: grid; place-items: center; color: #1a1204; background: linear-gradient(135deg, #ffc15e, #ff8f3b); box-shadow: 0 4px 16px rgba(255,150,50,.35); transition: transform .12s, box-shadow .12s; }
+  #play:hover:not(:disabled) { background: linear-gradient(135deg, #ffcd7a, #ffa057); transform: scale(1.05); }
+  #play:active:not(:disabled) { transform: scale(.96); }
+  #play svg { width: 16px; height: 16px; }
+  #play .ic-pause, #play.on .ic-play { display: none; }
+  #play.on .ic-pause { display: block; }
+  #ab { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; height: 34px; padding: 3px; border-radius: 11px; background: #0a0c10; border: 1px solid var(--line2); flex: none; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
+  #ab:hover:not(:disabled) { background: #0a0c10; border-color: #414859; }
+  #ab span { position: relative; z-index: 1; padding: 0 10px; line-height: 26px; font-size: 11.5px; font-weight: 700; color: var(--dim); transition: color .18s; white-space: nowrap; }
+  #ab span:first-child { color: var(--accent); }
+  #ab::before { content: ""; position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 8px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); box-sizing: border-box; transition: transform .2s cubic-bezier(.3,.7,.2,1), background .2s, border-color .2s; }
+  #ab.ab-on::before { transform: translateX(100%); background: var(--cyan-soft); border-color: color-mix(in srgb, var(--cyan) 55%, transparent); }
+  #ab.ab-on span:first-child { color: var(--dim); }
+  #ab.ab-on span:last-child { color: var(--cyan); }
+  #pos { flex: 1; min-width: 80px; height: 22px; }
+  #pos::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: linear-gradient(90deg, #ffc15e, #ff8f3b var(--p, 0%), #2a303c var(--p, 0%)); }
+  #pos::-moz-range-track { height: 5px; border-radius: 3px; background: #2a303c; }
+  #pos::-moz-range-progress { height: 5px; border-radius: 3px; background: linear-gradient(90deg, #ffc15e, #ff8f3b); }
+  #pos::-webkit-slider-thumb { width: 14px; height: 14px; margin-top: -4.5px; background: #fff; box-shadow: 0 0 0 4px rgba(255,176,59,.25), 0 1px 4px rgba(0,0,0,.6); }
+  #time { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lock { --mc: var(--accent); display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; }
+  .lock:has(input:checked) { color: var(--text); }
   .lock .ts { display: none; }
   #solving { font-size: 11px; color: var(--accent); white-space: nowrap; }
 
-  .viz { display: grid; grid-template-columns: 1fr 230px; gap: 10px; margin-top: 8px; }
-  #spec { display: block; width: 100%; height: 150px; border-radius: var(--r); border: 1px solid var(--line); --sp-bg: #0a0c10; touch-action: pan-y; }
-  #meters { background: #0a0c10; border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; align-content: start; }
+  .viz { display: grid; grid-template-columns: 1fr 240px; gap: 10px; margin-top: 10px; }
+  #spec { display: block; width: 100%; height: 150px; border-radius: 12px; border: 1px solid var(--line); --sp-bg: #0a0c10; touch-action: pan-y; }
+  #meters { background: linear-gradient(180deg, #0e1117, #0a0c10); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; align-content: start; }
   .m { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .m .k { font-size: 9px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; white-space: nowrap; }
-  .m .v { font-family: var(--mono); font-size: 14px; font-weight: 600; line-height: 1.1; white-space: nowrap; }
-  .m.big { grid-column: 1 / -1; }
-  .m.big .v { font-size: 24px; color: var(--accent); }
-  .m.big .v small { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 4px; }
-  .m.big.b .v { color: var(--cyan); }
+  .m .k { font-size: 9px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; white-space: nowrap; font-weight: 600; }
+  .m .v { font-family: var(--mono); font-size: 14px; font-weight: 600; line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .m.big { grid-column: 1 / -1; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .m.big .v { font-size: 26px; color: var(--accent); text-shadow: 0 0 18px rgba(255,176,59,.3); }
+  .m.big .v small { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 4px; text-shadow: none; }
+  .m.big.b .v { color: var(--cyan); text-shadow: 0 0 18px rgba(88,196,255,.3); }
   .bar-h { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; display: flex; }
   .bar-h i { display: block; height: 100%; width: 0; background: var(--green); transition: width .08s linear; }
   .bar-h.gr { justify-content: flex-end; }
@@ -165,16 +197,28 @@
   @media (max-width: 700px) { .genreGrid { grid-template-columns: repeat(2, 1fr); } }
   .genreGrid button { text-align: left; }
 
-  /* deck: presets popover + export rate */
+  /* deck popovers: presets / export */
   .pwrap { position: relative; }
-  #presetBtn { padding: 6px 10px; font-size: 12px; }
-  #presetBtn .ps { display: none; }
-  #presetPop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 340px; max-width: calc(100vw - 24px); background: var(--panel2); border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px 12px; box-shadow: 0 12px 30px rgba(0,0,0,.5); }
-  #presetPop .ph { font-size: 10px; letter-spacing: .12em; color: var(--dim); font-weight: 600; margin: 4px 0 6px; }
-  #presetPop .ph + .opts { margin-bottom: 10px; }
-  #presetPop select { flex: 1; min-width: 0; }
-  .exp #expRate { border-radius: 6px 0 0 6px; padding: 5px 4px; font-size: 12px; margin-right: -1px; }
-  .exp #expRate + button { border-radius: 0; margin-left: 0; }
+  .pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: 340px; max-width: calc(100vw - 24px); background: rgba(28,32,41,.97); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--line2); border-radius: 14px; padding: 12px 14px 14px; box-shadow: 0 18px 40px rgba(0,0,0,.55); }
+  .pop .ph { font-size: 10px; letter-spacing: .12em; color: var(--dim); font-weight: 700; margin: 4px 0 8px; }
+  .pop .ph ~ .ph { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .pop .opts { flex-wrap: nowrap; }
+  .pop .opts + .opts { margin-top: 6px; }
+  .pop select, .pop input[type=text] { flex: 1; min-width: 0; height: 32px; border-radius: 8px; }
+  .pop input[type=text] { background: #0a0c10; border: 1px solid var(--line2); padding: 0 10px; font-size: 16px; }
+  .pop input[type=text]:focus { outline: none; border-color: var(--accent); }
+  .pop .opts button { height: 32px; border-radius: 8px; white-space: nowrap; }
+  .pop .opts.wrap { flex-wrap: wrap; }
+  .rateSeg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .rateSeg label { display: block; cursor: pointer; position: relative; }
+  .rateSeg input { position: absolute; opacity: 0; pointer-events: none; }
+  .rateSeg span { display: block; text-align: center; padding: 6px 0; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .rateSeg input:checked + span { border-color: var(--accent); background: var(--accent-soft); color: #ffd79a; }
+  .fmtList { display: grid; gap: 6px; }
+  .fmtList button { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 10px; text-align: left; }
+  .fmtList button b { font-family: var(--mono); font-size: 13px; }
+  .fmtList button small { color: var(--muted); font-size: 11px; }
+  .fmtList button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
 
   /* detail rack */
   details.info summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 600; }
@@ -262,19 +306,25 @@
 
   /* ---------------------------------------------------------------- mobile */
   @media (max-width: 760px) {
-    .deck-in { padding: 6px 12px 8px; }
-    .topbar { gap: 8px; }
-    .brand small, .exp .lbl, .lock .t { display: none; }
-    .exp button { padding: 5px 7px; font-size: 11px; }
-    #open { padding: 5px 9px; font-size: 12px; }
-    .transport { gap: 8px; }
-    .viz { grid-template-columns: 1fr; gap: 6px; margin-top: 6px; }
-    #spec { height: 84px; }
-    #meters { grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 5px 8px; gap: 2px 6px; }
+    .sitebar { padding: 8px 12px 6px; }
+    .sitebar a { font-size: 11px; padding: 4px 10px 4px 8px; }
+    .deck-in { padding: 8px 12px 10px; }
+    .topbar { flex-wrap: wrap; gap: 8px; }
+    .acts { margin-left: auto; }
+    .statusbox { order: 9; flex: 1 1 100%; height: 30px; }
+    .brand small, .lock .t, .dbtn .tx { display: none; }
+    .dbtn { padding: 0 10px; }
+    .pop { position: fixed; left: 12px; right: 12px; top: var(--pop-top, 60px); width: auto; max-width: none; max-height: calc(100dvh - var(--pop-top, 60px) - 12px); overflow: auto; }
+    .transport { gap: 8px; margin-top: 8px; }
+    #play { width: 38px; height: 38px; }
+    #ab span { padding: 0 8px; font-size: 11px; }
+    .viz { grid-template-columns: 1fr; gap: 6px; margin-top: 8px; }
+    #spec { height: 84px; border-radius: 10px; }
+    #meters { grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 6px 8px; gap: 2px 6px; border-radius: 10px; }
     .m .k { font-size: 8px; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; }
     .lock .ts { display: inline; font-size: 11px; }
-    .m.big { grid-column: auto; }
-    .m.big .v { font-size: 14px; }
+    .m.big { grid-column: auto; padding-bottom: 0; border-bottom: 0; }
+    .m.big .v { font-size: 14px; text-shadow: none; }
     .m.big .v small, #mTarget, .bar-h { display: none; }
     .m .v { font-size: 12px; }
     #main { padding: 10px 12px 0; }
@@ -288,12 +338,7 @@
     .infocols { grid-template-columns: 1fr; }
     .bfaders { grid-template-columns: 1fr; }
     .btabs { grid-template-columns: repeat(2, 1fr); }
-    #presetBtn { padding: 5px 8px; font-size: 12px; }
-    #presetBtn .pt { display: none; }
-    #presetBtn .ps { display: inline; }
-    .brand { font-size: 11px; letter-spacing: .06em; }
     #qc { white-space: normal; font-size: 10px; }
-    #expRate { font-size: 11px; padding: 4px 2px; }
     .modesw { flex: 1; }
     .tabs .grow { display: none; }
     .tab { padding: 6px 10px; min-width: 0; }
@@ -302,49 +347,74 @@
   }
   @media (max-width: 420px) {
     #time { display: none; }
-    .topbar { gap: 6px; }
-    .brand { font-size: 10px; letter-spacing: 0; }
-    .exp button { padding: 5px 5px; }
-    #open { padding: 5px 7px; white-space: nowrap; flex: none; }
+    .brand { font-size: 11px; letter-spacing: .1em; }
+  }
+  @media (max-width: 400px) { /* narrow phones: seek bar gets its own row */
+    .transport { flex-wrap: wrap; row-gap: 4px; }
+    .lock { margin-left: auto; }
+    #pos { order: 5; flex: 1 1 100%; }
+    #solving { order: 4; }
   }
   body.busy #main, body.busy #viz, body.busy #expGroup, body.busy #pos { opacity: .35; pointer-events: none; }
 </style>
 </head>
 <body>
+<nav class="sitebar" aria-label="サイト">
+  <a href="https://bito999p-ctrl.github.io/sonografica"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Sonografica</a>
+  <a class="player" href="https://aether-player-blush.vercel.app/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>AetherPlayer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+</nav>
 <div id="deck">
   <div class="deck-in">
     <div class="topbar">
-      <span class="brand"><b>AETHER</b>MASTER<small>5</small></span>
-      <span id="status">曲を読み込んでください</span>
+      <span class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 9v6M16 4v16M20 10v4"/></svg></span><span><b>AETHER</b>MASTER<small>5</small></span></span>
+      <div class="statusbox"><span id="status">曲を読み込んでください</span><i id="prog"></i></div>
       <input type="file" id="file" accept=".mp3,.wav,.m4a,.aac,.flac,.ogg,.opus,.aif,.aiff,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/aac,audio/flac,audio/ogg,audio/aiff" hidden>
-      <button id="open" title="曲を開く">開く</button>
-      <div class="pwrap hidden" id="presetWrap">
-        <button id="presetBtn" title="プリセットと好みの学習"><span class="pt">プリセット ▾</span><span class="ps">☰</span></button>
-        <div id="presetPop" class="hidden">
-          <div class="ph">プリセット</div>
-          <div class="opts">
-            <select id="presetSel"><option value="">プリセット…</option></select>
-            <button id="presetLoad">読込</button><button id="presetSave">保存</button><button id="presetDel" title="選んだプリセットを削除">削除</button>
+      <div class="acts">
+        <button id="open" class="dbtn" title="曲を開く"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="tx">開く</span></button>
+        <div class="pwrap hidden" id="presetWrap">
+          <button id="presetBtn" class="dbtn" title="プリセットと好みの学習" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h4M12 12h8M4 18h12"/><circle cx="17" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="19" cy="18" r="2"/></svg><span class="tx">プリセット</span><span class="car">▼</span></button>
+          <div id="presetPop" class="pop hidden">
+            <div class="ph">プリセット</div>
+            <div class="opts">
+              <select id="presetSel"><option value="">保存したプリセット…</option></select>
+              <button id="presetLoad">読込</button><button id="presetDel" title="選んだプリセットを削除">削除</button>
+            </div>
+            <div class="opts">
+              <input type="text" id="presetName" placeholder="今の設定に名前を付けて保存" maxlength="40" enterkeyhint="done">
+              <button id="presetSave" class="primary">保存</button>
+            </div>
+            <div class="ph">好みの学習</div>
+            <div class="opts wrap">
+              <label><input type="checkbox" id="learn" checked> 書き出し時に好みを学習して、次の曲の自動設定に反映</label>
+              <button id="forget">学習をリセット</button>
+            </div>
           </div>
-          <div class="ph">好みの学習</div>
-          <div class="opts">
-            <label><input type="checkbox" id="learn" checked> 書き出し時に好みを学習して、次の曲の自動設定に反映</label>
-            <button id="forget">学習をリセット</button>
+        </div>
+        <div class="pwrap hidden" id="expGroup">
+          <button id="expBtn" class="dbtn go" title="書き出し" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="tx">書き出し</span><span class="car">▼</span></button>
+          <div id="expPop" class="pop hidden">
+            <div class="ph">サンプルレート</div>
+            <div class="rateSeg">
+              <label><input type="radio" name="expRate" value="44100"><span>44.1 kHz</span></label>
+              <label><input type="radio" name="expRate" value="48000"><span>48 kHz</span></label>
+            </div>
+            <select id="expRate" hidden><option value="44100">44.1k</option><option value="48000">48k</option></select>
+            <div class="ph">形式</div>
+            <div class="fmtList">
+              <button data-export="wav16"><b>WAV 16bit</b><small>CD・配信向け（ディザあり）</small></button>
+              <button data-export="wav24"><b>WAV 24bit</b><small>高音質で保存</small></button>
+              <button data-export="mp3"><b>MP3</b><small>320kbps・共有用</small></button>
+            </div>
           </div>
         </div>
       </div>
-      <div class="exp hidden" id="expGroup">
-        <span class="lbl">EXPORT</span>
-        <select id="expRate" title="書き出しのサンプルレート"><option value="44100">44.1k</option><option value="48000">48k</option></select>
-        <button data-export="wav16" title="WAV 16bit（ディザあり）">WAV16</button><button data-export="wav24" title="WAV 24bit">WAV24</button><button data-export="mp3" title="MP3 320kbps">MP3</button>
-      </div>
     </div>
     <div class="transport hidden" id="transport">
-      <button id="play" title="再生／停止（Space）">▶</button>
-      <button id="ab" title="加工前の音と比べる（B キー）">A/B</button>
+      <button id="play" title="再生／停止（Space）" aria-label="再生／停止"><svg class="ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg><svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="5.5" y="4" width="4.5" height="16" rx="1.2"/><rect x="14" y="4" width="4.5" height="16" rx="1.2"/></svg></button>
+      <button id="ab" title="加工前の音と比べる（B キー）"><span>マスター</span><span>原音</span></button>
       <input type="range" id="pos" min="0" max="1" step="0.001" value="0" aria-label="再生位置">
       <span id="time">0:00 / 0:00</span>
-      <label class="lock" title="スライダーを動かしても音量を目標 LUFS に保つ"><input type="checkbox" id="lock"><span class="t">ラウドネス固定</span><span class="ts">LUFS固定</span></label>
+      <label class="lock" title="スライダーを動かしても音量を目標 LUFS に保つ"><input type="checkbox" id="lock" class="sw"><span class="t">ラウドネス固定</span><span class="ts">LUFS固定</span></label>
       <span id="solving"></span>
     </div>
     <div class="viz hidden" id="viz">
