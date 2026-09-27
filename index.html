@@ -135,6 +135,7 @@
   #drop .foot { margin-top: 18px; font-size: 11px; color: var(--dim); }
   #drop .classic { display: inline-block; margin-top: 14px; font-size: 11px; color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--line2); }
   #drop .classic:hover { color: var(--accent); border-color: var(--accent); }
+  #drop .engine-ver { margin-top: 10px; font-size: 10.5px; color: var(--muted); }
   @media (max-width: 760px) { #drop { margin: 24px 12px; padding: 40px 16px; } }
 
   /* ---------------------------------------------------------------- main */
@@ -436,6 +437,7 @@
   <button class="primary" id="open2">ファイルを選ぶ</button>
   <div class="foot">WAV / MP3 / FLAC など · 処理はすべてブラウザ内で行われます</div>
   <a class="classic" href="classic/">以前のバージョン（AetherMaster Classic）はこちら →</a>
+  <div class="engine-ver" id="engineVer"></div>
 </div>
 
 <div id="main" class="hidden">

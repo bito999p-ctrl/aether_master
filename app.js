@@ -6,9 +6,11 @@ import { Spectrum } from './spectrum.js';
 import { EqGraph, BAND_COL } from './eqgraph.js';
 import { AXES, FIXES, MAX_LEVEL, recommend, applyDeltas, describe } from './engine/spices.js';
 import { GENRES, guessGenre, genreDeltas } from './engine/genres.js';
+import { ENGINE_VERSION } from './engine/version.js';
 
 const FS = 44100;
 const $ = (id) => document.getElementById(id);
+$('engineVer').textContent = `エンジン ${ENGINE_VERSION}`;
 
 const SLIDER_KEYS = GROUPS.flatMap(([, rows]) => rows.map((r) => r[0]));
 
