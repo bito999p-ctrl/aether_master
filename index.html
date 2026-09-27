@@ -1,772 +1,405 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AETHERMASTER | AI自動・手動対応の高音質無料Webマスタリングツール</title>
-  <meta name="description" content="AETHERMASTER（エーテルマスター）は、ブラウザ上で動作するAI自動・手動対応の高音質オンラインマスタリングツールです。5-BAND EQ、真空管/テープ・サチュレーター、ステレオイメージャー、ブリックウォールリミッターなどの本格的なマスタリングプロセッサーを完全無料で利用できます。">
-  <meta name="keywords" content="マスタリング, オンラインマスタリング, AIマスタリング, DTM, Web Audio, 無料マスタリング, イコライザー, サチュレーター, AETHERMASTER">
-  <meta property="og:title" content="AETHERMASTER | AI自動・手動対応の高音質無料Webマスタリングツール">
-  <meta property="og:description" content="ブラウザ上で動作するAI自動・手動対応の高音質オンラインマスタリングツール。5-BAND EQやサチュレーターなどを完全無料で利用できます。">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://bito999p-ctrl.github.io/aether_master/">
-  <meta property="og:image" content="https://bito999p-ctrl.github.io/sonografica/favicon.png">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="AETHERMASTER | AI自動・手動対応の高音質無料Webマスタリングツール">
-  <meta name="twitter:description" content="ブラウザ上で動作するAI自動・手動対応の高音質オンラインマスタリングツール。">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=6.0.0">
-  <link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C8CLCFDVX2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AetherMaster 5</title>
+<meta name="description" content="曲を読み込むだけで自動解析、その曲に合ったマスタリングを設定。ブラウザだけで動くマスタリングツール。">
+<meta property="og:title" content="AetherMaster 5">
+<meta property="og:description" content="曲を読み込むだけで自動解析、その曲に合ったマスタリングを設定。ブラウザだけで動くマスタリングツール。">
+<meta property="og:url" content="https://bito999p-ctrl.github.io/aether_master/">
+<meta property="og:type" content="website">
+<link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f13; --deck: #12151b; --panel: #161a21; --panel2: #1c2029; --raise: #232834;
+    --line: #262b36; --line2: #323846;
+    --text: #d9dde6; --muted: #858d9e; --dim: #5d6474;
+    --accent: #ffb03b; --accent-soft: rgba(255,176,59,.14);
+    --cyan: #58c4ff; --cyan-soft: rgba(88,196,255,.12);
+    --green: #62d98b; --red: #ff6b6b;
+    --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    --r: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 13px/1.45 Inter, 'Hiragino Sans', 'Yu Gothic UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  button, select, input { font: inherit; color: inherit; }
+  .hidden { display: none !important; }
 
-        gtag('config', 'G-C8CLCFDVX2');
-    </script>
+  button {
+    background: var(--raise); border: 1px solid var(--line2); border-radius: 6px;
+    padding: 6px 12px; cursor: pointer; transition: background .12s, border-color .12s, color .12s;
+  }
+  button:hover:not(:disabled) { background: #2b3140; border-color: #414859; }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--accent); color: #1a1204; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover:not(:disabled) { background: #ffc166; border-color: #ffc166; }
+  select { background: var(--raise); border: 1px solid var(--line2); border-radius: 6px; padding: 5px 8px; }
+  input[type=checkbox] { accent-color: var(--accent); }
+
+  /* range sliders */
+  input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; height: 18px; margin: 0; cursor: pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--line2); border-radius: 2px; }
+  input[type=range]::-moz-range-track { height: 3px; background: var(--line2); border-radius: 2px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4.5px; border-radius: 50%; background: var(--text); border: 0; box-shadow: 0 0 0 3px rgba(0,0,0,.35); }
+  input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--text); border: 0; }
+  input[type=range]:hover::-webkit-slider-thumb { background: var(--accent); }
+
+  /* ---------------------------------------------------------------- deck (always on top) */
+  #deck { position: sticky; top: 0; z-index: 10; background: var(--deck); border-bottom: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .deck-in { max-width: 1200px; margin: 0 auto; padding: 8px 16px 10px; }
+  .topbar { display: flex; align-items: center; gap: 10px; min-height: 34px; }
+  .brand { font-weight: 700; letter-spacing: .14em; font-size: 12px; white-space: nowrap; }
+  .brand b { color: var(--accent); font-weight: 700; }
+  .brand small { color: var(--dim); letter-spacing: .05em; margin-left: 4px; font-weight: 500; }
+  #status { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .exp { display: flex; }
+  .exp button { border-radius: 0; margin-left: -1px; padding: 6px 10px; font-size: 12px; }
+  .exp button:first-of-type { border-radius: 6px 0 0 6px; margin-left: 0; }
+  .exp button:last-of-type { border-radius: 0 6px 6px 0; }
+  .exp .lbl { align-self: center; color: var(--muted); font-size: 10px; margin-right: 6px; letter-spacing: .12em; }
+
+  .transport { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  #play { width: 42px; height: 34px; padding: 0; font-size: 15px; background: var(--accent); color: #1a1204; border-color: var(--accent); }
+  #play:hover { background: #ffc166; }
+  #ab { height: 34px; min-width: 70px; font-weight: 700; letter-spacing: .06em; }
+  #ab.ab-on { background: var(--cyan-soft); color: var(--cyan); border-color: var(--cyan); }
+  #pos { flex: 1; min-width: 80px; }
+  #pos::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(90deg, var(--accent) var(--p, 0%), var(--line2) var(--p, 0%)); }
+  #time { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .lock { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; }
+  .lock .ts { display: none; }
+  #solving { font-size: 11px; color: var(--accent); white-space: nowrap; }
+
+  .viz { display: grid; grid-template-columns: 1fr 230px; gap: 10px; margin-top: 8px; }
+  #spec { display: block; width: 100%; height: 150px; border-radius: var(--r); border: 1px solid var(--line); --sp-bg: #0a0c10; touch-action: pan-y; }
+  #meters { background: #0a0c10; border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; align-content: start; }
+  .m { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .m .k { font-size: 9px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+  .m .v { font-family: var(--mono); font-size: 14px; font-weight: 600; line-height: 1.1; white-space: nowrap; }
+  .m.big { grid-column: 1 / -1; }
+  .m.big .v { font-size: 24px; color: var(--accent); }
+  .m.big .v small { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+  .m.big.b .v { color: var(--cyan); }
+  .bar-h { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; display: flex; }
+  .bar-h i { display: block; height: 100%; width: 0; background: var(--green); transition: width .08s linear; }
+  .bar-h.gr { justify-content: flex-end; }
+  .bar-h.gr i { background: var(--red); }
+  #mTarget { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+  /* ---------------------------------------------------------------- empty state */
+  #drop {
+    max-width: 720px; margin: 60px auto; padding: 56px 24px; text-align: center;
+    border: 1.5px dashed var(--line2); border-radius: 14px; background: var(--panel); color: var(--muted);
+  }
+  #drop h2 { color: var(--text); font-size: 18px; margin: 0 0 6px; font-weight: 600; }
+  #drop p { margin: 0 0 18px; }
+  body.over #drop { border-color: var(--accent); background: var(--accent-soft); }
+  body.over #deck { box-shadow: 0 0 0 2px var(--accent); }
+  #drop .foot { margin-top: 18px; font-size: 11px; color: var(--dim); }
+  #drop .classic { display: inline-block; margin-top: 14px; font-size: 11px; color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--line2); }
+  #drop .classic:hover { color: var(--accent); border-color: var(--accent); }
+  @media (max-width: 760px) { #drop { margin: 24px 12px; padding: 40px 16px; } }
+
+  /* ---------------------------------------------------------------- main */
+  #main { max-width: 1200px; margin: 0 auto; padding: 12px 16px 0; }
+  .tabs { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+  /* AUTO / CUSTOM: a two-position mode switch with a sliding thumb */
+  .modesw { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: #0a0c10; border: 1px solid var(--line2); border-radius: 12px; padding: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
+  .modesw .thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 9px; background: linear-gradient(180deg, #2a2f3b, #1d212a); border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 25%, transparent), 0 2px 6px rgba(0,0,0,.5); transition: transform .22s cubic-bezier(.3,.7,.2,1); pointer-events: none; }
+  .modesw:has(.tab[data-tab="adv"].on) .thumb { transform: translateX(100%); }
+  .tab { position: relative; z-index: 1; background: none; border: 0; border-radius: 9px; padding: 7px 18px; color: var(--dim); text-align: left; min-width: 150px; transition: color .15s; }
+  .tab b { display: flex; align-items: center; gap: 7px; font-size: 14px; letter-spacing: .18em; font-weight: 800; }
+  .tab b::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--line2); transition: background .15s, box-shadow .15s; }
+  .tab small { display: block; font-size: 10px; margin-top: 1px; padding-left: 14px; font-weight: 500; letter-spacing: .02em; }
+  .tab:hover:not(:disabled) { background: none; border-color: transparent; color: var(--muted); }
+  .tab.on, .tab.on:hover:not(:disabled) { color: var(--text); }
+  .tab.on b::before { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .tab.on small { color: var(--muted); }
+  .tabs .grow { flex: 1; }
+  .tabs .tools button { padding: 4px 10px; font-size: 12px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .card h3, .sec { margin: 0 0 10px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+  /* recommendations */
+  #recs p { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+  #recs p.rh, #genres p.rh { color: var(--text); font-weight: 600; }
+  #recs p.rh small, #genres p.rh small { display: block; color: var(--muted); font-weight: 400; }
+  .recrow { display: flex; gap: 12px; align-items: center; padding: 8px 10px; margin-bottom: 6px; background: var(--cyan-soft); border: 1px solid rgba(88,196,255,.28); border-radius: var(--r); }
+  .recrow:last-child { margin-bottom: 0; }
+  .recrow button { flex: none; background: var(--cyan); color: #04121c; border-color: var(--cyan); font-weight: 600; }
+  .recrow button:hover:not(:disabled) { background: #86d6ff; border-color: #86d6ff; }
+  .recrow button.on, .recrow button.on:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #1a1204; }
+  .recrow span { font-size: 12px; }
+
+  /* taste axes */
+  #spices h4 { margin: 18px 0 8px; font-size: 11px; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
+  #spices h4:first-child { margin-top: 0; }
+  .axis { display: grid; grid-template-columns: 1fr 120px 1fr; gap: 8px; align-items: stretch; margin-bottom: 8px; }
+  .side { width: 100%; padding: 8px 12px; min-height: 54px; background: var(--panel2); border-color: var(--line); font-weight: 600; }
+  .axis .side:first-child { text-align: left; }
+  .axis .side:last-child { text-align: right; }
+  .side small { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; font-weight: 400; }
+  .side.on, .side.on:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: #ffd79a; }
+  .side.rec { box-shadow: inset 0 0 0 1px var(--cyan); }
+  .mid { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  .mid .t { font-weight: 600; font-size: 12px; }
+  .meter { display: flex; gap: 3px; align-items: center; }
+  .meter i { width: 11px; height: 6px; border-radius: 2px; background: var(--line2); }
+  .meter i.f { background: var(--accent); box-shadow: 0 0 6px rgba(255,176,59,.55); }
+  .meter b { width: 2px; height: 12px; background: var(--dim); margin: 0 2px; font-size: 0; }
+  .mid .x { font-size: 10px; padding: 1px 6px; color: var(--muted); }
+  .fixes { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .fix { position: relative; }
+  .fix .side { text-align: left; padding-right: 36px; }
+  .fix .dots { color: var(--accent); font-size: 9px; letter-spacing: 2px; margin-left: 4px; }
+  .fix .x { position: absolute; top: 6px; right: 6px; padding: 0 7px; font-size: 12px; }
+
+  #spiceFoot { position: sticky; bottom: 0; z-index: 5; background: rgba(13,15,19,.94); backdrop-filter: blur(6px); border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: flex-start; margin: 0 -16px; padding: 8px 16px; }
+  .genreGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  @media (max-width: 700px) { .genreGrid { grid-template-columns: repeat(2, 1fr); } }
+  .genreGrid button { text-align: left; }
+
+  /* deck: presets popover + export rate */
+  .pwrap { position: relative; }
+  #presetBtn { padding: 6px 10px; font-size: 12px; }
+  #presetBtn .ps { display: none; }
+  #presetPop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 340px; max-width: calc(100vw - 24px); background: var(--panel2); border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px 12px; box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+  #presetPop .ph { font-size: 10px; letter-spacing: .12em; color: var(--dim); font-weight: 600; margin: 4px 0 6px; }
+  #presetPop .ph + .opts { margin-bottom: 10px; }
+  #presetPop select { flex: 1; min-width: 0; }
+  .exp #expRate { border-radius: 6px 0 0 6px; padding: 5px 4px; font-size: 12px; margin-right: -1px; }
+  .exp #expRate + button { border-radius: 0; margin-left: 0; }
+
+  /* detail rack */
+  details.info summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 600; }
+  details.info[open] summary { margin-bottom: 10px; }
+  .infocols { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; }
+  .rackbar { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; flex-wrap: wrap; }
+  .rackhelp { color: var(--dim); font-size: 11px; margin: 0; flex: 1; min-width: 220px; }
+  .rackbtns { display: flex; gap: 6px; }
+  .rackbtns button { font-size: 11px; padding: 4px 10px; }
+  /* module power: a sliding ON / OFF toggle */
+  .mod .pwr { position: relative; width: 50px; height: 24px; padding: 0; border-radius: 12px; flex: none; cursor: pointer; background: var(--mc); border: 0; box-shadow: 0 0 10px color-mix(in srgb, var(--mc) 45%, transparent), inset 0 1px 2px rgba(0,0,0,.35); transition: background .18s, box-shadow .18s; }
+  .mod .pwr::before { content: ""; position: absolute; top: 3px; left: 29px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); transition: left .18s cubic-bezier(.3,.7,.2,1); }
+  .mod .pwr::after { content: "ON"; position: absolute; left: 8px; top: 0; line-height: 24px; font-size: 10px; font-weight: 800; letter-spacing: .06em; color: #10131a; }
+  .mod .pwr:hover:not(:disabled) { background: var(--mc); filter: brightness(1.1); }
+  .mod.bypassed .pwr, .mod.bypassed .pwr:hover:not(:disabled) { background: #2a2f3b; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); filter: none; }
+  .mod.bypassed .pwr::before { left: 3px; background: #8a91a0; }
+  .mod.bypassed .pwr::after { content: "OFF"; left: auto; right: 7px; color: var(--dim); }
+  .mod.bypassed { border-top-color: var(--line2); background: var(--panel); }
+  .mod.bypassed .mt b::after { content: "BYPASS"; margin-left: 8px; font-size: 9px; letter-spacing: .14em; color: var(--dim); border: 1px solid var(--line2); border-radius: 4px; padding: 1px 5px; vertical-align: 2px; }
+  .mod.bypassed .mbody, .mod.bypassed .mm { opacity: .38; filter: grayscale(1); }
+  .rackhelp .tk { display: inline-block; width: 2px; height: 9px; background: var(--cyan); vertical-align: -1px; margin: 0 3px; }
+  #groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); grid-auto-flow: row dense; gap: 12px; align-items: start; }
+  .mod { --mc: var(--accent); background: linear-gradient(180deg, #1a1e27, var(--panel) 60px); border: 1px solid var(--line); border-top: 2px solid var(--mc); border-radius: 10px; min-width: 0; }
+  .mod.wide { grid-column: 1 / -1; }
+  .mod header { display: flex; align-items: center; gap: 10px; padding: 9px 12px 8px; border-bottom: 1px solid var(--line); }
+  .mod .led { width: 8px; height: 8px; border-radius: 50%; background: var(--mc); box-shadow: 0 0 8px var(--mc); flex: none; }
+  .mod .mt { flex: 1; min-width: 0; }
+  .mod .mt b { display: block; font-size: 13px; }
+  .mod .mt small { display: block; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mm { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; }
+  .mm .k { color: var(--dim); font-size: 9px; }
+  .mm .bar { width: 60px; height: 5px; background: #0a0c10; border-radius: 3px; overflow: hidden; display: flex; justify-content: flex-end; }
+  .mm .bar i { background: var(--red); width: 0; transition: width .08s linear; }
+  .mm .v { color: var(--red); width: 30px; text-align: right; }
+  .mreset { font-size: 11px; padding: 3px 8px; visibility: hidden; }
+  .mod.dirty .mreset { visibility: visible; }
+  .mbody { padding: 8px 12px 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 18px; }
+  .fd { min-width: 0; padding: 3px 0; }
+  .fd-top { display: flex; align-items: center; gap: 6px; min-height: 20px; }
+  .fd .l { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; cursor: default; user-select: none; }
+  .fd .val { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  .fd.changed .val { color: var(--mc); font-weight: 600; }
+  .fd.changed .l { color: var(--text); }
+  .fd .rs { padding: 0 5px; font-size: 11px; line-height: 16px; color: var(--muted); visibility: hidden; }
+  .fd.changed .rs { visibility: visible; }
+  .fd.off .l, .fd.off .val { opacity: .45; }
+  .fd.off .fd-trk { opacity: .35; }
+  .fd-trk { position: relative; }
+  .fd-trk input { width: 100%; display: block; height: 20px; }
+  .fd-trk input::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: linear-gradient(90deg, #0a0c10 calc(var(--a, 0) * 100%), var(--mc) calc(var(--a, 0) * 100%), var(--mc) calc(var(--b, 0) * 100%), #0a0c10 calc(var(--b, 0) * 100%)); box-shadow: inset 0 0 0 1px var(--line2); }
+  .fd-trk input::-moz-range-track { height: 5px; border-radius: 3px; background: linear-gradient(90deg, #0a0c10 calc(var(--a, 0) * 100%), var(--mc) calc(var(--a, 0) * 100%), var(--mc) calc(var(--b, 0) * 100%), #0a0c10 calc(var(--b, 0) * 100%)); }
+  .fd-trk input::-webkit-slider-thumb { width: 14px; height: 14px; margin-top: -4.5px; background: #e9ecf3; box-shadow: 0 1px 4px rgba(0,0,0,.6), 0 0 0 2px #0a0c10; }
+  .fd-trk input:hover::-webkit-slider-thumb, .fd-trk input:active::-webkit-slider-thumb { background: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--mc) 35%, transparent), 0 1px 4px rgba(0,0,0,.6); }
+  .fd-trk .tick { position: absolute; top: 2px; left: calc(7px + var(--t, 0) * (100% - 14px)); width: 2px; height: 5px; margin-left: -1px; background: var(--cyan); border-radius: 1px; pointer-events: none; }
+  .sw { -webkit-appearance: none; appearance: none; width: 26px; height: 14px; border-radius: 7px; background: var(--line2); position: relative; cursor: pointer; flex: none; margin: 0; transition: background .12s; }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: #aab; transition: left .12s; }
+  .sw:checked { background: var(--mc); }
+  .sw:checked::after { left: 14px; background: #fff; }
+  .grb { width: 42px; height: 4px; background: #0a0c10; border-radius: 2px; overflow: hidden; display: flex; justify-content: flex-end; flex: none; }
+  .grb i { background: var(--red); width: 0; transition: width .08s linear; }
+  .eqbody { display: block; }
+  .eqg { display: block; width: 100%; height: 190px; border-radius: 8px; border: 1px solid var(--line); touch-action: none; }
+  .btabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0 4px; }
+  .btabs button { font-size: 11px; padding: 5px 6px; text-align: left; font-family: var(--mono); border-left: 3px solid var(--bc); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btabs button b { color: var(--bc); }
+  .btabs button span { color: var(--muted); }
+  .btabs button.on { background: color-mix(in srgb, var(--bc) 16%, var(--raise)); border-color: var(--bc); }
+  .bfaders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 18px; }
+
+  /* fixes: level as 弱/中/強 segments */
+  .fix .lv { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+  .fix .lv i { flex: 1; font-style: normal; font-size: 10px; text-align: center; padding: 1px 0; border-radius: 3px; background: var(--line); color: var(--dim); font-weight: 600; }
+  .fix .lv i.f { background: var(--accent); color: #1a1204; }
+  .fix .lv em { font-style: normal; font-size: 10px; color: var(--muted); margin-left: 4px; white-space: nowrap; font-weight: 400; min-width: 70px; text-align: right; }
+  #spiceMsg { white-space: pre-wrap; min-height: 2.9em; color: var(--muted); flex: 1; font-size: 12px; }
+  #qc { font-family: var(--mono); font-size: 11px; color: var(--green); white-space: nowrap; align-self: center; }
+
+  /* advanced */
+  #diag { color: var(--muted); font-size: 12px; }
+  #reasons { padding-left: 16px; margin: 0; color: var(--muted); font-size: 12px; }
+  #reasons li { margin-bottom: 4px; }
+  #reasons .k { color: var(--dim); font-size: 10px; font-family: var(--mono); }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .opts label { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 12px; }
+
+  /* ---------------------------------------------------------------- mobile */
+  @media (max-width: 760px) {
+    .deck-in { padding: 6px 12px 8px; }
+    .topbar { gap: 8px; }
+    .brand small, .exp .lbl, .lock .t { display: none; }
+    .exp button { padding: 5px 7px; font-size: 11px; }
+    #open { padding: 5px 9px; font-size: 12px; }
+    .transport { gap: 8px; }
+    .viz { grid-template-columns: 1fr; gap: 6px; margin-top: 6px; }
+    #spec { height: 84px; }
+    #meters { grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 5px 8px; gap: 2px 6px; }
+    .m .k { font-size: 8px; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; }
+    .lock .ts { display: inline; font-size: 11px; }
+    .m.big { grid-column: auto; }
+    .m.big .v { font-size: 14px; }
+    .m.big .v small, #mTarget, .bar-h { display: none; }
+    .m .v { font-size: 12px; }
+    #main { padding: 10px 12px 0; }
+    #spiceFoot { margin: 0 -12px; padding: 8px 12px; }
+    .axis { grid-template-columns: 1fr 84px 1fr; gap: 6px; }
+    .side { padding: 7px 8px; font-size: 12px; }
+    .side small { font-size: 10px; }
+    .recrow { flex-direction: column; align-items: stretch; gap: 6px; }
+    .cols { grid-template-columns: 1fr; }
+    #groups { grid-template-columns: 1fr; }
+    .infocols { grid-template-columns: 1fr; }
+    .bfaders { grid-template-columns: 1fr; }
+    .btabs { grid-template-columns: repeat(2, 1fr); }
+    #presetBtn { padding: 5px 8px; font-size: 12px; }
+    #presetBtn .pt { display: none; }
+    #presetBtn .ps { display: inline; }
+    .brand { font-size: 11px; letter-spacing: .06em; }
+    #qc { white-space: normal; font-size: 10px; }
+    #expRate { font-size: 11px; padding: 4px 2px; }
+    .modesw { flex: 1; }
+    .tabs .grow { display: none; }
+    .tab { padding: 6px 10px; min-width: 0; }
+    .tab b { font-size: 13px; letter-spacing: .12em; }
+    .tab small { font-size: 9px; padding-left: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
+  @media (max-width: 420px) {
+    #time { display: none; }
+    .topbar { gap: 6px; }
+    .brand { font-size: 10px; letter-spacing: 0; }
+    .exp button { padding: 5px 5px; }
+    #open { padding: 5px 7px; white-space: nowrap; flex: none; }
+  }
+  body.busy #main, body.busy #viz, body.busy #expGroup, body.busy #pos { opacity: .35; pointer-events: none; }
+</style>
 </head>
 <body>
-  <div class="app-container">
-    <header class="app-header">
-      <div class="logo-area">
-        <div class="logo-icon"><i class="fa-solid fa-wave-square"></i></div>
-        <div class="logo-text">
-          <div style="font-family: var(--font-tech); font-size: 0.65rem; font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.2em; line-height: 1; margin-bottom: 3px; text-transform: uppercase;">Sonografica Presents</div>
-          <h1 style="line-height: 1.1;">AETHERMASTER</h1>
-          <span class="subtitle">PROFESSIONAL DIGITAL MASTERING SUITE</span>
-        </div>
-      </div>
-      
-      <div class="header-nav">
-        <a href="https://bito999p-ctrl.github.io/sonografica" class="nav-link-btn portal-btn">
-          <i class="fa-solid fa-house"></i> <span>Sonografica ポータル</span>
-        </a>
-        <a href="https://aether-player-blush.vercel.app/" class="nav-link-btn player-btn" target="_blank">
-          <i class="fa-solid fa-compact-disc"></i> <span>AetherPlayer</span>
-        </a>
-      </div>
-
-      <div class="system-status">
-        <span class="status-indicator online" id="status-indicator"></span>
-        <span class="status-text" id="status-text">SYSTEM READY</span>
-      </div>
-    </header>
-
-    <section class="panel upload-panel" id="main-upload-panel">
-      <div id="drop-zone" class="drop-zone">
-        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-        <p class="upload-text">オーディオファイルをドラッグ＆ドロップ、または<span class="browse-btn">ファイルを選択</span></p>
-        <span class="upload-hint">対応形式: WAV, MP3, FLAC, M4A</span>
-        <input type="file" id="file-input" accept=".mp3,.wav,.flac,.m4a,audio/*" class="hidden-input">
-      </div>
-    </section>
-
-    <div class="app-sticky-header-wrapper">
-      <section class="panel player-panel hidden" id="player-panel">
-        <div id="track-info" class="track-info">
-          <div class="track-details">
-            <span class="track-name" id="track-name">Song_Title.wav</span>
-            <span class="track-meta" id="track-meta">44.1 kHz / 16-bit Stereo | 03:42</span>
+<div id="deck">
+  <div class="deck-in">
+    <div class="topbar">
+      <span class="brand"><b>AETHER</b>MASTER<small>5</small></span>
+      <span id="status">曲を読み込んでください</span>
+      <input type="file" id="file" accept="audio/*" hidden>
+      <button id="open" title="曲を開く">開く</button>
+      <div class="pwrap hidden" id="presetWrap">
+        <button id="presetBtn" title="プリセットと好みの学習"><span class="pt">プリセット ▾</span><span class="ps">☰</span></button>
+        <div id="presetPop" class="hidden">
+          <div class="ph">プリセット</div>
+          <div class="opts">
+            <select id="presetSel"><option value="">プリセット…</option></select>
+            <button id="presetLoad">読込</button><button id="presetSave">保存</button><button id="presetDel" title="選んだプリセットを削除">削除</button>
           </div>
-          <div id="desktop-controls-target">
-            <div class="player-controls">
-              <button id="btn-play-pause" class="ctrl-btn play-btn" title="再生/一時停止" disabled>
-                <i class="fa-solid fa-play"></i>
-              </button>
-              <button id="btn-stop" class="ctrl-btn" title="停止" disabled>
-                <i class="fa-solid fa-stop"></i>
-              </button>
-              <button id="btn-loop" class="ctrl-btn toggle-btn" title="ループ" disabled>
-                <i class="fa-solid fa-repeat"></i>
-              </button>
-              <button id="btn-bypass" class="ctrl-btn bypass-btn toggle-btn alert-toggle" title="バイパス (A/Bテスト)" disabled>
-                <span>BYPASS</span>
-              </button>
-              <button id="btn-quick-upload" class="ctrl-btn upload-btn" title="ファイルを選択">
-                <i class="fa-solid fa-folder-open"></i>
-              </button>
-            </div>
+          <div class="ph">好みの学習</div>
+          <div class="opts">
+            <label><input type="checkbox" id="learn" checked> 書き出し時に好みを学習して、次の曲の自動設定に反映</label>
+            <button id="forget">学習をリセット</button>
           </div>
         </div>
-      </section>
-
-      <section class="panel visualizer-panel">
-        <div class="panel-header" style="flex-direction: column; align-items: stretch; gap: 8px;">
-          <div class="visualizer-header-top" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <h2 class="panel-title" style="margin: 0;"><i class="fa-solid fa-chart-simple"></i> VISUALIZERS <span class="help-icon" data-tooltip="リアルタイムの周波数スペクトラムと、マスタリング前後の波形を視覚的に比較・モニタリングするエリアです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-            <button id="btn-toggle-monitor" class="monitor-toggle-btn" style="display: none;" title="モニター表示切替">
-              <i class="fa-solid fa-chevron-up" style="transition: transform 0.3s;"></i>
-            </button>
-          </div>
-          <div class="visualizer-header-bottom" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; flex-wrap: wrap;">
-            <div class="visualizer-tabs">
-              <button class="tab-btn active" data-target="spectrum">FREQUENCY SPECTRUM</button>
-              <button class="tab-btn" data-target="waveform">WAVEFORM COMPARE</button>
-            </div>
-            <div id="mobile-controls-target" class="mobile-controls-container">
-              <div class="mobile-controls-placeholder"></div>
-              <div id="mobile-track-name" class="mobile-sticky-track-name"></div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="visualizer-content">
-          <div class="visualizer-container" id="spectrum-view">
-            <canvas id="spectrum-canvas"></canvas>
-          </div>
-          <div class="visualizer-container hidden" id="waveform-view">
-            <canvas id="waveform-canvas"></canvas>
-            <div class="waveform-legend">
-              <span class="legend-item dry"><span class="legend-color"></span>ORIGINAL</span>
-              <span class="legend-item wet"><span class="legend-color"></span>MASTERED</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      </div>
+      <div class="exp hidden" id="expGroup">
+        <span class="lbl">EXPORT</span>
+        <select id="expRate" title="書き出しのサンプルレート"><option value="44100">44.1k</option><option value="48000">48k</option></select>
+        <button data-export="wav16" title="WAV 16bit（ディザあり）">WAV16</button><button data-export="wav24" title="WAV 24bit">WAV24</button><button data-export="mp3" title="MP3 320kbps">MP3</button>
+      </div>
     </div>
-
-      <main class="dashboard-grid">
-        <section class="panel meter-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-gauge-high"></i> ANALYZERS <span class="help-icon" data-tooltip="L/Rの入力音量、コンプレッサーのゲイン削減量（GR）、出力音量、およびステレオの左右相関を監視するメーター群です。"><i class="fa-regular fa-circle-question"></i></span></h2>
-        </div>
-        <div class="meters-container">
-          <div class="meter-channel">
-            <div class="meter-track">
-              <div class="meter-fill" id="meter-in-l"></div>
-              <div class="meter-fill" id="meter-in-r"></div>
-            </div>
-            <span class="meter-label">INPUT</span>
-          </div>
-          <div class="meter-channel gr-meter">
-            <div class="meter-track gr-track">
-              <div class="meter-fill gr-fill" id="meter-gr"></div>
-            </div>
-            <span class="meter-label">GR (dB)</span>
-          </div>
-          <div class="meter-channel">
-            <div class="meter-track">
-              <div class="meter-fill" id="meter-out-l"></div>
-              <div class="meter-fill" id="meter-out-r"></div>
-            </div>
-            <span class="meter-label">OUTPUT</span>
-          </div>
-        </div>
-        <div class="correlation-panel">
-          <span class="corr-label">STEREO CORRELATION</span>
-          <div class="corr-track">
-            <div class="corr-pointer" id="corr-pointer"></div>
-            <div class="corr-ticks">
-              <span>-1</span>
-              <span>0</span>
-              <span>+1</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-sliders"></i> PRESETS & LOUDNESS <span class="help-icon" data-tooltip="曲のジャンルを選び、YouTubeやCDなどの配信先に合わせた音量に自動調整するセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <span data-tooltip="クリックすると、すべてのツマミを手動変更する前の、AIが自動調整してくれた最初の状態に戻します。" style="display: inline-block;">
-            <button id="btn-reset-master" class="tab-btn" style="font-size: 0.65rem; font-weight: 700; color: var(--accent-cyan); border: 1px dashed rgba(0, 242, 254, 0.35); padding: 2px 8px; border-radius: 4px; background: transparent; cursor: pointer; transition: all 0.2s;" disabled>RESET</button>
-          </span>
-        </div>
-        <div class="control-group">
-          <label for="preset-select">GENRE PRESET <span class="help-icon" data-tooltip="曲のジャンルを選びます。選ぶだけで、そのジャンルに最適な音響バランス（低音や高音の比率）が自動適用されます。"><i class="fa-regular fa-circle-question"></i></span></label>
-          <div class="select-wrapper">
-            <select id="preset-select">
-              <option value="auto" selected>✨ AI AUTO (Smart Auto-Mastering)</option>
-              <option value="custom">CUSTOM (Manual Settings)</option>
-              <option value="pops">POPS (Balanced Warmth)</option>
-              <option value="rnb">R&B / SOUL (Silky Vocals & Warm Groove)</option>
-              <option value="rock">ROCK (Punchy Mid/Tape Drive)</option>
-              <option value="metal">METAL / PUNK (Fast Compressor & Mid-Scoop)</option>
-              <option value="edm">EDM / DANCE (Punchy Lows & Bright Highs)</option>
-              <option value="hiphop">HIP HOP / TRAP (Heavy Sub-Bass & Crisp Transients)</option>
-              <option value="lofi">LO-FI / CHILL (Warm Tape Saturation & Mellow Highs)</option>
-              <option value="hardcore">HARDCORE (Aggressive/Loud)</option>
-              <option value="ambient">AMBIENT (Ultra Wide/Clean)</option>
-              <option value="podcast">PODCAST / VOICE (Centered Speech Intelligibility)</option>
-              <option value="classic">CLASSIC (Pure Dynamics)</option>
-              <option value="jazz">JAZZ (Vintage Smooth)</option>
-              <option value="acoustic">ACOUSTIC / FOLK (Natural Dynamics & Woody Mids)</option>
-            </select>
-          </div>
-        </div>
-        <div class="control-group">
-          <label for="loudness-select">LOUDNESS TARGET <span class="help-icon" data-tooltip="配信先やリスニング環境に合わせた目標音圧です。「STREAMING (-14 LUFS)」がYouTubeやSpotify等の世界標準・推奨値です。"><i class="fa-regular fa-circle-question"></i></span></label>
-          <div class="select-wrapper">
-            <select id="loudness-select">
-              <option value="streaming" selected>🌐 STREAMING (-14 LUFS / Recommended)</option>
-              <option value="club">🔊 CLUB/MODERN (-9 LUFS / Punchy)</option>
-              <option value="loud">🔥 MAX LOUD (-7 LUFS / Intense)</option>
-              <option value="natural">🍃 NATURAL (-16 LUFS / Acoustic & Classical)</option>
-              <option value="custom">🎛️ CUSTOM (Manual / AI Adjusted)</option>
-            </select>
-          </div>
-        </div>
-        <div class="input-output-gains">
-          <div class="control-row">
-            <span class="control-label">INPUT GAIN <span class="help-icon" data-tooltip="曲の元の音量を調整します。右に回すと大きくなります。AI解析ボタンを押すと、歪まない最適な音量に自動設定されます。"><i class="fa-regular fa-circle-question"></i></span></span>
-            <input type="range" id="input-gain-slider" min="-12" max="12" step="0.1" value="0">
-            <span class="value-readout" id="input-gain-val">0.0 dB</span>
-          </div>
-          <div class="control-row">
-            <span class="control-label">OUTPUT CEILING <span class="help-icon" data-tooltip="出力される最大音量の上限値です。「-1.0dB」にしておくことで、音量をどれだけ上げても音が割れる（歪む）のを完全に防ぎます。"><i class="fa-regular fa-circle-question"></i></span></span>
-            <input type="range" id="ceiling-slider" min="-2.0" max="-0.1" step="0.1" value="-1.0">
-            <span class="value-readout" id="ceiling-val">-1.0 dB</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wand-magic-sparkles"></i> AI SMART ASSISTANCE <span class="help-icon" data-tooltip="AIが曲全体をスキャンし、人間が判断しにくい低音・中音・高音の音量バランスを一瞬で整えて自動補正します。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 0.65rem; color: var(--text-secondary); font-weight: 600;">AUTO</span>
-            <label class="switch" style="transform: scale(0.8); transform-origin: right center; margin: 0; display: inline-flex;">
-              <input type="checkbox" id="ai-auto-run" checked>
-              <span class="slider-round"></span>
-            </label>
-          </div>
-        </div>
-        <div class="control-group" style="margin-bottom: 0;">
-          <button id="btn-ai-analyze" class="action-btn" style="padding: 10px 15px; font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-purple) 0%, #ff007f 100%); border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(157, 78, 221, 0.2); cursor: pointer; color: #fff; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" disabled>
-            <i class="fa-solid fa-wand-magic-sparkles"></i> ANALYZE & AUTO-CORRECT EQ
-          </button>
-          
-          <div id="ai-report" class="ai-report" style="margin-top: 12px; font-family: var(--font-tech); font-size: 0.7rem; color: var(--text-muted); display: none; background: rgba(0, 0, 0, 0.35); border-radius: 8px; padding: 12px; border: 1px solid rgba(157, 78, 221, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); animation: fadeIn 0.4s ease;">
-            
-            <div style="text-align: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; color: var(--accent-cyan); font-weight: 700; font-size: 0.72rem; letter-spacing: 1px;">
-              <i class="fa-solid fa-square-poll-vertical"></i> ANALYZED SONIC PROFILE <span id="ai-detected-genre-badge" style="background: var(--accent-purple); color: #fff; padding: 1px 6px; border-radius: 4px; font-size: 0.58rem; margin-left: 6px; font-weight: 800; display: inline-block; box-shadow: 0 0 6px rgba(157,78,221,0.5);">AUTO</span>
-            </div>
-
-            <div class="ai-stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
-              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
-                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">DYNAMICS (CREST FACTOR)</div>
-                <div id="ai-crest-factor" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">-- dB</div>
-                <div id="ai-crest-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
-              </div>
-              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
-                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">STEREO PHASE CORR</div>
-                <div id="ai-stereo-corr" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">--</div>
-                <div id="ai-stereo-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
-              </div>
-              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
-                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">BASS DEVIATION</div>
-                <div id="ai-bass-energy" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">--</div>
-                <div id="ai-bass-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
-              </div>
-              <div style="background: rgba(255,255,255,0.02); padding: 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.03);">
-                <div style="font-size: 0.58rem; color: var(--text-secondary); line-height: 1.1;">TREBLE DEVIATION</div>
-                <div id="ai-treble-energy" style="color: #fff; font-weight: 700; font-size: 0.75rem; margin-top: 2px;">--</div>
-                <div id="ai-treble-desc" style="font-size: 0.55rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">--</div>
-              </div>
-            </div>
-
-
-
-            <div style="color: #00f2fe; font-weight: 700; margin-bottom: 4px; font-size: 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2px; letter-spacing: 0.5px;">
-              <i class="fa-solid fa-sliders"></i> DYNAMIC AUTO-ADJUSTMENTS APPLIED
-            </div>
-            <div id="ai-adjustments-list" style="display: flex; flex-direction: column; gap: 1px; font-size: 0.65rem;">
-              <div style="color: var(--text-muted); font-style: italic; padding: 2px;">No adjustments applied yet.</div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wind"></i> NOISE CLEANER <span class="help-icon" data-tooltip="曲の中に含まれる不要な雑音（空調音やシャーという砂嵐音）を検知して取り除くセクションです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-        </div>
-        <div class="control-row">
-          <span class="control-label">RUMBLE CUT <span class="help-icon" data-tooltip="オンにすると、マイクの吹かれや空調の不要な超低域ノイズ（32Hz以下）を安全にカットし、キックの芯を損なわずに低音をすっきりさせます。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <label class="switch">
-            <input type="checkbox" id="rumble-cut-enable">
-            <span class="slider-round"></span>
-          </label>
-        </div>
-        <div class="control-row">
-          <span class="control-label">HISS REDUCER <span class="help-icon" data-tooltip="スライダーを右に動かすと、曲の後ろで鳴っている「サー」という砂嵐ノイズを除去します。演奏中は自動でオフになり音質を守ります。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="hiss-reducer-slider" min="0" max="100" step="1" value="0">
-          <span class="value-readout" id="hiss-reducer-val">OFF</span>
-        </div>
-        <div class="control-row secondary-control" id="hiss-limit-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 2px; margin-top: -6px; opacity: 0.85;">
-          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-compress"></i> Max Limit</span>
-          <input type="range" id="hiss-limit-slider" min="-24.0" max="-6.0" step="0.5" value="-16.0" style="height: 4px;">
-          <span class="value-readout" id="hiss-limit-val" style="min-width: 65px; text-align: right;">-16.0 dB</span>
-        </div>
-        <div class="control-row secondary-control" id="hiss-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 2px; opacity: 0.85;">
-          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Start Freq</span>
-          <input type="range" id="hiss-freq-slider" min="4000" max="14000" step="50" value="9000" style="height: 4px;">
-          <span class="value-readout" id="hiss-freq-val" style="min-width: 65px; text-align: right;">9,000 Hz</span>
-        </div>
-        <div class="control-row secondary-control" id="hiss-max-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 4px; opacity: 0.85;">
-          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrow-right-to-bracket"></i> End Freq (上限)</span>
-          <input type="range" id="hiss-max-freq-slider" min="5000" max="20000" step="50" value="16000" style="height: 4px;">
-          <span class="value-readout" id="hiss-max-freq-val" style="min-width: 65px; text-align: right;">16,000 Hz</span>
-        </div>
-        <div class="control-row" style="margin-top: 8px;">
-          <span class="control-label">DE-ESSER <span class="help-icon" data-tooltip="スライダーを右に動かすと、ボーカルの「サ、シ、ス、セ、ソ」に含まれる耳に刺さるキンキンした歯擦音（シビランス）を自動検知して抑えます。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="deesser-slider" min="0" max="100" step="1" value="0">
-          <span class="value-readout" id="deesser-val">OFF</span>
-        </div>
-        <div class="control-row secondary-control" id="deesser-limit-row" style="margin-left: 15px; font-size: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px; padding-bottom: 2px; margin-top: -6px; opacity: 0.85;">
-          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-compress"></i> Max Limit</span>
-          <input type="range" id="deesser-limit-slider" min="-24.0" max="-6.0" step="0.5" value="-15.0" style="height: 4px;">
-          <span class="value-readout" id="deesser-limit-val" style="min-width: 65px; text-align: right;">-15.0 dB</span>
-        </div>
-        <div class="control-row secondary-control" id="deesser-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 2px; opacity: 0.85;">
-          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrows-left-right-to-line"></i> Start Freq</span>
-          <input type="range" id="deesser-freq-slider" min="4000" max="12000" step="50" value="7500" style="height: 4px;">
-          <span class="value-readout" id="deesser-freq-val" style="min-width: 65px; text-align: right;">7,500 Hz</span>
-        </div>
-        <div class="control-row secondary-control" id="deesser-max-freq-row" style="margin-left: 15px; font-size: 0.8rem; padding-bottom: 4px; opacity: 0.85;">
-          <span class="control-label" style="font-weight: normal;"><i class="fa-solid fa-arrow-right-to-bracket"></i> End Freq (上限)</span>
-          <input type="range" id="deesser-max-freq-slider" min="4500" max="16000" step="50" value="9500" style="height: 4px;">
-          <span class="value-readout" id="deesser-max-freq-val" style="min-width: 65px; text-align: right;">9,500 Hz</span>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-fire"></i> HARMONIC SATURATOR <span class="help-icon" data-tooltip="音に「温かみ」や「太さ」を与えるセクションです。真空管やテープを通したような心地よい粘りと艶を曲に加えます。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <label class="switch">
-            <input type="checkbox" id="sat-enable" checked>
-            <span class="slider-round"></span>
-          </label>
-        </div>
-        <div class="control-group">
-          <label for="sat-type">SATURATION CHARACTER</label>
-          <div class="select-wrapper">
-            <select id="sat-type">
-              <option value="tube">TUBE (Warm asymmetric harmonics)</option>
-              <option value="tape">TAPE (Analog tape soft clipping)</option>
-              <option value="hardcore">DRIVE (Aggressive solid-state drive)</option>
-            </select>
-          </div>
-        </div>
-        <div class="control-row">
-          <span class="control-label">DRIVE <span class="help-icon" data-tooltip="音の太さや温かみの「強さ」を調整します。右に動かすほど音がジリッと太くなり、ロックなどで迫力が出ます。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="sat-drive-slider" min="1" max="100" step="1" value="15">
-          <span class="value-readout" id="sat-drive-val">15%</span>
-        </div>
-        <div class="control-row">
-          <span class="control-label">MIX <span class="help-icon" data-tooltip="太くした音を、元のきれいな音にどれだけ混ぜるかの割合です。通常は10%〜20%前後で自然に馴染ませます。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="sat-mix-slider" min="0" max="100" step="1" value="30">
-          <span class="value-readout" id="sat-mix-val">30%</span>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-wave-triangle"></i> 5-BAND EQ <span class="help-icon" data-tooltip="低音、中低音、中音、中高音、高音の5つの帯域の音量を調整し、暖かみや太さを出しつつキンキン感などを除去します。"><i class="fa-regular fa-circle-question"></i></span></h2>
-        </div>
-        <div class="eq-band">
-          <div class="eq-band-header">
-            <span class="band-name">LOW SHELF</span>
-            <span class="value-readout" id="eq-low-val">+1.0 dB</span>
-          </div>
-          <div class="eq-row">
-            <input type="range" id="eq-low-gain" min="-12" max="12" step="0.5" value="1.0">
-            <div class="freq-input-group">
-              <input type="number" id="eq-low-freq" min="40" max="250" value="120">
-              <span class="unit">Hz</span>
-            </div>
-          </div>
-          <div class="eq-row" style="margin-top: 4px;">
-            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
-              <span class="band-name" style="font-size: 0.65rem;">LOW Q</span>
-              <span class="help-icon" data-tooltip="低域シェルビングフィルターのQ値です。大きくすると、カットオフ付近に反発が生じ、低音（キック等）がタイトに引き締まります（プルテック・トリック）。"><i class="fa-regular fa-circle-question"></i></span>
-            </div>
-            <input type="range" id="eq-low-q" min="0.3" max="2.0" step="0.05" value="0.70">
-            <span class="value-readout" id="eq-low-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">0.70</span>
-          </div>
-        </div>
-        <div class="eq-band">
-          <div class="eq-band-header">
-            <span class="band-name">LOW-MID PEAK</span>
-            <span class="value-readout" id="eq-low-mid-val">0.0 dB</span>
-          </div>
-          <div class="eq-row">
-            <input type="range" id="eq-low-mid-gain" min="-12" max="12" step="0.5" value="0.0">
-            <div class="freq-input-group">
-              <input type="number" id="eq-low-mid-freq" min="150" max="400" value="200">
-              <span class="unit">Hz</span>
-            </div>
-          </div>
-          <div class="eq-row" style="margin-top: 4px;">
-            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
-              <span class="band-name" style="font-size: 0.65rem;">LOW-MID Q</span>
-              <span class="help-icon" data-tooltip="ローミッド（中低域）のQ値です。ボーカルの温かみやベースのふくよかさを調整する帯域の幅を設定します。"><i class="fa-regular fa-circle-question"></i></span>
-            </div>
-            <input type="range" id="eq-low-mid-q" min="0.3" max="1.5" step="0.05" value="0.60">
-            <span class="value-readout" id="eq-low-mid-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">0.60</span>
-          </div>
-        </div>
-        <div class="eq-band">
-          <div class="eq-band-header">
-            <span class="band-name">MID PEAK</span>
-            <span class="value-readout" id="eq-mid-val">-0.5 dB</span>
-          </div>
-          <div class="eq-row">
-            <input type="range" id="eq-mid-gain" min="-12" max="12" step="0.5" value="-0.5">
-            <div class="freq-input-group">
-              <input type="number" id="eq-mid-freq" min="300" max="5000" value="1000">
-              <span class="unit">Hz</span>
-            </div>
-          </div>
-          <div class="eq-row" style="margin-top: 4px;">
-            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
-              <span class="band-name" style="font-size: 0.65rem;">MID Q</span>
-              <span class="help-icon" data-tooltip="調整する「音の幅（広さ）」です。小さくすると中音域全体が滑らかに変わり、大きくするとボーカルなどを狙い撃ちできます。"><i class="fa-regular fa-circle-question"></i></span>
-            </div>
-            <input type="range" id="eq-mid-q" min="0.3" max="5.0" step="0.1" value="1.0">
-            <span class="value-readout" id="eq-mid-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">1.0</span>
-          </div>
-        </div>
-        <div class="eq-band">
-          <div class="eq-band-header">
-            <span class="band-name">MID-HIGH PEAK</span>
-            <span class="value-readout" id="eq-mid-high-val">0.0 dB</span>
-          </div>
-          <div class="eq-row">
-            <input type="range" id="eq-mid-high-gain" min="-12" max="12" step="0.5" value="0.0">
-            <div class="freq-input-group">
-              <input type="number" id="eq-mid-high-freq" min="2000" max="6000" value="3000">
-              <span class="unit">Hz</span>
-            </div>
-          </div>
-          <div class="eq-row" style="margin-top: 4px;">
-            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
-              <span class="band-name" style="font-size: 0.65rem;">MID-HIGH Q</span>
-              <span class="help-icon" data-tooltip="ミッドハイ（中高域）のQ値です。ボーカルの抜けや存在感（距離感）を調節します。"><i class="fa-regular fa-circle-question"></i></span>
-            </div>
-            <input type="range" id="eq-mid-high-q" min="0.3" max="3.0" step="0.1" value="1.0">
-            <span class="value-readout" id="eq-mid-high-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">1.0</span>
-          </div>
-        </div>
-        <div class="eq-band">
-          <div class="eq-band-header">
-            <span class="band-name">HIGH SHELF</span>
-            <span class="value-readout" id="eq-high-val">+1.5 dB</span>
-          </div>
-          <div class="eq-row">
-            <input type="range" id="eq-high-gain" min="-12" max="12" step="0.5" value="1.5">
-            <div class="freq-input-group">
-              <input type="number" id="eq-high-freq" min="6000" max="16000" value="10000">
-              <span class="unit">Hz</span>
-            </div>
-          </div>
-          <div class="eq-row" style="margin-top: 4px;">
-            <div style="display: flex; align-items: center; gap: 4px; min-width: 60px;">
-              <span class="band-name" style="font-size: 0.65rem;">HIGH Q</span>
-              <span class="help-icon" data-tooltip="高域シェルビングフィルターのQ値です。大きくすると、高域のカットオフ手前が僅かに凹み、それ以上のきらびやかな空気感を引き立てます。"><i class="fa-regular fa-circle-question"></i></span>
-            </div>
-            <input type="range" id="eq-high-q" min="0.3" max="2.0" step="0.05" value="0.70">
-            <span class="value-readout" id="eq-high-q-val" style="min-width: 25px; text-align: right; font-size: 0.72rem;">0.70</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-compress"></i> GLUE COMPRESSOR <span class="help-icon" data-tooltip="バラバラに聴こえる各楽器の音量を均一に整え、「1つの曲としてのまとまり感（接着効果）」を生み出します。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <label class="switch">
-            <input type="checkbox" id="comp-enable" checked>
-            <span class="slider-round"></span>
-          </label>
-        </div>
-        <div class="control-row">
-          <span class="control-label">THRESHOLD <span class="help-icon" data-tooltip="どの音量を超えたら音を抑え込むか（圧縮）の基準値です。左に動かす（下げる）ほど、全体の音量が平均化されまとまります。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="comp-thresh" min="-40" max="0" step="0.5" value="-16">
-          <span class="value-readout" id="comp-thresh-val">-16.0 dB</span>
-        </div>
-        <div class="control-row">
-          <span class="control-label">RATIO <span class="help-icon" data-tooltip="音を抑え込む「強さ」の比率です。数値を大きくするほど、大きな音が強く抑え込まれ、全体の音量が均一になります。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="comp-ratio" min="1.1" max="10.0" step="0.1" value="1.8">
-          <span class="value-readout" id="comp-ratio-val">1.8:1</span>
-        </div>
-        <div class="control-row flex-sliders">
-          <div class="slider-col">
-            <span class="control-label">ATTACK <span class="help-icon" data-tooltip="音が大きくなってからコンプレッサーが作動するまでの「反応時間」です。遅くするとキック等のアタック感が残ります。"><i class="fa-regular fa-circle-question"></i></span></span>
-            <input type="range" id="comp-attack" min="0.005" max="0.3" step="0.005" value="0.03" class="vertical">
-            <span class="value-readout" id="comp-attack-val">30 ms</span>
-          </div>
-          <div class="slider-col">
-            <span class="control-label">RELEASE <span class="help-icon" data-tooltip="音量が小さくなってから元の音量に戻るまでの「戻り速度」です。曲のテンポに合わせて自然にリリースタイムを調整します。"><i class="fa-regular fa-circle-question"></i></span></span>
-            <input type="range" id="comp-release" min="0.05" max="1.5" step="0.01" value="0.15" class="vertical">
-            <span class="value-readout" id="comp-release-val">150 ms</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-arrows-left-right"></i> STEREO IMAGER <span class="help-icon" data-tooltip="曲全体の「左右の広がり感」を調整します。ベースなどの超低音は自動でセンターに集められ、音が軽くなるのを防ぎます。"><i class="fa-regular fa-circle-question"></i></span></h2>
-        </div>
-        <div class="control-row">
-          <span class="control-label">WIDTH <span class="help-icon" data-tooltip="左右の広がり幅です。100%より大きくすると部屋全体に広がる立体的な音響になり、小さくすると中央に音が凝縮されます。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="width-slider" min="0" max="2" step="0.02" value="1.2">
-          <span class="value-readout" id="width-val">120%</span>
-        </div>
-        <div class="width-visualizer">
-          <div class="width-arc">
-            <div class="width-beam left" id="width-beam-l"></div>
-            <div class="width-beam right" id="width-beam-r"></div>
-            <div class="width-center-node"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel control-panel">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-block-brick"></i> MAXIMIZER & LIMITER <span class="help-icon" data-tooltip="音を歪ませずに全体の音量（音圧）を商業用CDや配信サイトレベルまで引き上げる、最後の仕上げ調整ステージです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-        </div>
-        <div class="control-row">
-          <span class="control-label">CLIPPER DRIVE <span class="help-icon" data-tooltip="リミッター直前でドラム等の過度なトゲ（ピーク）を自然に整え、音を濁らせずに音圧を底上げするマスタリングクリッパーです。0dBでバイパス、2〜3dBでパンチのある現代的音圧になります。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="clipper-drive" min="0" max="6" step="0.1" value="0.0">
-          <span class="value-readout" id="clipper-drive-val">+0.0 dB</span>
-        </div>
-        <div class="control-row">
-          <span class="control-label">GAIN BOOST <span class="help-icon" data-tooltip="音量の「引き上げ量」です。右に動かすほど全体の音がパワフルに大きくなります。音割れは自動で防がれます。"><i class="fa-regular fa-circle-question"></i></span></span>
-          <input type="range" id="limiter-gain" min="0" max="15" step="0.1" value="4.0">
-          <span class="value-readout" id="limiter-gain-val">+4.0 dB</span>
-        </div>
-        <div class="limiter-meter">
-          <div class="limiter-light" id="limiter-light">LIMITING</div>
-          <span class="limiter-warning hidden" id="limiter-warning">CLIPPING DETECTED</span>
-        </div>
-      </section>
-
-      <!-- AUDIO SPICES CABINET PANEL -->
-      <section class="panel control-panel full-width">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-pepper-hot"></i> AUDIO SPICES <span class="help-icon" data-tooltip="ワンクリックで曲の「雰囲気」を微調整できるプロ秘伝のスパイス効果です。複数組み合わせて好みの音に仕上げられます。"><i class="fa-regular fa-circle-question"></i></span></h2>
-        </div>
-        <div class="spice-cabinet-grid">
-          
-          <div class="spice-card">
-            <label class="spice-label" for="spice-air-treble">
-              <span class="spice-title">高音の抜け感 <span class="spice-sub">AIR TREBLE</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、15kHz以上の超高域（Air Band）を滑らかに持ち上げ、サ行の刺さりを防ぎながら透き通った空気感と気品を加えます。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-air-treble">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <div class="spice-card">
-            <label class="spice-label" for="spice-kick-punch">
-              <span class="spice-title">キックの抜け感 <span class="spice-sub">KICK PUNCH</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、ドラムのキックのアタック感を際立たせ、ノリの良い元気で力強いサウンドにします。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-kick-punch">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <div class="spice-card">
-            <label class="spice-label" for="spice-pultec-bass">
-              <span class="spice-title">低音の引き締め <span class="spice-sub">PULTEC BASS</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、名機Pultecトリックを再現。重低音を支えつつ200Hzのこもり（泥水感）をカットし、キックとベースの輪郭をタイトに引き締めます。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-pultec-bass">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <div class="spice-card">
-            <label class="spice-label" for="spice-vocal-presence">
-              <span class="spice-title">ボーカルの存在感 <span class="spice-sub">VOCAL PRESENCE</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、声の明瞭度や子音が宿るプレゼンス帯域を自然に引き出し、歌詞をオケから一歩前にクリアに浮き立たせます。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-vocal-presence">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <div class="spice-card">
-            <label class="spice-label" for="spice-silky-smooth">
-              <span class="spice-title">耳触りの良さ <span class="spice-sub">SILKY SMOOTH</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、イヤホンや大音量で耳が痛くなりやすい帯域のトゲを優しく丸め、長時間でも聴き疲れしないシルキーで上質な質感にします。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-silky-smooth">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <div class="spice-card">
-            <label class="spice-label" for="spice-stereo-wider">
-              <span class="spice-title">空間の広がり <span class="spice-sub">STEREO WIDER</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、低音の位相崩れを防ぎながら横方向の広がりを自然に拡大し、立体的で開放感のある音響空間を作ります。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-stereo-wider">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <div class="spice-card">
-            <label class="spice-label" for="spice-analog-warmth">
-              <span class="spice-title">アナログの温かみ <span class="spice-sub">ANALOG WARMTH</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、真空管サチュレーションを強め、音の尖りを丸くして耳に優しい温かいアナログ質感にします。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-analog-warmth">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-          <div class="spice-card">
-            <label class="spice-label" for="spice-loudness-push">
-              <span class="spice-title">音圧プッシュ <span class="spice-sub">LOUDNESS PUSH</span></span>
-              <span class="help-icon" data-tooltip="オンにすると、クリッパーとリミッターが協調し、全体のバランスやダイナミクスを壊さずに力強く音圧を底上げします。"><i class="fa-regular fa-circle-question"></i></span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="spice-loudness-push">
-              <span class="slider-round"></span>
-            </label>
-          </div>
-
-        </div>
-      </section>
-
-      <section class="panel export-panel full-width" style="display: flex; flex-direction: row; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
-        <div class="control-group" style="flex: 1; min-width: 200px;">
-          <label for="export-format">EXPORT FORMAT <span class="help-icon" data-tooltip="保存するファイル形式です。最高音質なら「WAV」、スマホへの転送やシェアに便利な軽量サイズなら「MP3」を選んでください。"><i class="fa-regular fa-circle-question"></i></span></label>
-          <div class="select-wrapper">
-            <select id="export-format">
-              <option value="wav" selected>WAV (16-bit PCM / Lossless)</option>
-              <option value="mp3-320">MP3 (320 kbps / High Quality)</option>
-              <option value="mp3-192">MP3 (192 kbps / Standard)</option>
-            </select>
-          </div>
-        </div>
-        <div class="control-group" style="flex: 1; min-width: 180px;">
-          <label for="export-sample-rate">SAMPLE RATE <span class="help-icon" data-tooltip="出力サンプリングレートです。配信やCD標準の「44.1 kHz」や、元音源そのままの「ORIGINAL」、動画標準の「48.0 kHz」を選択できます。"><i class="fa-regular fa-circle-question"></i></span></label>
-          <div class="select-wrapper">
-            <select id="export-sample-rate">
-              <option value="44100" selected>44.1 kHz (CD / Standard)</option>
-              <option value="original">ORIGINAL (Source Sample Rate)</option>
-              <option value="48000">48.0 kHz (Video / Hi-Res)</option>
-            </select>
-          </div>
-        </div>
-        <div class="export-actions" style="flex: 2; min-width: 250px;">
-          <button id="btn-export" class="action-btn export-btn" disabled>
-            <i class="fa-solid fa-circle-down"></i> RENDER & DOWNLOAD MASTERED AUDIO
-          </button>
-        </div>
-        <div id="export-progress-bar" class="progress-bar-container hidden">
-          <div class="progress-label">
-            <span>RENDERING MASTERED TRACK...</span>
-            <span id="export-percentage">0%</span>
-          </div>
-          <div class="progress-track">
-            <div id="progress-fill" class="progress-fill"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel console-panel full-width" id="clipping-radar-panel" style="margin-top: 20px;">
-        <div class="panel-header">
-          <h2 class="panel-title" style="color: #f77f00;"><i class="fa-solid fa-triangle-exclamation"></i> CLIPPING & DISTORTION RADAR (音割れ検知モニター) <span class="help-icon" data-tooltip="「SCAN NOW」ボタンを押すとバックグラウンドで曲全体をスキャンし、音割れ（0dBFS超過）が生じている箇所とピークdBを一覧表示します。普段のつまみ調整時はCPUを一切消費しません。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-family: var(--font-tech); font-size: 0.7rem; font-weight: 700; color: #a4a3b8;" id="clipping-status">STATUS: READY</div>
-            <button id="btn-scan-clipping" class="tab-btn" style="display: flex; align-items: center; gap: 6px; color: #00f2fe; border-color: rgba(0, 242, 254, 0.4); font-weight: 600; cursor: pointer;"><i class="fa-solid fa-magnifying-glass"></i> SCAN NOW (音割れ検査)</button>
-          </div>
-        </div>
-        <div class="console-log-content" id="clipping-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8; word-wrap: break-word; word-break: break-all; white-space: pre-wrap;">
-          <div class="log-line info" style="color: #a4a3b8;">[SYSTEM] 音割れモニター待機中。「SCAN NOW」ボタンを押すと、現在のマスタリング設定で曲全体の音割れ（0dBFS超過）を検査します。</div>
-        </div>
-      </section>
-
-      <section class="panel console-panel full-width">
-        <div class="panel-header">
-          <h2 class="panel-title"><i class="fa-solid fa-terminal"></i> SYSTEM DIAGNOSTIC LOG <span class="help-icon" data-tooltip="AIが曲のどこを検知して、どう補正したかの「思考プロセス」をリアルタイムで表示する診断モニターです。"><i class="fa-regular fa-circle-question"></i></span></h2>
-          <div style="display: flex; gap: 8px;">
-            <button id="btn-copy-log" class="tab-btn" style="display: flex; align-items: center; gap: 4px;"><i class="fa-regular fa-copy"></i> COPY LOG</button>
-            <button id="btn-clear-log" class="tab-btn">CLEAR LOG</button>
-          </div>
-        </div>
-        <div class="console-log-content" id="debug-log" style="height: 100px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; color: #94a3b8; word-wrap: break-word; word-break: break-all; white-space: pre-wrap;">
-          <div class="log-line info" style="color: #00f2fe;">[SYSTEM] AetherMaster Diagnostic Console Initialized. Ready.</div>
-        </div>
-      </section>
-    </main>
-
-    <section class="panel credits-panel full-width" style="margin-top: 20px; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 8px; padding: 16px; font-family: 'Outfit', sans-serif;">
-      <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary, #94a3b8); letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 6px;">
-        <i class="fa-solid fa-scale-balanced"></i> THIRD-PARTY SOFTWARE NOTICES & LICENSES
+    <div class="transport hidden" id="transport">
+      <button id="play" title="再生／停止（Space）">▶</button>
+      <button id="ab" title="加工前の音と比べる（B キー）">A/B</button>
+      <input type="range" id="pos" min="0" max="1" step="0.001" value="0" aria-label="再生位置">
+      <span id="time">0:00 / 0:00</span>
+      <label class="lock" title="スライダーを動かしても音量を目標 LUFS に保つ"><input type="checkbox" id="lock"><span class="t">ラウドネス固定</span><span class="ts">LUFS固定</span></label>
+      <span id="solving"></span>
+    </div>
+    <div class="viz hidden" id="viz">
+      <canvas id="spec" title="周波数スペクトル（カーソルで周波数を表示）"></canvas>
+      <div id="meters">
+        <div class="m big" id="mBig"><span class="k">Short-term</span><span class="v"><span id="mS">-inf</span><small>LUFS</small></span><span id="mTarget"></span></div>
+        <div class="m"><span class="k">Momentary</span><span class="v" id="mM">-inf</span></div>
+        <div class="m"><span class="k">Peak</span><span class="v" id="mP">-inf</span><div class="bar-h"><i id="bP"></i></div></div>
+        <div class="m"><span class="k">Glue GR</span><span class="v" id="mG">0.0</span><div class="bar-h gr"><i id="bG"></i></div></div>
+        <div class="m"><span class="k">Limiter GR</span><span class="v" id="mL">0.0</span><div class="bar-h gr"><i id="bL"></i></div></div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; font-size: 0.68rem; color: var(--text-muted, #64748b); line-height: 1.5;">
-        
-        <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.02);">
-          <span style="color: #fff; font-weight: 600;">lamejs (v1.2.1)</span><br>
-          Copyright (c) zhuker (<a href="https://github.com/zhuker/lamejs" target="_blank" style="color: #00f2fe; text-decoration: none;">GitHub</a>)<br>
-          Licensed under LGPL-3.0.<br>
-          <span style="font-style: italic; font-size: 0.62rem;">This application links dynamically to the unmodified lamejs library. LAME is an MP3 encoding research project hosted at <a href="http://lame.sourceforge.net" target="_blank" style="color: #00f2fe; text-decoration: none;">lame.sourceforge.net</a>.</span>
-        </div>
-
-        <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.02);">
-          <span style="color: #fff; font-weight: 600;">wav-exporter.js</span><br>
-          Client-side 16-bit PCM WAV audio encoder utility module.<br>
-          <span style="font-style: italic; font-size: 0.62rem;">Utilized for baking processed OfflineAudioContext render buffers into downloadable Lossless PCM format.</span>
-        </div>
-
-        <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.02);">
-          <span style="color: #fff; font-weight: 600;">Assets & Iconography</span><br>
-          Font Awesome Free (Icons: CC BY 4.0, Code: MIT)<br>
-          Google Fonts: Outfit / JetBrains Mono (SIL OFL 1.1)<br>
-          <span style="font-style: italic; font-size: 0.62rem;">UI typography and iconography are powered by open-source digital asset distributions.</span>
-        </div>
-
-        <div style="background: rgba(239, 68, 68, 0.08); padding: 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.15);">
-          <span style="color: #f87171; font-weight: 600;"><i class="fa-solid fa-ban"></i> Proprietary Source Code Notice</span><br>
-          <span style="color: #fff; font-weight: 500;">Unauthorized copying, redistribution, modification, or reuse of any part of this software's source code is strictly prohibited.</span> All rights reserved.
-        </div>
-
-      </div>
-    </section>
-
-    <footer class="app-footer">
-      <div class="footer-links">
-        <a href="guide.html" target="_blank"><i class="fa-solid fa-book-open"></i> 総合ユーザーズガイド</a>
-        <span class="separator">|</span>
-        <a href="tech.html" target="_blank"><i class="fa-solid fa-circle-info"></i> 技術仕様・DSP詳細</a>
-        <span class="separator">|</span>
-        <a href="updates.html" target="_blank"><i class="fa-solid fa-clock-rotate-left"></i> 更新記録</a>
-      </div>
-      <p>&copy; 2026 Sonografica // AETHERMASTER. All Rights Reserved. Powered by Web Audio API & Antigravity AI.<br><span style="opacity: 0.45; font-size: 0.75rem; margin-top: 4px; display: inline-block; font-family: 'JetBrains Mono', monospace;">Version 5.0.0</span></p>
-    </footer>
-  </div>
-
-  <div id="mobile-help-sheet" class="mobile-help-sheet hidden">
-    <div class="sheet-backdrop" id="sheet-backdrop"></div>
-    <div class="sheet-content">
-      <div class="sheet-header">
-        <h3 id="sheet-title">HELP</h3>
-        <button class="sheet-close" id="btn-close-sheet"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="sheet-body" id="sheet-body"></div>
     </div>
   </div>
+</div>
 
-  <script type="module" src="app.js?v=6.0.0"></script>
+<div id="drop">
+  <h2>曲をドロップして開始</h2>
+  <p>自動で解析して、この曲に合ったマスタリングを設定します</p>
+  <button class="primary" id="open2">ファイルを選ぶ</button>
+  <div class="foot">WAV / MP3 / FLAC など · 処理はすべてブラウザ内で行われます</div>
+  <a class="classic" href="classic/">以前のバージョン（AetherMaster Classic）はこちら →</a>
+</div>
+
+<div id="main" class="hidden">
+  <div class="tabs">
+    <div class="modesw" role="tablist" aria-label="モード">
+      <button class="tab on" data-tab="easy" role="tab"><b>AUTO</b><small>おまかせで仕上げる</small></button>
+      <button class="tab" data-tab="adv" role="tab"><b>CUSTOM</b><small>すべて自分で追い込む</small></button>
+      <i class="thumb"></i>
+    </div>
+    <span class="grow"></span>
+    <span class="tools"><button id="resetAll" title="すべて解析直後の自動設定に戻す">↺ リセット</button></span>
+  </div>
+
+  <section id="tab-easy">
+    <div class="card"><div id="genres"></div></div>
+    <div class="card" id="spicePanel"><div id="recs"></div></div>
+    <div class="card"><div id="spices"></div></div>
+  </section>
+
+  <section id="tab-adv" class="hidden">
+    <details class="card info"><summary>この曲の解析結果と、自動設定の理由</summary>
+      <div class="infocols"><div><h3>診断</h3><div id="diag"></div></div><div><h3>自動設定の理由</h3><ul id="reasons"></ul></div></div>
+    </details>
+    <div class="rackbar">
+      <p class="rackhelp">動かすとすぐ音が変わります。<span class="tk"></span> はオートの位置。<b>↺</b> かラベルのダブルクリックでオートに戻ります。各モジュールの <b>ON／OFF</b> スイッチで素通しにできます</p>
+      <span class="rackbtns"><button id="allOff" title="全モジュールを素通しにして、ゼロから自分で組む（音量合わせのリミッターだけ残ります）">すべてバイパス</button><button id="allOn">すべてON</button></span>
+    </div>
+    <div id="groups"></div>
+  </section>
+
+  <div id="spiceFoot"><button id="undo" disabled>↶ 元に戻す</button><div id="spiceMsg"></div><span id="qc"></span></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js" defer></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

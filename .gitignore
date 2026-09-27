@@ -9,3 +9,4 @@ simulate_scroll.js
 # Node.js
 node_modules/
 package-lock.json
+_test.wav

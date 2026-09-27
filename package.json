@@ -4,12 +4,13 @@
   "description": "Professional Web Audio Mastering Suite",
   "main": "app.js",
   "scripts": {
-    "dev": "npx http-server -p 8082"
+    "dev": "npx http-server -p 8082 -c-1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "puppeteer": "^25.3.0"
-  }
+  },
+  "type": "module"
 }

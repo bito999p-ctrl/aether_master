@@ -1,0 +1,320 @@
+// 2-mix diagnosis (port of aidaw_mastering.analyze without stems) and
+// calibration helpers for the dynamic processors.
+import { Biquad, coef } from './filters.js';
+import { Punch } from './dynamics.js';
+import { kPower100ms, integratedFromPowers, shortTermFromPowers, lra, truePeakDb } from './loudness.js';
+
+// ---------------------------------------------------------------- FFT
+class FFT {
+  constructor(n) {
+    this.n = n;
+    this.rev = new Uint32Array(n);
+    const bits = Math.log2(n);
+    for (let i = 0; i < n; i++) {
+      let r = 0;
+      for (let b = 0; b < bits; b++) r |= ((i >> b) & 1) << (bits - 1 - b);
+      this.rev[i] = r;
+    }
+    this.cos = new Float64Array(n / 2); this.sin = new Float64Array(n / 2);
+    for (let i = 0; i < n / 2; i++) { this.cos[i] = Math.cos(2 * Math.PI * i / n); this.sin[i] = -Math.sin(2 * Math.PI * i / n); }
+    this.re = new Float64Array(n); this.im = new Float64Array(n);
+    this.win = new Float64Array(n);
+    for (let i = 0; i < n; i++) this.win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / n);
+  }
+  // power spectrum (bins 0..n/2) of x[off..off+n) with a Hann window
+  power(x, off, out) {
+    const n = this.n, re = this.re, im = this.im, rev = this.rev, w = this.win;
+    for (let i = 0; i < n; i++) { const v = x[off + i] || 0; re[rev[i]] = v * w[i]; im[rev[i]] = 0; }
+    for (let size = 2; size <= n; size <<= 1) {
+      const half = size >> 1, step = n / size;
+      for (let s = 0; s < n; s += size)
+        for (let j = 0, k = 0; j < half; j++, k += step) {
+          const a = s + j, b = a + half;
+          const tr = re[b] * this.cos[k] - im[b] * this.sin[k];
+          const ti = re[b] * this.sin[k] + im[b] * this.cos[k];
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        }
+    }
+    for (let i = 0; i <= n / 2; i++) out[i] = re[i] * re[i] + im[i] * im[i];
+    return out;
+  }
+}
+
+const pct = (arr, p) => {
+  const a = Float64Array.from(arr).sort();
+  return a[Math.min(a.length - 1, Math.max(0, Math.round(p / 100 * (a.length - 1))))];
+};
+const median = (a) => pct(a, 50);
+const db = (p) => 10 * Math.log10(p + 1e-20);
+
+function smooth(a, w) { // centred moving average (odd w)
+  const h = w >> 1, n = a.length, out = new Float64Array(n), cs = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) cs[i + 1] = cs[i] + a[i];
+  for (let i = 0; i < n; i++) {
+    const lo = Math.max(0, i - h), hi = Math.min(n - 1, i + h);
+    out[i] = (cs[hi + 1] - cs[lo]) / (hi - lo + 1);
+  }
+  return out;
+}
+
+// top-n local maxima of score in [lo,hi) at least minOct apart
+function pickPeaks(freqs, score, lo, hi, n, minOct, minScore) {
+  const idx = [];
+  for (let k = 0; k < freqs.length; k++) if (freqs[k] >= lo && freqs[k] < hi) idx.push(k);
+  idx.sort((a, b) => score[b] - score[a]);
+  const picked = [];
+  for (const k of idx) {
+    if (score[k] < minScore || picked.length >= n) break;
+    if (picked.every((j) => Math.abs(Math.log2(freqs[k] / freqs[j])) >= minOct)) picked.push(k);
+  }
+  return picked.sort((a, b) => a - b).map((k) => ({ hz: freqs[k], score: score[k] }));
+}
+
+export function foldBpm(bpm, lo = 70, hi = 180) {
+  while (bpm > hi) bpm /= 2;
+  while (bpm > 0 && bpm < lo) bpm *= 2;
+  return bpm;
+}
+
+// ---------------------------------------------------------------- diagnosis
+// Long-term average spectrum of the mid (for the analyser overlay): dB per bin of an 8192 FFT,
+// scaled like a Web Audio AnalyserNode (magnitude / N) so it sits on the same axis.
+export const LTAS_N = 8192;
+export function ltas(L, R, fs) {
+  const n = LTAS_N, fft = new FFT(n), nb = n / 2 + 1, buf = new Float64Array(nb), acc = new Float64Array(nb);
+  const M = new Float32Array(L.length);
+  for (let i = 0; i < L.length; i++) M[i] = 0.5 * (L[i] + R[i]);
+  let frames = 0;
+  for (let off = 0; off + n <= M.length; off += n / 2, frames++) {
+    fft.power(M, off, buf);
+    for (let k = 0; k < nb; k++) acc[k] += buf[k];
+  }
+  const out = new Float32Array(nb), norm = 1 / (Math.max(1, frames) * n * n);
+  // -1.2 dB: Hann here vs Blackman in the AnalyserNode (noise-like content)
+  for (let k = 0; k < nb; k++) out[k] = 10 * Math.log10(acc[k] * norm + 1e-20) - 1.2;
+  return out;
+}
+
+export function diagnose(L, R, fs, onProgress = () => {}) {
+  const N = L.length;
+  const M = new Float32Array(N), S = new Float32Array(N);
+  let peak = 0, sq = 0;
+  for (let i = 0; i < N; i++) {
+    M[i] = 0.5 * (L[i] + R[i]); S[i] = 0.5 * (L[i] - R[i]);
+    peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i]));
+    sq += L[i] * L[i] + R[i] * R[i];
+  }
+  const rms = Math.sqrt(sq / (2 * N));
+  onProgress(0.05, 'loudness');
+  const P100 = kPower100ms(L, R, fs);
+  const lufs = integratedFromPowers(P100);
+  const sections = [];
+  for (let i = 0; i + 100 <= P100.length; i += 100) sections.push(integratedFromPowers(P100.subarray(i, i + 100)));
+  const st = shortTermFromPowers(P100);
+  const out = {
+    fs, duration: N / fs, lufs, truePeakDb: truePeakDb(L, R), samplePeakDb: 20 * Math.log10(peak + 1e-20),
+    crestDb: 20 * Math.log10(peak / (rms + 1e-20)), lra: lra(P100), sectionLufs: sections,
+    shortTermMax: Math.max(...st),
+  };
+  onProgress(0.2, 'spectrum');
+
+  // STFT of the mid (and side, for stereo checks)
+  const nfft = 4096, hop = 2048, fft = new FFT(nfft), nb = nfft / 2 + 1;
+  const freqs = Float64Array.from({ length: nb }, (_, k) => k * fs / nfft);
+  const maxBin = Math.min(nb - 1, Math.ceil(16000 / (fs / nfft)));
+  const frames = Math.max(1, Math.floor((N - nfft) / hop));
+  const spec = new Float32Array(frames * (maxBin + 1));
+  const tot = new Float64Array(frames);
+  const avgM = new Float64Array(nb), avgS = new Float64Array(nb), onset = new Float64Array(frames);
+  const buf = new Float64Array(nb), prev = new Float64Array(nb);
+  for (let t = 0; t < frames; t++) {
+    fft.power(M, t * hop, buf);
+    let s = 0, flux = 0;
+    for (let k = 0; k <= maxBin; k++) {
+      spec[t * (maxBin + 1) + k] = buf[k];
+      s += buf[k];
+      const d = Math.log(buf[k] + 1e-12) - Math.log(prev[k] + 1e-12);
+      if (d > 0 && k > 2) flux += d;
+      prev[k] = buf[k];
+    }
+    for (let k = 0; k < nb; k++) avgM[k] += buf[k];
+    onset[t] = flux;
+    tot[t] = db(s);
+    if (t % 4 === 0) { fft.power(S, t * hop, buf); for (let k = 0; k < nb; k++) avgS[k] += buf[k]; }
+    if (t % 200 === 0) onProgress(0.2 + 0.5 * t / frames, 'spectrum');
+  }
+  for (let k = 0; k < nb; k++) { avgM[k] /= frames; avgS[k] /= Math.ceil(frames / 4); }
+  const band = (P, lo, hi) => { let s = 0; for (let k = 0; k < nb; k++) if (freqs[k] >= lo && freqs[k] < hi) s += P[k]; return s; };
+  const allP = band(avgM, 20, 20000);
+  const BANDS = [[20, 40], [40, 80], [80, 160], [160, 320], [320, 640], [640, 1250], [1250, 2500], [2500, 5000], [5000, 10000], [10000, 16000], [16000, 22050]];
+  out.bandBalance = Object.fromEntries(BANDS.map(([a, b]) => [`${a}-${b}`, db(band(avgM, a, b) / allP)]));
+  out.lowHighRatioDb = db(band(avgM, 20, 250) / band(avgM, 4000, 16000));
+  out.lowSideDb = db(band(avgS, 30, 150) / band(avgM, 30, 150)); // side energy in the lows
+  out.highSideDb = db(band(avgS, 4500, 14000) / band(avgM, 4500, 14000));
+
+  // low-end body peak (kick / bass core)
+  let best = 0, bestHz = 60;
+  for (let k = 0; k < nb; k++) if (freqs[k] >= 40 && freqs[k] < 120 && avgM[k] > best) { best = avgM[k]; bestHz = freqs[k]; }
+  out.lowPeakHz = bestHz;
+
+  // persistent resonances 2-6 kHz: bins peaky vs their neighbourhood in >30% of frames
+  const share = new Float64Array(maxBin + 1);
+  const row = new Float64Array(maxBin + 1);
+  for (let t = 0; t < frames; t++) {
+    for (let k = 0; k <= maxBin; k++) row[k] = db(spec[t * (maxBin + 1) + k]);
+    const sm = smooth(row, 31);
+    for (let k = 0; k <= maxBin; k++) if (row[k] - sm[k] > 5) share[k]++;
+  }
+  for (let k = 0; k <= maxBin; k++) share[k] /= frames;
+  out.resonances = pickPeaks(freqs.subarray(0, maxBin + 1), share, 2000, 6000, 3, 1 / 12, 0.30)
+    .map((r) => ({ hz: Math.round(r.hz), share: +r.score.toFixed(3) }));
+  onProgress(0.8, 'dynamics');
+
+  // loud-growth: bands / bins that jump in the loudest 15% of frames
+  const loudThr = pct(tot, 85), t20 = pct(tot, 20), t70 = pct(tot, 70);
+  const loud = [], typ = [];
+  for (let t = 0; t < frames; t++) { if (tot[t] > loudThr) loud.push(t); else if (tot[t] > t20 && tot[t] < t70) typ.push(t); }
+  const HB = [[1000, 2000], [2000, 3000], [3000, 4500], [4500, 6500], [6500, 8500], [8500, 11000], [11000, 14000]];
+  const bandRel = (t, a, b) => {
+    let s = 0;
+    for (let k = 0; k <= maxBin; k++) if (freqs[k] >= a && freqs[k] < b) s += spec[t * (maxBin + 1) + k];
+    return db(s) - tot[t];
+  };
+  out.growth = {};
+  for (const [a, b] of HB) {
+    const l = median(loud.map((t) => bandRel(t, a, b))), y = median(typ.map((t) => bandRel(t, a, b)));
+    out.growth[`${a}-${b}`] = +(l - y).toFixed(2);
+  }
+  const Pl = new Float64Array(maxBin + 1), Pt = new Float64Array(maxBin + 1);
+  for (const t of loud) for (let k = 0; k <= maxBin; k++) Pl[k] += spec[t * (maxBin + 1) + k];
+  for (const t of typ) for (let k = 0; k <= maxBin; k++) Pt[k] += spec[t * (maxBin + 1) + k];
+  let g = new Float64Array(maxBin + 1), gm = 0, gc = 0;
+  for (let k = 0; k <= maxBin; k++) {
+    g[k] = db(Pl[k] / Math.max(1, loud.length)) - db(Pt[k] / Math.max(1, typ.length));
+    if (freqs[k] >= 1500 && freqs[k] < 14000) { gm += g[k]; gc++; }
+  }
+  for (let k = 0; k <= maxBin; k++) g[k] -= gm / gc;
+  g = smooth(g, 5);
+  out.harshBins = pickPeaks(freqs.subarray(0, maxBin + 1), g, 4500, 14000, 3, 1 / 3, 2.0)
+    .map((r) => ({ hz: Math.round(r.hz), relGrowthDb: +r.score.toFixed(1) }));
+
+  // tempo from spectral-flux autocorrelation (70-180 BPM)
+  const fr = fs / hop;
+  const on = onset.map((v, i) => Math.max(0, v - (i > 0 ? onset[i - 1] : 0)));
+  let bestLag = 0, bestAc = -1;
+  for (let bpm = 70; bpm <= 180; bpm += 0.5) {
+    const lag = 60 * fr / bpm, l0 = Math.floor(lag), fracL = lag - l0;
+    let ac = 0;
+    for (let i = 0; i + l0 + 1 < on.length; i++) ac += on[i] * (on[i + l0] * (1 - fracL) + on[i + l0 + 1] * fracL);
+    if (ac > bestAc) { bestAc = ac; bestLag = bpm; }
+  }
+  out.bpm = foldBpm(bestLag);
+
+  // sub-bass profile: per-frame dominant pitch 30-120 Hz on a decimated mid
+  out.bassProfile = bassProfile(M, fs);
+  // onset density in the low band (sparse drums -> gentle punch)
+  out.lowOnsetRate = lowOnsetRate(M, fs);
+  onProgress(1, 'done');
+  return out;
+}
+
+function bassProfile(M, fs) {
+  const D = 8, lp = [new Biquad(1).set('lowpass', fs, 400, 0.54), new Biquad(1).set('lowpass', fs, 400, 1.31)];
+  const n = Math.floor(M.length / D), x = new Float64Array(n);
+  for (let i = 0, j = 0; i < M.length; i++) {
+    const v = lp[1].tick(lp[0].tick(M[i], 0), 0);
+    if (i % D === 0 && j < n) x[j++] = v;
+  }
+  const f2 = fs / D, nfft = 4096, fft = new FFT(nfft), buf = new Float64Array(nfft / 2 + 1);
+  const f0 = [], en = [];
+  for (let off = 0; off + nfft < n; off += 1024) {
+    fft.power(x, off, buf);
+    // 2-mix: the loudest bin is often a kick or a bass harmonic, so take the
+    // lowest local peak within 6 dB of the maximum as the bass fundamental.
+    let bv = 0, e = 0;
+    const k0 = Math.ceil(25 * nfft / f2), k1 = Math.floor(120 * nfft / f2);
+    for (let k = k0; k <= k1; k++) { e += buf[k]; if (buf[k] > bv) bv = buf[k]; }
+    let bk = 0;
+    for (let k = k0 + 1; k < k1; k++) {
+      if (buf[k] >= bv / 4 && buf[k] >= buf[k - 1] && buf[k] >= buf[k + 1]) { bk = k * f2 / nfft; break; }
+    }
+    f0.push(bk); en.push(e);
+  }
+  if (!f0.length) return { f0p10: 60, f0p50: 60, f0p90: 60, rangeOct: 0, subShare: 0 };
+  const thr = pct(en, 40);
+  const voiced = f0.filter((_, i) => en[i] > thr);
+  const p10 = pct(voiced, 10), p50 = pct(voiced, 50), p90 = pct(voiced, 90);
+  return { f0p10: +p10.toFixed(1), f0p50: +p50.toFixed(1), f0p90: +p90.toFixed(1), rangeOct: +Math.log2(p90 / p10).toFixed(2) };
+}
+
+function lowOnsetRate(M, fs) {
+  // kicks per second: peaks of the fast/slow envelope ratio in the 40-150 Hz band
+  const bp = [new Biquad(1).set('lowpass', fs, 150, 0.7071), new Biquad(1).set('highpass', fs, 40, 0.7071)];
+  const fa = coef(1, fs), fr = coef(40, fs), sa = coef(60, fs);
+  let fast = 0, slow = 0, count = 0, armed = true;
+  for (let i = 0; i < M.length; i++) {
+    const v = bp[1].tick(bp[0].tick(M[i], 0), 0), d = v * v;
+    fast += (d > fast ? fa : fr) * (d - fast);
+    slow += sa * (d - slow);
+    const r = fast / (slow + 1e-12);
+    if (armed && r > 4 && fast > 1e-5) { count++; armed = false; }
+    else if (!armed && r < 1.5) armed = true;
+  }
+  return count / (M.length / fs);
+}
+
+// ---------------------------------------------------------------- calibration
+// Envelope (dB, every 8 samples) of a dynamic bell's detector on the mono mid,
+// exactly as DynBand computes it, plus the 100 ms band loudness for "loud" frames.
+export function bandEnvelope(M, fs, { hz, q, att, rel }) {
+  const bp = new Biquad(1).set('bandpass', fs, hz, q);
+  const ca = coef(att, fs), cr = coef(rel, fs);
+  const n = Math.floor(M.length / 8), env = new Float32Array(n);
+  const step = Math.round(fs * 0.1), frames = Math.floor(M.length / step), fpow = new Float64Array(frames);
+  let e = 0;
+  for (let i = 0; i < M.length; i++) {
+    const b = bp.tick(M[i], 0), d = b * b;
+    e += (d > e ? ca : cr) * (d - e);
+    if ((i & 7) === 0 && (i >> 3) < n) env[i >> 3] = 10 * Math.log10(e + 1e-20);
+    const f = Math.floor(i / step);
+    if (f < frames) fpow[f] += d;
+  }
+  const loudThr = pct(fpow, 85);
+  const loud = new Uint8Array(n);
+  for (let j = 0; j < n; j++) { const f = Math.floor(j * 8 / step); loud[j] = f < frames && fpow[f] > loudThr ? 1 : 0; }
+  return { env, loud };
+}
+
+// Threshold so the loud 15% of the track gets on average `depth` dB reduction.
+export function calibrateThreshold({ env, loud }, depth, ratio, range) {
+  const slope = 1 - 1 / Math.max(1, ratio);
+  const meanGr = (thr) => {
+    let s = 0, c = 0;
+    for (let j = 0; j < env.length; j++) if (loud[j]) { const o = env[j] - thr; s += o > 0 ? Math.min(range, o * slope) : 0; c++; }
+    return s / Math.max(1, c);
+  };
+  let lo = -100, hi = 0;
+  for (let it = 0; it < 30; it++) {
+    const mid = (lo + hi) / 2;
+    if (meanGr(mid) > depth) lo = mid; else hi = mid;
+  }
+  return +((lo + hi) / 2).toFixed(2);
+}
+
+// Level compensation for the punch shaper on the low band (power-weighted mean gain).
+export function punchMakeup(M, fs, attackDb, sustainDb, splitHz = 150) {
+  if (Math.abs(attackDb) < 0.01 && Math.abs(sustainDb) < 0.01) return 0;
+  const lp = new Biquad(1).set('lowpass', fs, splitHz, 0.7071);
+  const fa = coef(0.8, fs), fr = coef(40, fs), sa = coef(25, fs), sr = coef(40, fs);
+  let fast = 0, slow = 0, num = 0, den = 0;
+  for (let i = 0; i < M.length; i += 1) {
+    const v = lp.tick(M[i], 0), d = v * v;
+    fast += (d > fast ? fa : fr) * (d - fast);
+    slow += (d > slow ? sa : sr) * (d - slow);
+    if ((i & 3) === 0) {
+      const g = Math.pow(10, Punch.shape(10 * Math.log10((fast + 1e-20) / (slow + 1e-20)), attackDb, sustainDb) / 10);
+      num += g * d; den += d;
+    }
+  }
+  return +(-10 * Math.log10(num / (den + 1e-20))).toFixed(2);
+}
