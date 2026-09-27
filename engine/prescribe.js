@@ -2,6 +2,7 @@
 // same rules and lessons, with stem-specific moves replaced by mix-level ones.
 import { DEFAULTS } from './chain.js';
 
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const REF_LUFS = -14; // the chain works on audio trimmed to this level
 
 export function prescribe(d) {
@@ -19,6 +20,10 @@ export function prescribe(d) {
   const spread = pct(sec, 95) - pct(sec, 5);
   const ballad = d.crestDb >= 15 && spread >= 6;
   const sparseDrums = d.lowOnsetRate < 0.6;
+  // Already mastered / dense source (loud and little crest; Suno 2-mixes sit around -11..-14 LUFS,
+  // crest 14-16 dB). The 2-mix recipe's fixed moves (broad -4.5 dB top shelf, bass lifts, tape,
+  // room) turn such a master muddy, so its tone is corrected from the measurement instead.
+  const mastered = d.lufs > -10.5 && d.crestDb < 12.5;
   const growthHigh = Math.max(...Object.entries(d.growth).filter(([k]) => +k.split('-')[0] >= 4500).map(([, v]) => v));
 
   const p = structuredClone(DEFAULTS);
@@ -39,13 +44,16 @@ export function prescribe(d) {
   p.hpfHz = is808 ? 25 : 32;
   why('hpfHz', is808 ? `ベースの最低音が低い（p10 ${bp.f0p10} Hz）→ HPF を 25 Hz まで下げて最低音を残す` : '32 Hz 以下の不要な超低域をカット');
   p.lowHz = Math.round(d.lowPeakHz);
-  p.lowDb = movingBass || sparseDrums ? 0 : 1.0;
+  p.lowDb = movingBass || sparseDrums || mastered ? 0 : 1.0;
   why('lowDb', p.lowDb ? `低域の芯（${p.lowHz} Hz）を +1 dB` : (movingBass ? 'ベースの音程が大きく動く → 固定ベルは音ごとのムラになるので入れない' : 'ドラムが少ない → 低域ベルなし'));
   p.mudHz = 280; p.mudDb = -1.0;
   why('mudDb', '250〜300 Hz のこもりを常に -1 dB（マスタリングでよく使う定番の処理）');
 
   // punch (kick-band transient) and tightness (stands in for kick-keyed bass ducking)
-  if (sparseDrums || ballad) {
+  if (mastered) {
+    p.punchDb = 1.5; p.tightDb = -0.5; p.lowGainDb = 0;
+    why('punchDb', 'マスタリング済みの密な音源 → キックの強調は控えめ（低域を膨らませない）');
+  } else if (sparseDrums || ballad) {
     p.punchDb = 1.5; p.tightDb = 0; p.lowGainDb = 0;
     why('punchDb', 'ドラムがまばら／バラード → キックのアタックは控えめ、低域ダッキングなし');
   } else if (is808) {
@@ -60,6 +68,16 @@ export function prescribe(d) {
   // broad shelf 4.3 kHz / -4.7 dB). The stem chain got there with de-essers, loud-only
   // bells and suppressors; on a 2-mix a broad shelf is the closest single move.
   p.highHz = 4300;
+  if (mastered) {
+    // already mastered: move toward a master's balance (lowHighRatio ~12.5) by what it measures
+    const e = 12.5 - d.lowHighRatioDb;
+    p.highShelfDb = +clamp(-0.7 * e, -4, 1.5).toFixed(1);
+    p.bassDb = +clamp(0.3 * e, -1.5, 1).toFixed(1);
+    p.airDb = p.highShelfDb < -1 ? 1.0 : 0;
+    why('highShelfDb', `マスタリング済みの音源（${d.lufs.toFixed(1)} LUFS、クレスト ${d.crestDb.toFixed(1)} dB）→ 高域は測定したバランスから補正: 4.3 kHz 以上 ${p.highShelfDb} dB`
+      + (Math.abs(p.highShelfDb) < 0.5 ? '（ほぼそのまま）' : p.highShelfDb < 0 ? '（高域が強め）' : '（こもり気味なので少し明るく）'));
+    why('bassDb', `低域シェルフ ${p.bassDb > 0 ? '+' : ''}${p.bassDb} dB（測定したバランスから）`);
+  } else {
   p.highShelfDb = veryDark ? -3.0 : -4.5;
   why('highShelfDb', veryDark ? '暗めの音源 → 4.3 kHz 以上を -3 dB だけ（空気感は残す）'
     : `4.3 kHz 以上をなだらかに ${p.highShelfDb} dB（市販マスターの高域バランスに合わせる。仕上がったマスターは生の 2mix より高域が落ち着いている）`);
@@ -67,6 +85,7 @@ export function prescribe(d) {
   why('bassDb', is808 ? '808 の低域はそのまま' : '90 Hz 以下をシェルフで +1 dB（市販マスター並みの低域の厚み）');
   p.airDb = 2.0; // 16 kHz shelf: puts back the top octave the broad shelf takes
   if (p.airDb) why('airDb', '16 kHz 以上を +2 dB（広いシェルフで落ちすぎる最上域を戻して艶を残す）');
+  }
 
   // dynamic bells (loud-moment only)
   const dyn = [];
@@ -109,12 +128,16 @@ export function prescribe(d) {
   p.glueThr = -20; p.glueRatio = 1.25; p.glueAttack = 30;
   p.glueRelPeak = +(beat / 4).toFixed(1); p.glueRelRms = +(beat / 2).toFixed(1);
   why('glue', `1.25:1 のゆるいグルー、リリースは ${bpm.toFixed(1)} BPM に同期（${p.glueRelPeak} / ${p.glueRelRms} ms）`);
-  p.colorDrive = 2.5;
-  why('colorDrive', 'テープ系の倍音を軽く（ドライブ 2.5、音量は自動で合わせる）');
-  p.spaceMix = 3.5; p.spacePredelay = +(beat / 4).toFixed(1); p.spaceDecay = ballad ? 1.8 : 1.2;
-  why('spaceMix', `ごく薄い空間 3.5%（プリディレイ 16 分音符 = ${p.spacePredelay} ms）`);
+  if (mastered) p.glueRatio = 1.1;
+  p.colorDrive = mastered ? 1.0 : 2.5;
+  why('colorDrive', mastered ? 'マスタリング済み → テープ倍音はごく軽く（1.0、にじみ防止）' : 'テープ系の倍音を軽く（ドライブ 2.5、音量は自動で合わせる）');
+  p.spaceMix = mastered ? 1.0 : 3.5; p.spacePredelay = +(beat / 4).toFixed(1); p.spaceDecay = ballad ? 1.8 : 1.2;
+  why('spaceMix', `ごく薄い空間 ${p.spaceMix}%（プリディレイ 16 分音符 = ${p.spacePredelay} ms）`);
 
-  const decisions = { bpm: +bpm.toFixed(1), is808, movingBass, subBass, brightSource, veryDark, ballad, sparseDrums,
+  // a master is not pushed louder than it already is (it is already limited)
+  if (mastered && p.targetLufs > d.lufs) { p.targetLufs = +d.lufs.toFixed(1); why('targetLufs', `マスタリング済み → 元の音量 ${p.targetLufs} LUFS より上げない（二重に潰さない）`); }
+
+  const decisions = { bpm: +bpm.toFixed(1), is808, mastered, movingBass, subBass, brightSource, veryDark, ballad, sparseDrums,
     highGrowthDb: +growthHigh.toFixed(1), sectionSpreadDb: +spread.toFixed(1) };
   return { params: p, reasons, decisions };
 }
