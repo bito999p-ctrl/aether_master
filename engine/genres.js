@@ -5,24 +5,25 @@
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+// hint: what it does / use: when to pick it (shown in the pickers)
 // lufs: target loudness / lh: target low÷high ratio (dB, diag.lowHighRatioDb; ~12.5 = neutral)
 export const GENRES = [
-  { id: 'pop', label: 'J-POP / ポップ', hint: '歌が主役。明るく聴きやすく', lufs: -10.5, lh: 12.5,
-    d: { presenceDb: 0.5, airDb: 0.5, glueRatio: 0.1 } },
-  { id: 'rock', label: 'ロック', hint: 'ギターの厚み、太い中域、まとまり', lufs: -10, lh: 12,
-    d: { colorDrive: 1.5, mudDb: -0.5, glueRatio: 0.25, glueAttack: 10, punchDb: 1, width: 5 } },
-  { id: 'edm', label: 'EDM / ダンス', hint: 'キックと低域が強く、広く、大きく', lufs: -9, lh: 15,
-    d: { punchDb: 2, width: 10, monoHz: 30, airDb: 1, glueRatio: 0.3, limRelease: -20 } },
-  { id: 'hiphop', label: 'ヒップホップ / トラップ', hint: '低域の太さとラップの近さ', lufs: -9.5, lh: 16,
-    d: { punchDb: 1.5, presenceDb: 1, monoHz: 30, width: -5, 'dyn:deess': 0.5 } },
-  { id: 'anison', label: 'アニソン / ボカロ', hint: 'きらびやかで密度が高く、歌が前', lufs: -9.5, lh: 11,
-    d: { presenceDb: 1, airDb: 1, glueRatio: 0.25, width: 5, 'dyn:shimmer': 0.5 } },
-  { id: 'ballad', label: 'バラード', hint: '抑揚を残して、余韻をきれいに', lufs: -13, lh: 12,
-    d: { glueRatio: -0.15, spaceMix: 2, spaceDecay: 0.5, punchDb: -1, limRelease: 60, presenceDb: 0.5 } },
-  { id: 'acoustic', label: 'アコースティック / ジャズ', hint: '自然な響きと生っぽさ優先', lufs: -14, lh: 11,
-    d: { glueRatio: -0.2, colorDrive: -1, spaceMix: 1.5, punchDb: -1, airDb: 0.5, width: 5 } },
-  { id: 'lofi', label: 'Lo-fi / チル', hint: '高域を丸く、温かく、狭め', lufs: -12, lh: 14,
-    d: { highShelfDb: -1.5, airDb: -2, colorDrive: 2, width: -10, spaceMix: 1 } },
+  { id: 'pop', label: 'J-POP / ポップ', hint: '歌を前に、明るく聴きやすく', use: '歌が埋もれて聴こえる時', lufs: -10.5, lh: 12.5,
+    d: { presenceDb: 1.5, airDb: 1, highShelfDb: 0.8, mudDb: -0.5, glueRatio: 0.15, width: 5 } },
+  { id: 'rock', label: 'ロック', hint: '倍音で太く熱く、中域に厚み', use: '音が薄い・軽く感じる時', lufs: -10, lh: 12,
+    d: { colorDrive: 3, mudDb: 0.8, presenceDb: 0.5, airDb: -0.5, glueRatio: 0.4, glueAttack: 15, punchDb: 1.5, width: 8 } },
+  { id: 'edm', label: 'EDM / ダンス', hint: 'キックと低音を強く、左右に広く', use: 'ノリや迫力が足りない時', lufs: -9, lh: 16,
+    d: { punchDb: 3, lowGainDb: 1, width: 20, monoHz: 30, airDb: 1.5, glueRatio: 0.4, spaceMix: -1, limRelease: -20 } },
+  { id: 'hiphop', label: 'ヒップホップ / トラップ', hint: '低音を太く、声を近く', use: '低音が物足りない時', lufs: -9.5, lh: 17,
+    d: { punchDb: 2, lowDb: 1.5, presenceDb: 1.5, monoHz: 40, width: -10, airDb: -0.5, spaceMix: -1.5, 'dyn:deess': 1 } },
+  { id: 'anison', label: 'アニソン / ボカロ', hint: '高域をきらびやかに、華やかに', use: 'こもって聴こえる時', lufs: -9.5, lh: 10.5,
+    d: { presenceDb: 1.5, airDb: 2, highShelfDb: 1, glueRatio: 0.4, width: 12, colorDrive: 1, 'dyn:shimmer': 1 } },
+  { id: 'ballad', label: 'バラード', hint: '余韻を豊かに、抑揚を残す', use: '詰まって息苦しく感じる時', lufs: -13, lh: 12,
+    d: { glueRatio: -0.2, spaceMix: 4, spaceDecay: 0.8, punchDb: -2, limRelease: 80, presenceDb: 1, airDb: 0.5, colorDrive: -1 } },
+  { id: 'acoustic', label: 'アコースティック / ジャズ', hint: '加工感を抑えて自然に', use: '音がきつい・作り物っぽい時', lufs: -14, lh: 11,
+    d: { glueRatio: -0.25, colorDrive: -2, spaceMix: 3, punchDb: -2, tightDb: 1, mudDb: 0.5, airDb: 1, width: 8 } },
+  { id: 'lofi', label: 'Lo-fi / チル', hint: '高域を丸く、温かく', use: 'シャリシャリして耳が痛い時', lufs: -12, lh: 15,
+    d: { highShelfDb: -3, airDb: -3, colorDrive: 4, mudDb: 1, width: -20, spaceMix: 2, punchDb: -1.5, glueRatio: 0.3 } },
 ];
 
 // Best guess from the diagnosis (shown as ★ 推定)
@@ -42,8 +43,8 @@ export function genreDeltas(g, { diag, dec, p }) {
   // tone: move toward the genre's low/high balance, sized by how far the song is from it
   const e = g.lh - diag.lowHighRatioDb;
   if (Math.abs(e) >= 1) {
-    add('bassDb', clamp(0.35 * e, -2, 2));
-    add('highShelfDb', clamp(-0.3 * e, -2, 2));
+    add('bassDb', clamp(0.45 * e, -3, 3));
+    add('highShelfDb', clamp(-0.35 * e, -2.5, 2.5));
     notes.push(e > 0 ? `この曲は${g.label}の目安より高域寄り → 低域を足して高域を少し抑える`
       : `この曲は${g.label}の目安より低域寄り → 低域を控えて高域を少し足す`);
   } else notes.push(`低域と高域のバランスはすでに${g.label}の目安どおり → 音色はほぼそのまま`);

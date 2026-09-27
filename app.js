@@ -412,7 +412,7 @@ function renderGenres() {
   for (const g of GENRES) {
     const b = document.createElement('button');
     b.className = 'side' + (genre?.id === g.id ? ' on' : '') + (g.id === guess ? ' rec' : '');
-    b.innerHTML = `${g.id === guess ? '★' : ''}${g.label}<small>${g.hint}（${g.lufs} LUFS）</small>`;
+    b.innerHTML = `${g.id === guess ? '★' : ''}${g.label}<small>${g.hint}<br>${g.use}に・${g.lufs} LUFS</small>`;
     b.onclick = () => pickGenre(g.id);
     grid.append(b);
   }
