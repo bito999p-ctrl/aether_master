@@ -198,6 +198,9 @@ export function diagnose(L, R, fs, onProgress = () => {}) {
   out.harshBins = pickPeaks(freqs.subarray(0, maxBin + 1), g, 4500, 14000, 3, 1 / 3, 2.0)
     .map((r) => ({ hz: Math.round(r.hz), relGrowthDb: +r.score.toFixed(1) }));
 
+  out.fixedPeaks = fixedPeaks(spec, tot, loud, freqs, maxBin);
+  out.hfLoud = hfLoud(M, fs);
+
   // tempo from spectral-flux autocorrelation (70-180 BPM)
   const fr = fs / hop;
   const on = onset.map((v, i) => Math.max(0, v - (i > 0 ? onset[i - 1] : 0)));
@@ -216,6 +219,55 @@ export function diagnose(L, R, fs, onProgress = () => {}) {
   out.lowOnsetRate = lowOnsetRate(M, fs);
   onProgress(1, 'done');
   return out;
+}
+
+// Fixed narrow peaks 2-5 kHz in the loud-frame long-term spectrum (each frame normalised to
+// its own total). Suno 2-mixes carry the same peaks (~2.10 / 2.23 / 2.36 / 2.50 kHz, 4-11 dB)
+// across unrelated songs and keys; the reference masters measured 2026-09-28 do not.
+// promDb: peak over the median of its +-1/6 octave; persist: share of loud frames where the
+// bin stands >= 6 dB over its neighbourhood.
+function fixedPeaks(spec, tot, loud, freqs, maxBin) {
+  const w = maxBin + 1, df = freqs[1];
+  const k0 = Math.ceil(2000 / df), k1 = Math.floor(5000 / df);
+  const lo = (k) => Math.ceil(k * 2 ** (-1 / 6)), hi = (k) => Math.min(maxBin, Math.floor(k * 2 ** (1 / 6)));
+  const lt = new Float64Array(w);
+  for (const t of loud) { const p = 10 ** (tot[t] / 10); for (let k = lo(k0 - 5); k <= hi(k1 + 5); k++) lt[k] += spec[t * w + k] / p; }
+  const ltd = Array.from(lt, (v) => db(v / Math.max(1, loud.length)));
+  const nbhd = (row, k) => { const a = []; for (let j = lo(k); j <= hi(k); j++) a.push(row[j]); return median(a); };
+  const prom = new Float64Array(w);
+  for (let k = k0 - 1; k <= k1 + 1; k++) prom[k] = ltd[k] - nbhd(ltd, k);
+  const peaks = [];
+  for (let k = k0; k <= k1; k++) if (prom[k] >= 3 && prom[k] >= prom[k - 1] && prom[k] > prom[k + 1]) peaks.push(k);
+  peaks.sort((a, b) => prom[b] - prom[a]);
+  const row = new Float64Array(w);
+  return peaks.slice(0, 4).map((k) => {
+    let c = 0;
+    for (const t of loud) {
+      for (let j = lo(k); j <= hi(k); j++) row[j] = db(spec[t * w + j]);
+      if (row[k] - nbhd(row, k) >= 6) c++;
+    }
+    return { hz: Math.round(freqs[k]), promDb: +prom[k].toFixed(1), persist: +(c / Math.max(1, loud.length)).toFixed(2) };
+  });
+}
+
+// High-frequency level in the loud 30% of 400 ms blocks, dB re the block's full-band energy:
+// band9kDb = 8.5-10.5 kHz (4th-order band), above5kDb = > 5 kHz (RBJ HPF). Suno 2-mixes sit
+// 3-8 dB above finished masters here, and their 9-10 kHz is a steady wash rather than spikes.
+function hfLoud(M, fs) {
+  const bp = [new Biquad(1).set('highpass', fs, 8500, 0.707), new Biquad(1).set('lowpass', fs, 10500, 0.707),
+    new Biquad(1).set('highpass', fs, 8500, 0.707), new Biquad(1).set('lowpass', fs, 10500, 0.707)];
+  const hp = new Biquad(1).set('highpass', fs, 5000, 0.707);
+  const B = Math.round(fs * 0.4), nb = Math.floor(M.length / B);
+  const eb = new Float64Array(nb), eh = new Float64Array(nb), ef = new Float64Array(nb);
+  for (let i = 0; i < nb * B; i++) {
+    const x = M[i];
+    let y = x; for (const f of bp) y = f.tick(y, 0);
+    const h = hp.tick(x, 0), b = (i / B) | 0;
+    eb[b] += y * y; eh[b] += h * h; ef[b] += x * x;
+  }
+  const thr = pct(ef, 70), s9 = [], s5 = [];
+  for (let b = 0; b < nb; b++) if (ef[b] >= thr && ef[b] > 0) { s9.push(db(eb[b] / ef[b])); s5.push(db(eh[b] / ef[b])); }
+  return { band9kDb: +median(s9).toFixed(2), above5kDb: +median(s5).toFixed(2) };
 }
 
 function bassProfile(M, fs) {

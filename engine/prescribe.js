@@ -23,7 +23,10 @@ export function prescribe(d) {
   // Already mastered / dense source (loud and little crest; Suno 2-mixes sit around -11..-14 LUFS,
   // crest 14-16 dB). The 2-mix recipe's fixed moves (broad -4.5 dB top shelf, bass lifts, tape,
   // room) turn such a master muddy, so its tone is corrected from the measurement instead.
-  const mastered = d.lufs > -10.5 && d.crestDb < 12.5;
+  // A finished master also has its 9-10 kHz tamed (loud-block share: majors ~-28.5 dB, approved
+  // J masters -30.7..-33.9); raw Suno sits at -25..-28.5 even when it is loud and dense.
+  const hf = d.hfLoud || {};
+  const mastered = d.lufs > -10.5 && d.crestDb < 12.5 && !(hf.band9kDb > -29);
   const growthHigh = Math.max(...Object.entries(d.growth).filter(([k]) => +k.split('-')[0] >= 4500).map(([, v]) => v));
 
   const p = structuredClone(DEFAULTS);
@@ -94,13 +97,17 @@ export function prescribe(d) {
     dyn.push({ id: 'dyn8k', label: '高域の刺さり抑え (8k)', hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 120, on: true });
     why('dyn8k', `大きい瞬間だけ 8 kHz 帯を ${depth} dB 抑える（痛さ対策、普段は触らない）`);
   } else why('dyn8k', '非常に暗い音源 → 8 kHz のダイナミック処理なし');
-  const resDepth = ballad || veryDark ? 1.5 : 2.5;
-  d.resonances.forEach((r, i) => {
-    dyn.push({ id: `res${i}`, label: `共振 ${r.hz} Hz`, hz: r.hz, q: 6, depth: resDepth, ratio: 3, att: 5, rel: 80, on: true });
+  // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): reference masters stay
+  // <= 3 dB over their neighbourhood, so cut the excess, narrow and on loud moments only
+  const peaks = (d.fixedPeaks || []).filter((r) => r.promDb >= 4 && r.persist >= 0.15);
+  const soft = ballad || veryDark;
+  peaks.forEach((r, i) => {
+    const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(r.promDb - 2.5, 1, 4)).toFixed(1);
+    dyn.push({ id: `res${i}`, label: `共振 ${r.hz} Hz`, hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
   });
-  if (d.resonances.length) {
-    why('res', `鳴り続ける共振 ${d.resonances.map((r) => r.hz + ' Hz').join(' / ')} を狭く（Q6）、大きい瞬間だけ ${resDepth} dB カット`
-      + (ballad || veryDark ? '。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を' : ''));
+  if (peaks.length) {
+    why('res', `鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ市販マスター並み（+3 dB 以内）まで抑える`
+      + (soft ? '。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を' : ''));
   }
   if (growthHigh >= 6 && !veryDark) {
     d.harshBins.forEach((b, i) => {
