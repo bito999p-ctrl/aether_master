@@ -7,10 +7,12 @@ import { EqGraph, BAND_COL } from './eqgraph.js';
 import { AXES, FIXES, MAX_LEVEL, recommend, applyDeltas, describe } from './engine/spices.js';
 import { GENRES, guessGenre, genreDeltas } from './engine/genres.js';
 import { ENGINE_VERSION } from './engine/version.js';
+import { LANG, tr, setLang } from './engine/i18n.js';
 
 const FS = 44100;
 const $ = (id) => document.getElementById(id);
-$('engineVer').textContent = `エンジン ${ENGINE_VERSION}`;
+$('engineVer').textContent = tr(`エンジン ${ENGINE_VERSION}`, `Engine ${ENGINE_VERSION}`);
+translateStatic();
 
 const SLIDER_KEYS = GROUPS.flatMap(([, rows]) => rows.map((r) => r[0]));
 
@@ -35,7 +37,7 @@ async function ensureAudio() {
   node.connect(ctx.destination);
   spec = new Spectrum($('spec'), ctx, node);
   node.port.onmessage = (e) => e.data.type === 'meter' && onMeter(e.data);
-  worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+  worker = new Worker(new URL(`./worker.js?lang=${LANG}`, import.meta.url), { type: 'module' });
   worker.onmessage = (e) => onWorker(e.data);
 }
 
@@ -43,20 +45,20 @@ async function loadFile(file) {
   await ensureAudio();
   setReady(false); // no playback until analysis is done (otherwise the raw file sounds like the master)
   fileName = file.name.replace(/\.[^.]+$/, '');
-  status(`読み込み中: ${file.name}`);
+  status(tr(`読み込み中: ${file.name}`, `Loading: ${file.name}`));
   const buf = await ctx.decodeAudioData(await file.arrayBuffer());
   const L = buf.getChannelData(0), R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : L;
   duration = buf.duration;
   node.port.postMessage({ type: 'load', L: L.slice(), R: R.slice() });
   worker.postMessage({ type: 'load', L: L.slice(), R: R.slice(), fs: FS, prefs: store.get('am5.prefs', {}) });
-  status('解析中…');
+  status(tr('解析中…', 'Analysing…'));
 }
 
 // ------------------------------------------------------------------ worker
 let solveBusy = false, solveQueued = false, solveTimer = 0, exportFormat = '';
 function onWorker(m) {
   if (m.type === 'progress') { progress(m.f); return status(`${m.stage} ${Math.round(m.f * 100)}%`); }
-  if (m.type === 'error') { console.error(m.message); status('エラー: ' + m.message.split('\n')[0]); solveBusy = false; return; }
+  if (m.type === 'error') { console.error(m.message); status(tr('エラー: ', 'Error: ') + m.message.split('\n')[0]); solveBusy = false; return; }
   if (m.type === 'analyzed') {
     diag = m.diag; lastAuto = m.auto; rawAuto = m.auto.params; start = { ...m.params, off: {} }; cur = structuredClone(start); solvedAt = targetKey();
     spiceLv = {}; spiceStack = {}; genre = null; history = []; $('undo').disabled = true;
@@ -66,7 +68,7 @@ function onWorker(m) {
     for (const id of ['main', 'transport', 'viz', 'expGroup', 'presetWrap']) $(id).classList.remove('hidden');
     $('drop').classList.add('hidden');
     setReady(true);
-    status(`${fileName} — 準備完了`);
+    status(`${fileName} — ${tr('準備完了', 'ready')}`);
   } else if (m.type === 'solved') {
     solveBusy = false;
     cur.driveDb = m.params.driveDb;
@@ -76,14 +78,14 @@ function onWorker(m) {
     pushParams();
     if (solveQueued) { solveQueued = false; sendSolve(); } else $('solving').textContent = '';
   } else if (m.type === 'rendered') {
-    $('qc').textContent = `書き出し: ${m.fs / 1000} kHz / ${m.qc.lufs} LUFS / ${m.qc.truePeakDb} dBTP`;
+    $('qc').textContent = `${tr('書き出し', 'Exported')}: ${m.fs / 1000} kHz / ${m.qc.lufs} LUFS / ${m.qc.truePeakDb} dBTP`;
     saveExport(m.L, m.R, exportFormat, m.fs);
-    status(`${fileName} — 書き出し完了`);
+    status(`${fileName} — ${tr('書き出し完了', 'export done')}`);
   }
 }
 function requestSolve() {
   clearTimeout(solveTimer);
-  $('solving').textContent = '調整中…';
+  $('solving').textContent = tr('調整中…', 'Adjusting…');
   solveTimer = setTimeout(() => (solveBusy ? (solveQueued = true) : sendSolve()), 300);
 }
 // the loudness target itself always re-solves the limiter drive; the lock only decides
@@ -94,7 +96,7 @@ function sendSolve() {
   solveBusy = true;
   const lock = $('lock').checked || targetKey() !== solvedAt;
   solvedAt = targetKey();
-  $('solving').textContent = lock ? 'ラウドネス合わせ中…' : '調整中…';
+  $('solving').textContent = lock ? tr('ラウドネス合わせ中…', 'Matching loudness…') : tr('調整中…', 'Adjusting…');
   worker.postMessage({ type: 'solve', params: cur, lockLoudness: lock });
 }
 function pushParams() {
@@ -147,10 +149,10 @@ function onMeter(m) {
   $('bP').style.width = pct(m.peakDb + 30, 30);
   $('mG').textContent = gr(m.glue); $('bG').style.width = pct(Math.abs(m.glue), 8);
   $('mL').textContent = gr(m.limiter); $('bL').style.width = pct(Math.abs(m.limiter), 8);
-  $('mTarget').textContent = bypass ? '原音を再生中' : `目標 ${cur.targetLufs.toFixed(1)} LUFS`;
+  $('mTarget').textContent = bypass ? tr('原音を再生中', 'Playing original') : `${tr('目標', 'Target')} ${cur.targetLufs.toFixed(1)} LUFS`;
   (cur?.dyn || []).forEach((d, i) => {
     const el = rows['dyn:' + d.id]?.gr; if (!el) return;
-    el.firstChild.style.width = pct(m.dyn[i], 6); el.title = m.dyn[i] > 0.05 ? `今 -${m.dyn[i].toFixed(1)} dB` : '';
+    el.firstChild.style.width = pct(m.dyn[i], 6); el.title = m.dyn[i] > 0.05 ? `${tr('今', 'Now')} -${m.dyn[i].toFixed(1)} dB` : '';
   });
   for (const [k, v] of [['glue', m.glue], ['limiter', m.limiter]]) {
     const mm = modMeters[k]; if (!mm) continue;
@@ -165,14 +167,14 @@ function progress(f) { $('prog').style.width = f == null ? '0' : `${Math.round(f
 // ------------------------------------------------------------------ detail rack
 // Each module is a card with its own colour, a live meter where there is one, and a reset.
 const MODS = {
-  dyn: { id: 'dyn', color: '#ff6b9a', sub: '大きい瞬間だけ効くEQ。赤いバーが今効いている量' },
-  'トーン': { id: 'tone', color: '#62d98b', sub: '曲全体の音色（常にかかるEQ）' },
-  '手動EQ（特定の帯域を削る・足す）': { id: 'eq', title: '手動EQ', color: '#c58bff', sub: '特定の帯域をピンポイントで削る・足す', wide: true },
-  'パンチ': { id: 'punch', color: '#ff8a5b', sub: 'キックとベースの立ち上がり' },
-  'グルー': { id: 'glue', color: '#58c4ff', sub: '全体をまとめるコンプ', meter: 'glue' },
-  'カラー／空間': { id: 'color', color: '#f6d365', sub: 'テープの温かさと響き' },
-  'ステレオ': { id: 'stereo', color: '#7ee0d0', sub: '広がりと真ん中の存在感' },
-  'ラウドネス': { color: '#ffb03b', sub: '目標の音量に合わせるリミッター', meter: 'limiter' },
+  dyn: { id: 'dyn', color: '#ff6b9a', sub: tr('大きい瞬間だけ効くEQ。赤いバーが今効いている量', 'EQ that acts only at loud moments. The red bar shows how much it is working now') },
+  [tr('トーン', 'Tone')]: { id: 'tone', color: '#62d98b', sub: tr('曲全体の音色（常にかかるEQ）', 'Overall tone (always-on EQ)') },
+  [tr('手動EQ（特定の帯域を削る・足す）', 'Manual EQ (cut or boost a band)')]: { id: 'eq', title: tr('手動EQ', 'Manual EQ'), color: '#c58bff', sub: tr('特定の帯域をピンポイントで削る・足す', 'Cut or boost a specific band precisely'), wide: true },
+  [tr('パンチ', 'Punch')]: { id: 'punch', color: '#ff8a5b', sub: tr('キックとベースの立ち上がり', 'Attack of kick and bass') },
+  [tr('グルー', 'Glue')]: { id: 'glue', color: '#58c4ff', sub: tr('全体をまとめるコンプ', 'Compressor that glues the mix together'), meter: 'glue' },
+  [tr('カラー／空間', 'Colour / Space')]: { id: 'color', color: '#f6d365', sub: tr('テープの温かさと響き', 'Tape warmth and room') },
+  [tr('ステレオ', 'Stereo')]: { id: 'stereo', color: '#7ee0d0', sub: tr('広がりと真ん中の存在感', 'Width and centre presence') },
+  [tr('ラウドネス', 'Loudness')]: { color: '#ffb03b', sub: tr('目標の音量に合わせるリミッター', 'Limiter that reaches the target loudness'), meter: 'limiter' },
 };
 const modMeters = {}; // 'glue' | 'limiter' -> { bar, val }
 const mods = []; // built modules, for power / dirty refresh
@@ -182,9 +184,9 @@ function makeModule(parent, meta, fallbackTitle) {
   const el = document.createElement('section');
   el.className = 'mod' + (meta.wide ? ' wide' : '');
   el.style.setProperty('--mc', meta.color);
-  el.innerHTML = `<header>${meta.id ? '<button class="pwr" role="switch" title="このモジュールをON／OFF（OFFで素通し）"></button>' : '<i class="led"></i>'}<div class="mt"><b>${meta.title || fallbackTitle}</b><small>${meta.sub}</small></div>`
+  el.innerHTML = `<header>${meta.id ? `<button class="pwr" role="switch" title="${tr('このモジュールをON／OFF（OFFで素通し）', 'Turn this module on/off (off = bypass)')}"></button>` : '<i class="led"></i>'}<div class="mt"><b>${meta.title || fallbackTitle}</b><small>${meta.sub}</small></div>`
     + (meta.meter ? '<div class="mm"><span class="k">GR</span><span class="bar"><i></i></span><span class="v">0.0</span></div>' : '')
-    + '<button class="mreset" title="このモジュールをオートに戻す">↺ オート</button></header><div class="mbody"></div>';
+    + `<button class="mreset" title="${tr('このモジュールをオートに戻す', 'Reset this module to auto')}">↺ ${tr('オート', 'Auto')}</button></header><div class="mbody"></div>`;
   parent.append(el);
   const mod = { el, body: el.querySelector('.mbody'), rows: [], id: meta.id };
   mods.push(mod);
@@ -222,14 +224,14 @@ function fader(mod, key, label, min, max, step, unit, get, set, autoVal, { log, 
   const top = document.createElement('div'); top.className = 'fd-top';
   let cb = null, gr = null;
   if (dyn) {
-    cb = Object.assign(document.createElement('input'), { type: 'checkbox', className: 'sw', checked: dyn.on, title: 'オン／オフ' });
+    cb = Object.assign(document.createElement('input'), { type: 'checkbox', className: 'sw', checked: dyn.on, title: tr('オン／オフ', 'On / off') });
     cb.onchange = () => { snapshot(); dyn.on = cb.checked; show(); pushParams(); requestSolve(); };
     top.append(cb);
   }
-  const lab = Object.assign(document.createElement('span'), { className: 'l', textContent: label, title: `${label}（ダブルクリックでオートに戻す）` });
+  const lab = Object.assign(document.createElement('span'), { className: 'l', textContent: label, title: tr(`${label}（ダブルクリックでオートに戻す）`, `${label} (double-click to reset to auto)`) });
   top.append(lab);
   if (dyn) { gr = document.createElement('span'); gr.className = 'grb'; gr.innerHTML = '<i></i>'; top.append(gr); }
-  const reset = Object.assign(document.createElement('button'), { className: 'rs', textContent: '↺', title: `オートに戻す（${+(+autoVal).toFixed(2)}${unit}）` });
+  const reset = Object.assign(document.createElement('button'), { className: 'rs', textContent: '↺', title: tr(`オートに戻す（${+(+autoVal).toFixed(2)}${unit}）`, `Reset to auto (${+(+autoVal).toFixed(2)}${unit})`) });
   const val = document.createElement('span'); val.className = 'val';
   top.append(reset, val);
   const trk = document.createElement('div'); trk.className = 'fd-trk';
@@ -267,7 +269,7 @@ function buildUI(auto) {
   const g = $('groups'); g.innerHTML = ''; mods.length = 0;
   for (const k of Object.keys(rows)) delete rows[k];
   // dynamic bells first: they are the per-song part
-  const md = makeModule(g, MODS.dyn, 'ダイナミックEQ');
+  const md = makeModule(g, MODS.dyn, tr('ダイナミックEQ', 'Dynamic EQ'));
   for (const d of cur.dyn) {
     const a = start.dyn.find((x) => x.id === d.id);
     fader(md, 'dyn:' + d.id, d.label, 0, 6, 0.1, 'dB', () => d.depth, (v) => { d.depth = v; }, a.depth, { dyn: d });
@@ -275,18 +277,18 @@ function buildUI(auto) {
   for (const [title, defs] of GROUPS) {
     const meta = MODS[title] || { color: '#858d9e', sub: '' };
     const mod = makeModule(g, meta, title);
-    if (title.startsWith('手動EQ')) { buildEq(mod, defs); continue; }
+    if (title === GROUPS[1][0]) { buildEq(mod, defs); continue; }
     for (const [key, label, min, max, step, unit, log] of defs) {
       fader(mod, key, label, min, max, step, unit, () => cur[key], (v) => { cur[key] = v; }, start[key], { log });
     }
   }
   $('reasons').innerHTML = auto.reasons.map((r) => `<li>${r.text} <span class="k">${r.key}</span></li>`).join('');
   const dcs = auto.decisions;
-  const flags = [dcs.is808 && '808', dcs.ballad && 'バラード', dcs.brightSource && '明るい音源', dcs.veryDark && '暗い音源',
-    dcs.sparseDrums && 'ドラム少なめ', dcs.movingBass && 'ベース音程大'].filter(Boolean);
-  $('diag').innerHTML = `元音源 ${diag.lufs.toFixed(1)} LUFS / ${diag.truePeakDb.toFixed(1)} dBTP / クレスト ${diag.crestDb.toFixed(1)} dB / LRA ${diag.lra.toFixed(1)}<br>`
-    + `BPM ${dcs.bpm} / 低域÷高域 ${diag.lowHighRatioDb.toFixed(1)} dB / ベース f0 ${diag.bassProfile.f0p10}–${diag.bassProfile.f0p90} Hz<br>`
-    + `判定: ${flags.join('・') || '標準'}`;
+  const flags = [dcs.is808 && '808', dcs.ballad && tr('バラード', 'ballad'), dcs.brightSource && tr('明るい音源', 'bright source'), dcs.veryDark && tr('暗い音源', 'dark source'),
+    dcs.sparseDrums && tr('ドラム少なめ', 'sparse drums'), dcs.movingBass && tr('ベース音程大', 'moving bass')].filter(Boolean);
+  $('diag').innerHTML = `${tr('元音源', 'Source')} ${diag.lufs.toFixed(1)} LUFS / ${diag.truePeakDb.toFixed(1)} dBTP / ${tr('クレスト', 'crest')} ${diag.crestDb.toFixed(1)} dB / LRA ${diag.lra.toFixed(1)}<br>`
+    + `BPM ${dcs.bpm} / ${tr('低域÷高域', 'low÷high')} ${diag.lowHighRatioDb.toFixed(1)} dB / ${tr('ベース', 'bass')} f0 ${diag.bassProfile.f0p10}–${diag.bassProfile.f0p90} Hz<br>`
+    + `${tr('判定', 'Flags')}: ${flags.join(tr('・', ', ')) || tr('標準', 'standard')}`;
   refreshPresets();
 }
 
@@ -305,7 +307,7 @@ function buildEq(mod, defs) {
     const box = document.createElement('div'); box.className = 'bfaders';
     mod.body.append(box);
     for (const [key, label, min, max, step, unit, log] of defs.filter((d) => d[0].startsWith(`eq${k}`))) {
-      fader(mod, key, label.replace(/^バンド\d /, ''), min, max, step, unit, () => cur[key], (v) => { cur[key] = v; }, start[key], { log, parent: box });
+      fader(mod, key, label.replace(/^(バンド\d |Band \d )/, ''), min, max, step, unit, () => cur[key], (v) => { cur[key] = v; }, start[key], { log, parent: box });
     }
     groups.push({ t, box, k });
   }
@@ -349,7 +351,7 @@ function undo() {
   const h = history.pop(); if (!h) return;
   ({ cur, spiceLv, spiceStack, genre } = h);
   buildUI(lastAuto); renderSpices(); pushParams(); requestSolve();
-  spiceMsg('1つ前に戻しました');
+  spiceMsg(tr('1つ前に戻しました', 'Undone'));
   $('undo').disabled = !history.length;
 }
 function spiceMsg(t) { $('spiceMsg').textContent = t; }
@@ -371,50 +373,50 @@ function pushStep(id, side, dir) {
 function afterSpice(msg) { refreshUI(); renderSpices(); pushParams(); requestSolve(); spiceMsg(msg); }
 function tapAxis(id, dir) {
   const ax = AXIS[id], lv = spiceLv[id] || 0, side = dir > 0 ? ax.right : ax.left;
-  if (lv * dir >= MAX_LEVEL) { spiceMsg(`「${side.label}」はこれ以上強くできません。もっと欲しいときは CUSTOM で`); return; }
+  if (lv * dir >= MAX_LEVEL) { spiceMsg(tr(`「${side.label}」はこれ以上強くできません。もっと欲しいときは CUSTOM で`, `"${side.label}" is at maximum. Use CUSTOM for more`)); return; }
   snapshot();
   if (lv * dir < 0) {
     const back = dir > 0 ? ax.left : ax.right;
     const done = popStep(id);
-    afterSpice(`${ax.title}: 「${back.label}」を1段戻しました（${describe(done, cur)}）`);
+    afterSpice(tr(`${ax.title}: 「${back.label}」を1段戻しました（${describe(done, cur)}）`, `${ax.title}: "${back.label}" one step back (${describe(done, cur)})`));
   } else {
     const done = pushStep(id, side, dir);
-    afterSpice(`${ax.title}: ${side.label}（${Math.abs(spiceLv[id])}段目）… ${describe(done, cur) || '変化なし（スライダーが上限です）'}
-聴くポイント: ${side.listen}`);
+    afterSpice(`${ax.title}: ${side.label}${tr(`（${Math.abs(spiceLv[id])}段目）`, ` (step ${Math.abs(spiceLv[id])})`)}… ${describe(done, cur) || tr('変化なし（スライダーが上限です）', 'no change (sliders at their limit)')}
+${tr('聴くポイント', 'Listen for')}: ${side.listen}`);
   }
 }
 function tapFix(id) {
   const fx = FIX[id];
-  if ((spiceLv[id] || 0) >= MAX_LEVEL) { spiceMsg(`「${fx.label}」はこれ以上強くできません`); return; }
+  if ((spiceLv[id] || 0) >= MAX_LEVEL) { spiceMsg(tr(`「${fx.label}」はこれ以上強くできません`, `"${fx.label}" is at maximum`)); return; }
   snapshot();
   const done = pushStep(id, fx, 1);
-  afterSpice(`${fx.label}（${spiceLv[id]}段目）… ${describe(done, cur) || '変化なし（スライダーが上限です）'}
-聴くポイント: ${fx.listen}`);
+  afterSpice(`${fx.label}${tr(`（${spiceLv[id]}段目）`, ` (step ${spiceLv[id]})`)}… ${describe(done, cur) || tr('変化なし（スライダーが上限です）', 'no change (sliders at their limit)')}
+${tr('聴くポイント', 'Listen for')}: ${fx.listen}`);
 }
 function clearSpice(id) {
   snapshot();
   while (spiceLv[id]) popStep(id);
-  afterSpice('解除しました');
+  afterSpice(tr('解除しました', 'Removed'));
 }
 // Genre: a base layer under the spices. Switching removes the previous genre's exact deltas first.
 function pickGenre(id) {
   snapshot();
   if (genre) applyDeltas(cur, genre.done, -1);
   const g = GENRES.find((x) => x.id === id);
-  if (!g || genre?.id === id) { genre = null; return afterSpice('ジャンルを外しました（自動設定＋スパイスのまま）'); }
+  if (!g || genre?.id === id) { genre = null; return afterSpice(tr('ジャンルを外しました（自動設定＋スパイスのまま）', 'Genre removed (auto settings + spices kept)')); }
   const { deltas, notes } = genreDeltas(g, ctxOf());
   genre = { id, done: applyDeltas(cur, deltas) };
-  afterSpice(`ジャンル: ${g.label} … ${describe(genre.done, cur) || '変化なし'}\n${notes.join(' / ')}`);
+  afterSpice(`${tr('ジャンル', 'Genre')}: ${g.label} … ${describe(genre.done, cur) || tr('変化なし', 'no change')}\n${notes.join(' / ')}`);
 }
 function renderGenres() {
   const guess = guessGenre(diag, lastAuto.decisions);
   const box = $('genres');
-  box.innerHTML = '<p class="rh">ジャンルに寄せる<small>この曲の分析結果とジャンルの目安の差から調整量を決めます。★ は分析からの推定。もう一度押すと外れます</small></p>';
+  box.innerHTML = tr('<p class="rh">ジャンルに寄せる<small>この曲の分析結果とジャンルの目安の差から調整量を決めます。★ は分析からの推定。もう一度押すと外れます</small></p>', '<p class="rh">Lean toward a genre<small>The amount is set from how far this song is from the genre reference. ★ = guessed from the analysis. Tap again to remove</small></p>');
   const grid = document.createElement('div'); grid.className = 'genreGrid';
   for (const g of GENRES) {
     const b = document.createElement('button');
     b.className = 'side' + (genre?.id === g.id ? ' on' : '') + (g.id === guess ? ' rec' : '');
-    b.innerHTML = `${g.id === guess ? '★' : ''}${g.label}<small>${g.hint}<br>${g.use}に・${g.lufs} LUFS</small>`;
+    b.innerHTML = `${g.id === guess ? '★' : ''}${g.label}<small>${g.hint}<br>${tr(`${g.use}に・${g.lufs} LUFS`, `${g.use} · ${g.lufs} LUFS`)}</small>`;
     b.onclick = () => pickGenre(g.id);
     grid.append(b);
   }
@@ -425,21 +427,21 @@ function renderSpices() {
   const recs = recommend(diag, lastAuto.decisions);
   const recLabel = (r) => (r.fix ? FIX[r.fix].label : (r.dir > 0 ? AXIS[r.axis].right : AXIS[r.axis].left).label);
   const box0 = $('recs'); box0.innerHTML = '';
-  if (!recs.length) box0.innerHTML = '<p>自動設定でバランスは取れています。気になるところだけ下のボタンで調整してください</p>';
+  if (!recs.length) box0.innerHTML = tr('<p>自動設定でバランスは取れています。気になるところだけ下のボタンで調整してください</p>', '<p>The auto settings are already balanced. Use the buttons below only for what bothers you</p>');
   else {
-    box0.innerHTML = '<p class="rh">この曲へのおすすめ<small>押すと1段かかります。A/B で聴き比べて、好みでなければ「↶ 元に戻す」</small></p>';
+    box0.innerHTML = tr('<p class="rh">この曲へのおすすめ<small>押すと1段かかります。A/B で聴き比べて、好みでなければ「↶ 元に戻す」</small></p>', '<p class="rh">Suggestions for this song<small>Each tap adds one step. Compare with A/B and use "↶ Undo" if you don\'t like it</small></p>');
     for (const r of recs) {
       const applied = r.fix ? (spiceLv[r.fix] || 0) > 0 : (spiceLv[r.axis] || 0) * r.dir > 0;
       const row = document.createElement('div'); row.className = 'recrow';
       const b = Object.assign(document.createElement('button'), { className: applied ? 'on' : '' });
-      b.textContent = applied ? `✓ 「${recLabel(r)}」をかけ中（もう一度で強く）` : `「${recLabel(r)}」を試す`;
+      b.textContent = applied ? tr(`✓ 「${recLabel(r)}」をかけ中（もう一度で強く）`, `✓ "${recLabel(r)}" on (tap again for more)`) : tr(`「${recLabel(r)}」を試す`, `Try "${recLabel(r)}"`);
       b.onclick = () => (r.fix ? tapFix(r.fix) : tapAxis(r.axis, r.dir));
       const t = document.createElement('span'); t.textContent = r.why;
       row.append(b, t); box0.append(row);
     }
   }
   const isRec = (axis, dir) => recs.some((r) => r.axis === axis && r.dir === dir);
-  const box = $('spices'); box.innerHTML = '<h4>好みの方向 — ◀ ▶ でどちらかへ（最大3段）</h4>';
+  const box = $('spices'); box.innerHTML = tr('<h4>好みの方向 — ◀ ▶ でどちらかへ（最大3段）</h4>', '<h4>Your taste — push ◀ or ▶ (up to 3 steps)</h4>');
   for (const ax of AXES) {
     const lv = spiceLv[ax.id] || 0;
     const row = document.createElement('div'); row.className = 'axis';
@@ -456,24 +458,24 @@ function renderSpices() {
     for (let k = -MAX_LEVEL; k <= MAX_LEVEL; k++) if (k) cells.push(`<i class="${(k < 0 ? lv <= k : lv >= k) ? 'f' : ''}"></i>`);
     cells.splice(MAX_LEVEL, 0, '<b>|</b>');
     mid.innerHTML = `<span class="t">${ax.title}</span><span class="meter">${cells.join('')}</span>`;
-    if (lv) { const x = Object.assign(document.createElement('button'), { className: 'x', textContent: '0 に戻す' }); x.onclick = () => clearSpice(ax.id); mid.append(x); }
+    if (lv) { const x = Object.assign(document.createElement('button'), { className: 'x', textContent: tr('0 に戻す', 'Back to 0') }); x.onclick = () => clearSpice(ax.id); mid.append(x); }
     row.append(btn(ax.left, -1), mid, btn(ax.right, 1));
     box.append(row);
   }
-  const fh = document.createElement('h4'); fh.textContent = '気になる所を直す — タップするたびに 弱 → 中 → 強（× で解除）'; box.append(fh);
+  const fh = document.createElement('h4'); fh.textContent = tr('気になる所を直す — タップするたびに 弱 → 中 → 強（× で解除）', 'Fix what bothers you — each tap: light → medium → strong (× to remove)'); box.append(fh);
   const grid = document.createElement('div'); grid.className = 'fixes';
   for (const fx of FIXES) {
     const lv = spiceLv[fx.id] || 0, rec = recs.some((r) => r.fix === fx.id);
     const card = document.createElement('div'); card.className = 'fix';
     const b = document.createElement('button');
     b.className = 'side' + (lv ? ' on' : '') + (rec ? ' rec' : '');
-    const names = ['弱', '中', '強'].slice(0, MAX_LEVEL);
-    const state = !lv ? 'オフ・タップで弱' : lv >= MAX_LEVEL ? '最大（強）' : `${names[lv - 1]}・タップで${names[lv]}`;
+    const names = (LANG === 'ja' ? ['弱', '中', '強'] : ['Light', 'Med', 'Strong']).slice(0, MAX_LEVEL);
+    const state = !lv ? tr('オフ・タップで弱', 'Off · tap for light') : lv >= MAX_LEVEL ? tr('最大（強）', 'Max (strong)') : tr(`${names[lv - 1]}・タップで${names[lv]}`, `${names[lv - 1]} · tap for ${names[lv]}`);
     b.innerHTML = `${rec ? '★' : ''}${fx.label}<small>${fx.hint}</small>`
       + `<span class="lv">${names.map((n, i) => `<i class="${i < lv ? 'f' : ''}">${n}</i>`).join('')}<em>${state}</em></span>`;
     b.onclick = () => tapFix(fx.id);
     card.append(b);
-    if (lv) { const x = Object.assign(document.createElement('button'), { className: 'x', textContent: '×', title: '解除' }); x.onclick = () => clearSpice(fx.id); card.append(x); }
+    if (lv) { const x = Object.assign(document.createElement('button'), { className: 'x', textContent: '×', title: tr('解除', 'Remove') }); x.onclick = () => clearSpice(fx.id); card.append(x); }
     grid.append(card);
   }
   box.append(grid);
@@ -486,7 +488,7 @@ function setValues(src, keys) {
 // ------------------------------------------------------------------ presets / preferences
 function refreshPresets() {
   const ps = store.get('am5.presets', {});
-  $('presetSel').innerHTML = '<option value="">プリセット…</option>' + Object.keys(ps).map((n) => `<option>${n}</option>`).join('');
+  $('presetSel').innerHTML = `<option value="">${tr('プリセット…', 'Presets…')}</option>` + Object.keys(ps).map((n) => `<option>${n}</option>`).join('');
 }
 $('presetSave').onclick = () => {
   const name = $('presetName').value.trim();
@@ -496,26 +498,26 @@ $('presetSave').onclick = () => {
   ps[name] = Object.fromEntries(SLIDER_KEYS.filter((k) => !['lowHz', 'mudHz'].includes(k)).map((k) => [k, cur[k]]));
   ps[name].off = { ...cur.off };
   store.set('am5.presets', ps); refreshPresets(); $('presetSel').value = name; $('presetName').value = '';
-  spiceMsg(`プリセット「${name}」を保存しました`);
+  spiceMsg(tr(`プリセット「${name}」を保存しました`, `Preset "${name}" saved`));
 };
 $('presetName').onkeydown = (e) => { if (e.key === 'Enter') $('presetSave').click(); };
-$('presetLoad').onclick = () => { const n = $('presetSel').value, p = store.get('am5.presets', {})[n]; if (!p) return; snapshot(); cur.off = { ...p.off }; setValues(p, Object.keys(p).filter((k) => k !== 'off')); spiceMsg(`プリセット「${n}」を読み込みました`); };
+$('presetLoad').onclick = () => { const n = $('presetSel').value, p = store.get('am5.presets', {})[n]; if (!p) return; snapshot(); cur.off = { ...p.off }; setValues(p, Object.keys(p).filter((k) => k !== 'off')); spiceMsg(tr(`プリセット「${n}」を読み込みました`, `Preset "${n}" loaded`)); };
 $('presetDel').onclick = () => { const ps = store.get('am5.presets', {}); delete ps[$('presetSel').value]; store.set('am5.presets', ps); refreshPresets(); };
-$('forget').onclick = () => { if (confirm('学習した好みをリセットしますか？')) { store.set('am5.prefs', {}); status('好みの学習をリセットしました'); } };
-$('allOff').onclick = () => { snapshot(); setOff(MOD_IDS, true); spiceMsg('すべてバイパスしました。使うモジュールだけスイッチでONにしてください'); };
-$('allOn').onclick = () => { snapshot(); setOff(MOD_IDS, false); spiceMsg('すべてのモジュールをONにしました'); };
+$('forget').onclick = () => { if (confirm(tr('学習した好みをリセットしますか？', 'Reset the learned preferences?'))) { store.set('am5.prefs', {}); status(tr('好みの学習をリセットしました', 'Learned preferences reset')); } };
+$('allOff').onclick = () => { snapshot(); setOff(MOD_IDS, true); spiceMsg(tr('すべてバイパスしました。使うモジュールだけスイッチでONにしてください', 'Everything bypassed. Switch on only the modules you want')); };
+$('allOn').onclick = () => { snapshot(); setOff(MOD_IDS, false); spiceMsg(tr('すべてのモジュールをONにしました', 'All modules on')); };
 $('resetAll').onclick = () => {
   snapshot(); cur = structuredClone(start); spiceLv = {}; spiceStack = {}; genre = null;
-  buildUI(lastAuto); renderSpices(); pushParams(); requestSolve(); spiceMsg('自動設定に戻しました');
+  buildUI(lastAuto); renderSpices(); pushParams(); requestSolve(); spiceMsg(tr('自動設定に戻しました', 'Back to auto settings'));
 };
 $('undo').onclick = undo;
 
 // ------------------------------------------------------------------ export
 function exportAs(format) {
-  if (solveBusy) { status('調整の完了を待ってから書き出してください'); return; }
+  if (solveBusy) { status(tr('調整の完了を待ってから書き出してください', 'Wait for adjustment to finish before exporting')); return; }
   exportFormat = format;
   if ($('learn').checked) store.set('am5.prefs', learnPrefs(store.get('am5.prefs', {}), rawAuto, cur));
-  status('書き出し中…');
+  status(tr('書き出し中…', 'Exporting…'));
   worker.postMessage({ type: 'render', params: cur, format, fs: +$('expRate').value });
 }
 $('expRate').value = store.get('am5.expRate', 44100);
@@ -569,7 +571,7 @@ function encodeWav(L, R, bits, fs) {
 }
 
 function encodeMp3(L, R, fs) {
-  if (!window.lamejs) { status('MP3 エンコーダ（lamejs）が読み込めませんでした'); return null; }
+  if (!window.lamejs) { status(tr('MP3 エンコーダ（lamejs）が読み込めませんでした', 'Could not load the MP3 encoder (lamejs)')); return null; }
   const enc = new lamejs.Mp3Encoder(2, fs, 320), chunks = [], B = 1152;
   const toI16 = (a, s, e) => { const o = new Int16Array(e - s); for (let i = s; i < e; i++) { const x = Math.max(-1, Math.min(1, a[i])); o[i - s] = x < 0 ? x * 32768 : x * 32767; } return o; };
   for (let i = 0; i < L.length; i += B) {
@@ -604,3 +606,38 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
   if (e.key === ' ') { e.preventDefault(); setPlaying(!playing); }
 });
+
+// Static page text is written in Japanese in index.html; swap it for English here.
+function translateStatic() {
+  document.documentElement.lang = LANG;
+  const sw = $('langSw');
+  sw.textContent = LANG === 'ja' ? 'EN' : '日本語';
+  sw.title = LANG === 'ja' ? 'Switch to English' : '日本語に切り替え';
+  sw.onclick = () => setLang(LANG === 'ja' ? 'en' : 'ja');
+  if (LANG === 'ja') return;
+  const EN = {
+    'サイト': 'Site', '曲を読み込んでください': 'Load a song', '曲を開く': 'Open a song', '開く': 'Open',
+    'プリセットと好みの学習': 'Presets and taste learning', 'プリセット': 'Presets', '保存したプリセット…': 'Saved presets…',
+    '読込': 'Load', '選んだプリセットを削除': 'Delete the selected preset', '削除': 'Delete',
+    '今の設定に名前を付けて保存': 'Name and save the current settings', '保存': 'Save', '好みの学習': 'Taste learning',
+    '書き出し時に好みを学習して、次の曲の自動設定に反映': 'Learn my taste on export and apply it to the next song',
+    '学習をリセット': 'Reset learning', '書き出し': 'Export', 'サンプルレート': 'Sample rate', '形式': 'Format',
+    'CD・配信向け（ディザあり）': 'For CD / streaming (dithered)', '高音質で保存': 'High-resolution master', '320kbps・共有用': '320 kbps · for sharing',
+    '再生／停止（Space）': 'Play / stop (Space)', '再生／停止': 'Play / stop', '加工前の音と比べる（B キー）': 'Compare with the original (B key)',
+    'マスター': 'Master', '原音': 'Original', '再生位置': 'Position', 'スライダーを動かしても音量を目標 LUFS に保つ': 'Keep the loudness at the target LUFS while you move sliders',
+    'ラウドネス固定': 'Loudness lock', 'LUFS固定': 'LUFS lock', '周波数スペクトル（カーソルで周波数を表示）': 'Spectrum (hover to read the frequency)',
+    '曲をドロップして開始': 'Drop a song to start', '自動で解析して、この曲に合ったマスタリングを設定します': 'It analyses the song and sets up a mastering that suits it',
+    'ファイルを選ぶ': 'Choose a file', 'WAV / MP3 / FLAC など · 処理はすべてブラウザ内で行われます': 'WAV / MP3 / FLAC etc. · everything runs in your browser',
+    '以前のバージョン（AetherMaster Classic）はこちら →': 'Previous version (AetherMaster Classic) →', 'モード': 'Mode',
+    'おまかせで仕上げる': 'Let it finish for you', 'すべて自分で追い込む': 'Fine-tune everything yourself',
+    'すべて解析直後の自動設定に戻す': 'Reset everything to the auto settings', '↺ リセット': '↺ Reset',
+    'この曲の解析結果と、自動設定の理由': 'Analysis of this song and why it was set this way', '診断': 'Diagnosis', '自動設定の理由': 'Why these settings',
+    '全モジュールを素通しにして、ゼロから自分で組む（音量合わせのリミッターだけ残ります）': 'Bypass every module and build from scratch (only the loudness limiter stays)',
+    'すべてバイパス': 'Bypass all', 'すべてON': 'All on', '↶ 元に戻す': '↶ Undo',
+  };
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) { const k = n.nodeValue.trim(); if (EN[k]) n.nodeValue = n.nodeValue.replace(k, EN[k]); }
+  for (const el of document.querySelectorAll('[title],[placeholder],[aria-label]'))
+    for (const a of ['title', 'placeholder', 'aria-label']) { const v = el.getAttribute(a); if (v && EN[v]) el.setAttribute(a, EN[v]); }
+  document.querySelector('.rackhelp').innerHTML = 'Changes are heard immediately. <span class="tk"></span> marks the auto position. <b>↺</b> or double-clicking a label resets to auto. Each module\'s <b>ON/OFF</b> switch bypasses it';
+}

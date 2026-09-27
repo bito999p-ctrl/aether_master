@@ -1,6 +1,7 @@
 // Offline side: analysis, auto prescription, calibration, loudness lock, export render.
 import { Session } from './engine/session.js';
 import { applyPrefs } from './engine/prescribe.js';
+import { tr } from './engine/i18n.js';
 
 let s = null;
 const post = (type, data = {}, transfer = []) => self.postMessage({ type, ...data }, transfer);
@@ -11,20 +12,20 @@ self.onmessage = (e) => {
   try {
     if (m.type === 'load') {
       s = new Session(m.L, m.R, m.fs);
-      const diag = s.analyze(progress('解析'));
+      const diag = s.analyze(progress(tr('解析', 'Analysing')));
       const auto = s.auto();
       const start = applyPrefs(auto.params, m.prefs);
       const p = s.calibrate(start);
-      p.driveDb = s.solveLoudness(p, progress('ラウドネス'));
+      p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
       post('analyzed', { diag: { ...diag, sectionLufs: undefined }, auto, params: p,
         ltas: { src: s.sourceLtas(p.targetLufs), master: s.masterLtas(p) } });
     } else if (m.type === 'solve') {
       // recalibrate (dyn depth / punch) and re-lock loudness for edited params
       const p = s.calibrate(m.params);
-      if (m.lockLoudness) p.driveDb = s.solveLoudness(p, progress('ラウドネス'), { fast: true });
+      if (m.lockLoudness) p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')), { fast: true });
       post('solved', { id: m.id, params: p, ltas: { src: s.sourceLtas(p.targetLufs), master: s.masterLtas(p) } });
     } else if (m.type === 'render') {
-      const out = s.render(m.params, progress('書き出し'), m.fs);
+      const out = s.render(m.params, progress(tr('書き出し', 'Exporting')), m.fs);
       post('rendered', { L: out.L, R: out.R, fs: out.fs, qc: out.qc, format: m.format }, [out.L.buffer, out.R.buffer]);
     }
   } catch (err) {

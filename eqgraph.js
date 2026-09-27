@@ -1,6 +1,7 @@
 // Interactive 4-band EQ graph: drag a node (frequency / gain), wheel over it for Q, double-click = flat.
 // Also draws the auto tone EQ faintly so the manual bands are seen in context.
 import { magDb } from './engine/chain.js';
+import { tr } from './engine/i18n.js';
 
 const F_MIN = 20, F_MAX = 20000, RANGE = 12;
 const GRID = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
@@ -98,7 +99,7 @@ export class EqGraph {
       g.fillStyle = '#10131a'; g.font = 'bold 10px system-ui'; g.textAlign = 'center'; g.fillText(k, x, y + 3.5); g.textAlign = 'left';
     }
     g.fillStyle = 'rgba(255,255,255,0.45)'; g.font = '10px system-ui';
-    g.fillText('点をドラッグ ・ ホイールで幅 ・ ダブルクリックで 0 dB', 6, 13);
-    g.fillStyle = 'rgba(255,255,255,0.3)'; g.textAlign = 'right'; g.fillText('点線 = 自動のトーンEQ', w - 6, 13); g.textAlign = 'left';
+    g.fillText(tr('点をドラッグ ・ ホイールで幅 ・ ダブルクリックで 0 dB', 'Drag points · wheel for width · double-click for 0 dB'), 6, 13);
+    g.fillStyle = 'rgba(255,255,255,0.3)'; g.textAlign = 'right'; g.fillText(tr('点線 = 自動のトーンEQ', 'Dotted = auto tone EQ'), w - 6, 13); g.textAlign = 'left';
   }
 }

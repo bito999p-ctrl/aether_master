@@ -1,5 +1,6 @@
 // Spectrum (log frequency): live analyser as a faint background, whole-song average lines for
 // the original and the master (loudness-matched), and the static EQ curve.
+import { tr } from './engine/i18n.js';
 const F_MIN = 20, F_MAX = 20000, DB_MIN = -90, DB_MAX = -10, EQ_RANGE = 12;
 const GRID = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
 const fmt = (f) => (f >= 1000 ? `${+(f / 1000).toFixed(f < 10000 ? 1 : 0)}k` : `${Math.round(f)}`);
@@ -110,20 +111,20 @@ export class Spectrum {
       let t = f >= 1000 ? (f / 1000).toFixed(2) + ' kHz' : Math.round(f) + ' Hz';
       if (this.ltCurve) {
         const d = this.ltCurve.master[xi] - this.ltCurve.src[xi];
-        t += ` / 原曲との差 ${d >= 0 ? '+' : ''}${d.toFixed(1)} dB`;
+        t += ` / ${tr('原曲との差', 'vs original')} ${d >= 0 ? '+' : ''}${d.toFixed(1)} dB`;
       }
       if (this.eqCurve && this.show.eq) t += ` / EQ ${this.eqCurve[xi].toFixed(1)} dB`;
       g.fillStyle = '#fff'; g.font = '11px system-ui';
       g.fillText(t, Math.min(x + 4, w - g.measureText(t).width - 4), 30);
     }
     g.fillStyle = 'rgba(255,255,255,0.6)'; g.font = '10px system-ui';
-    g.fillText(this.bypass ? '再生中: 元音源（バイパス）' : '再生中: マスター', 4, 12);
+    g.fillText(this.bypass ? tr('再生中: 元音源（バイパス）', 'Playing: original (bypass)') : tr('再生中: マスター', 'Playing: master'), 4, 12);
 
     // legend chips (right-aligned, click to toggle)
     this.chips = [];
     const items = [];
-    if (this.lt) items.push(['src', '原曲 平均'], ['master', 'マスター 平均']);
-    if (this.eqFn) items.push(['eq', 'EQ 設定']);
+    if (this.lt) items.push(['src', tr('原曲 平均', 'Original avg')], ['master', tr('マスター 平均', 'Master avg')]);
+    if (this.eqFn) items.push(['eq', tr('EQ 設定', 'EQ curve')]);
     let rx = w - 4;
     for (const [key, label] of items.reverse()) {
       const tw = g.measureText(label).width + 14, x0 = rx - tw, c = COL[key];

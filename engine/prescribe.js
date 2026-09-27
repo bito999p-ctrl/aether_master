@@ -2,6 +2,7 @@
 // same rules and lessons, with stem-specific moves replaced by mix-level ones.
 import { DEFAULTS } from './chain.js';
 import { design } from './filters.js';
+import { tr } from './i18n.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const REF_LUFS = -14; // the chain works on audio trimmed to this level
@@ -32,37 +33,37 @@ export function prescribe(d) {
 
   // loudness
   p.targetLufs = -10.8;
-  if (is808) { p.targetLufs = -10.0; why('targetLufs', '808（音程が動く超低域ベース）を検出 → ヒップホップ基準の -10.0 LUFS'); }
+  if (is808) { p.targetLufs = -10.0; why('targetLufs', tr('808（音程が動く超低域ベース）を検出 → ヒップホップ基準の -10.0 LUFS', '808 (pitched sub bass) detected → hip-hop target -10.0 LUFS')); }
   if (ballad) {
     p.targetLufs = -13.0;
     if (bpm > 110) bpm /= 2;
-    why('targetLufs', `ダイナミクスが大きい（クレスト ${d.crestDb.toFixed(1)} dB、セクション差 ${spread.toFixed(1)} dB）→ バラード扱いで -13 LUFS、リリースは半分のテンポに合わせる`);
+    why('targetLufs', tr(`ダイナミクスが大きい（クレスト ${d.crestDb.toFixed(1)} dB、セクション差 ${spread.toFixed(1)} dB）→ バラード扱いで -13 LUFS、リリースは半分のテンポに合わせる`, `Very dynamic (crest ${d.crestDb.toFixed(1)} dB, section spread ${spread.toFixed(1)} dB) → treated as a ballad: -13 LUFS, releases at half tempo`));
   }
-  if (!is808 && !ballad) why('targetLufs', '標準の目標 -10.8 LUFS / -1.0 dBTP');
+  if (!is808 && !ballad) why('targetLufs', tr('標準の目標 -10.8 LUFS / -1.0 dBTP', 'Standard target -10.8 LUFS / -1.0 dBTP'));
   const beat = 60000 / bpm;
 
   // low end
   p.hpfHz = is808 ? 25 : 32;
-  why('hpfHz', is808 ? `ベースの最低音が低い（p10 ${bp.f0p10} Hz）→ HPF を 25 Hz まで下げて最低音を残す` : '32 Hz 以下の不要な超低域をカット');
+  why('hpfHz', is808 ? tr(`ベースの最低音が低い（p10 ${bp.f0p10} Hz）→ HPF を 25 Hz まで下げて最低音を残す`, `Very low bass notes (p10 ${bp.f0p10} Hz) → HPF lowered to 25 Hz to keep them`) : tr('32 Hz 以下の不要な超低域をカット', 'Cut unneeded sub-bass below 32 Hz'));
   p.lowHz = Math.round(d.lowPeakHz);
   p.lowDb = movingBass || sparseDrums || dense ? 0 : 1.0;
-  why('lowDb', p.lowDb ? `低域の芯（${p.lowHz} Hz）を +1 dB` : (movingBass ? 'ベースの音程が大きく動く → 固定ベルは音ごとのムラになるので入れない' : 'ドラムが少ない → 低域ベルなし'));
+  why('lowDb', p.lowDb ? tr(`低域の芯（${p.lowHz} Hz）を +1 dB`, `+1 dB on the low-end core (${p.lowHz} Hz)`) : (movingBass ? tr('ベースの音程が大きく動く → 固定ベルは音ごとのムラになるので入れない', 'Bass notes move a lot → no fixed bell (it would make notes uneven)') : tr('ドラムが少ない → 低域ベルなし', 'Few drums → no low bell')));
   p.mudHz = 280; p.mudDb = -1.0;
-  why('mudDb', '250〜300 Hz のこもりを常に -1 dB（マスタリングでよく使う定番の処理）');
+  why('mudDb', tr('250〜300 Hz のこもりを常に -1 dB（マスタリングでよく使う定番の処理）', 'Always -1 dB of 250–300 Hz mud (a standard mastering move)'));
 
   // punch (kick-band transient) and tightness (stands in for kick-keyed bass ducking)
   if (dense) {
     p.punchDb = 1.5; p.tightDb = -0.5; p.lowGainDb = 0;
-    why('punchDb', `すでに密な音源（クレスト ${d.crestDb.toFixed(1)} dB）→ キックの強調は控えめ（低域を膨らませない）`);
+    why('punchDb', tr(`すでに密な音源（クレスト ${d.crestDb.toFixed(1)} dB）→ キックの強調は控えめ（低域を膨らませない）`, `Already dense source (crest ${d.crestDb.toFixed(1)} dB) → light kick emphasis (no bloated lows)`));
   } else if (sparseDrums || ballad) {
     p.punchDb = 1.5; p.tightDb = 0; p.lowGainDb = 0;
-    why('punchDb', 'ドラムがまばら／バラード → キックのアタックは控えめ、低域ダッキングなし');
+    why('punchDb', tr('ドラムがまばら／バラード → キックのアタックは控えめ、低域ダッキングなし', 'Sparse drums / ballad → light kick attack, no low ducking'));
   } else if (is808) {
     p.punchDb = 3; p.tightDb = -1.0; p.lowGainDb = 0.5;
-    why('punchDb', '808 → キックの輪郭は出しつつ、808 の胴鳴りを削らない程度に');
+    why('punchDb', tr('808 → キックの輪郭は出しつつ、808 の胴鳴りを削らない程度に', '808 → define the kick without thinning the 808 body'));
   } else {
     p.punchDb = 4; p.tightDb = -1.5; p.lowGainDb = 1.0;
-    why('punchDb', '150 Hz 以下だけアタックを強調（スネア・シンバルは硬くしない）＋余韻を少し締めてキックを前に');
+    why('punchDb', tr('150 Hz 以下だけアタックを強調（スネア・シンバルは硬くしない）＋余韻を少し締めてキックを前に', 'Attack boosted below 150 Hz only (snare and cymbals stay soft) + slightly tighter tails to bring the kick forward'));
   }
 
   // highs: solve the broad 4.3 kHz shelf so the loud parts' >5 kHz share lands on the major-label
@@ -74,69 +75,69 @@ export function prescribe(d) {
   const hf = d.hfLoud;
   if (ballad || !hf || !d.loudSpec) {
     p.highShelfDb = veryDark ? -3.0 : -4.5;
-    why('highShelfDb', ballad ? 'バラード → 4.3 kHz 以上は控えめに（空気感は残す）' : veryDark ? '暗めの音源 → 4.3 kHz 以上を -3 dB だけ（空気感は残す）' : '4.3 kHz 以上をなだらかに -4.5 dB');
+    why('highShelfDb', ballad ? tr('バラード → 4.3 kHz 以上は控えめに（空気感は残す）', 'Ballad → gentle cut above 4.3 kHz (air kept)') : veryDark ? tr('暗めの音源 → 4.3 kHz 以上を -3 dB だけ（空気感は残す）', 'Dark source → only -3 dB above 4.3 kHz (air kept)') : tr('4.3 kHz 以上をなだらかに -4.5 dB', 'Gentle -4.5 dB above 4.3 kHz'));
   } else {
     const at = (g) => hf.above5kDb + hfShift(d.loudSpec, p.highHz, g, p.airDb) + HF_OFFSET;
     let lo = -8, hi = 4; // brighten at most +4 dB (dark masters; more would lift MP3 artefacts)
     for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (at(m) > HF_TARGET) hi = m; else lo = m; }
     p.highShelfDb = +((lo + hi) / 2).toFixed(1);
-    why('highShelfDb', `大きい場面の 5 kHz 以上の比率 ${hf.above5kDb.toFixed(1)} dB（9〜10 kHz ${hf.band9kDb.toFixed(1)} dB）→ 市販メジャー曲の中央値 ${HF_TARGET} dB に合わせて 4.3 kHz 以上を ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB`);
+    why('highShelfDb', tr(`大きい場面の 5 kHz 以上の比率 ${hf.above5kDb.toFixed(1)} dB（9〜10 kHz ${hf.band9kDb.toFixed(1)} dB）→ 市販メジャー曲の中央値 ${HF_TARGET} dB に合わせて 4.3 kHz 以上を ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB`, `Share above 5 kHz in loud parts ${hf.above5kDb.toFixed(1)} dB (9–10 kHz ${hf.band9kDb.toFixed(1)} dB) → ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB above 4.3 kHz to match the major-label median of ${HF_TARGET} dB`));
   }
   if (p.highShelfDb > -2) p.airDb = 1.0;
-  why('airDb', `16 kHz 以上を +${p.airDb} dB（広いシェルフで落ちすぎる最上域を戻して艶を残す）`);
+  why('airDb', tr(`16 kHz 以上を +${p.airDb} dB（広いシェルフで落ちすぎる最上域を戻して艶を残す）`, `+${p.airDb} dB above 16 kHz (restores the top octave the broad shelf takes, keeps the sheen)`));
   p.bassDb = is808 || dense ? 0 : 1.0;
-  why('bassDb', is808 ? '808 の低域はそのまま' : dense ? 'すでに密な音源 → 低域シェルフはそのまま' : '90 Hz 以下をシェルフで +1 dB（市販マスター並みの低域の厚み）');
+  why('bassDb', is808 ? tr('808 の低域はそのまま', '808 low end left as is') : dense ? tr('すでに密な音源 → 低域シェルフはそのまま', 'Already dense source → low shelf left as is') : tr('90 Hz 以下をシェルフで +1 dB（市販マスター並みの低域の厚み）', '+1 dB shelf below 90 Hz (low-end weight like commercial masters)'));
 
   // dynamic bells (loud-moment only)
   const dyn = [];
   if (!ballad) {
     const depth = brightSource ? 1.0 : 2.0;
-    dyn.push({ id: 'dyn8k', label: '高域の刺さり抑え (8k)', hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 120, on: true });
-    why('dyn8k', `大きい瞬間だけ 8 kHz 帯を ${depth} dB 抑える（痛さ対策、普段は触らない）`);
-  } else why('dyn8k', '非常に暗い音源 → 8 kHz のダイナミック処理なし');
+    dyn.push({ id: 'dyn8k', label: tr('高域の刺さり抑え (8k)', 'High bite control (8k)'), hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 120, on: true });
+    why('dyn8k', tr(`大きい瞬間だけ 8 kHz 帯を ${depth} dB 抑える（痛さ対策、普段は触らない）`, `8 kHz band reduced by ${depth} dB only at loud moments (against harshness, untouched otherwise)`));
+  } else why('dyn8k', tr('非常に暗い音源 → 8 kHz のダイナミック処理なし', 'Very dark source → no dynamic 8 kHz processing'));
   // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): reference masters stay
   // <= 3 dB over their neighbourhood, so cut the excess, narrow and on loud moments only
   const peaks = (d.fixedPeaks || []).filter((r) => r.promDb >= 4 && r.persist >= 0.15);
   const soft = ballad || veryDark;
   peaks.forEach((r, i) => {
     const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(r.promDb - 2.5, 1, 4)).toFixed(1);
-    dyn.push({ id: `res${i}`, label: `共振 ${r.hz} Hz`, hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
+    dyn.push({ id: `res${i}`, label: tr(`共振 ${r.hz} Hz`, `Resonance ${r.hz} Hz`), hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
   });
   if (peaks.length) {
-    why('res', `鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ市販マスター並み（+3 dB 以内）まで抑える`
-      + (soft ? '。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を' : ''));
+    why('res', tr(`鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ市販マスター並み（+3 dB 以内）まで抑える`, `Persistent resonances ${peaks.map((r) => `${r.hz} Hz (+${r.promDb} dB)`).join(' / ')} narrowly cut (Q8) at loud moments only, down to commercial-master level (within +3 dB)`)
+      + (soft ? tr('。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を', '. Kept shallow since it may be the song\'s own notes (e.g. piano). Check by ear') : ''));
   }
   if (growthHigh >= 6 && !ballad) {
     d.harshBins.forEach((b, i) => {
-      dyn.push({ id: `harsh${i}`, label: `刺さり ${b.hz} Hz`, hz: b.hz, q: 3, depth: 2.0, ratio: 4, att: 3, rel: 100, on: true });
+      dyn.push({ id: `harsh${i}`, label: tr(`刺さり ${b.hz} Hz`, `Harshness ${b.hz} Hz`), hz: b.hz, q: 3, depth: 2.0, ratio: 4, att: 3, rel: 100, on: true });
     });
-    if (d.harshBins.length) why('harsh', `サビなど大きい場面で高域が ${growthHigh.toFixed(1)} dB 伸びる → ${d.harshBins.map((b) => b.hz + ' Hz').join(' / ')} を大きい瞬間だけ狭くカット（シェルフで削ると遠くなるので使わない）`);
+    if (d.harshBins.length) why('harsh', tr(`サビなど大きい場面で高域が ${growthHigh.toFixed(1)} dB 伸びる → ${d.harshBins.map((b) => b.hz + ' Hz').join(' / ')} を大きい瞬間だけ狭くカット（シェルフで削ると遠くなるので使わない）`, `Highs grow ${growthHigh.toFixed(1)} dB in loud parts such as the chorus → narrow cuts at ${d.harshBins.map((b) => b.hz + ' Hz').join(' / ')} at loud moments only (no shelf, which would sound distant)`));
   }
   // Suno "shimmer": metallic hash centred around 9-10 kHz (cymbals / vocal air). Narrow and
   // loud-only, so the top end keeps its sheen the rest of the time.
   const shimDepth = ballad ? 0 : brightSource ? 2.0 : 1.0;
-  dyn.push({ id: 'shimmer', label: 'シャリシャリ抑え (9.5k)', hz: 9500, q: 2, depth: shimDepth, ratio: 3, att: 2, rel: 80, on: shimDepth > 0 });
-  why('shimmer', shimDepth ? `Suno 特有のシャリシャリ（9〜10 kHz）を大きい瞬間だけ ${shimDepth} dB 抑える` : '非常に暗い音源 → シャリシャリ処理なし');
+  dyn.push({ id: 'shimmer', label: tr('シャリシャリ抑え (9.5k)', 'Fizz control (9.5k)'), hz: 9500, q: 2, depth: shimDepth, ratio: 3, att: 2, rel: 80, on: shimDepth > 0 });
+  why('shimmer', shimDepth ? tr(`Suno 特有のシャリシャリ（9〜10 kHz）を大きい瞬間だけ ${shimDepth} dB 抑える`, `Suno's fizz (9–10 kHz) reduced by ${shimDepth} dB at loud moments only`) : tr('非常に暗い音源 → シャリシャリ処理なし', 'Very dark source → no fizz control'));
   const sibDepth = ballad || brightSource ? 0 : 1.5;
-  dyn.push({ id: 'deess', label: '歯擦音', hz: 7000, q: 2, depth: sibDepth, ratio: 3, att: 1, rel: 50, on: sibDepth > 0 });
-  why('deess', sibDepth ? '歯擦音（6〜8 kHz）を速いアタックで軽く抑える' : '明るい／暗い音源なので歯擦音処理はオフ（艶を守る）');
+  dyn.push({ id: 'deess', label: tr('歯擦音', 'Sibilance'), hz: 7000, q: 2, depth: sibDepth, ratio: 3, att: 1, rel: 50, on: sibDepth > 0 });
+  why('deess', sibDepth ? tr('歯擦音（6〜8 kHz）を速いアタックで軽く抑える', 'Light, fast-attack control of sibilance (6–8 kHz)') : tr('明るい／暗い音源なので歯擦音処理はオフ（艶を守る）', 'Bright/dark source, so sibilance control is off (keeps the sheen)'));
   p.dyn = dyn;
 
   // vocals / image
   p.presenceDb = ballad ? 0 : 0.5;
-  why('presenceDb', ballad ? 'ボーカルが前に出ている想定 → 中央の持ち上げなし' : '中央（ボーカル）の 3 kHz を +0.5、サイドを少し下げて歌を前に');
+  why('presenceDb', ballad ? tr('ボーカルが前に出ている想定 → 中央の持ち上げなし', 'Vocals assumed to be forward already → no centre lift') : tr('中央（ボーカル）の 3 kHz を +0.5、サイドを少し下げて歌を前に', '+0.5 dB at 3 kHz in the centre (vocal), sides slightly lower to bring the vocal forward'));
   p.monoHz = 120; p.width = 5;
-  why('width', `120 Hz 以下をモノラルにまとめ、ステレオ幅 +5%${d.lowSideDb > -10 ? `（低域にステレオ成分が多い: ${d.lowSideDb.toFixed(1)} dB）` : ''}`);
+  why('width', tr(`120 Hz 以下をモノラルにまとめ、ステレオ幅 +5%${d.lowSideDb > -10 ? `（低域にステレオ成分が多い: ${d.lowSideDb.toFixed(1)} dB）` : ''}`, `Mono below 120 Hz, stereo width +5%${d.lowSideDb > -10 ? ` (lots of stereo in the lows: ${d.lowSideDb.toFixed(1)} dB)` : ''}`));
 
   // glue / colour / space
   p.glueThr = -20; p.glueRatio = 1.25; p.glueAttack = 30;
   p.glueRelPeak = +(beat / 4).toFixed(1); p.glueRelRms = +(beat / 2).toFixed(1);
-  why('glue', `1.25:1 のゆるいグルー、リリースは ${bpm.toFixed(1)} BPM に同期（${p.glueRelPeak} / ${p.glueRelRms} ms）`);
+  why('glue', tr(`1.25:1 のゆるいグルー、リリースは ${bpm.toFixed(1)} BPM に同期（${p.glueRelPeak} / ${p.glueRelRms} ms）`, `Gentle 1.25:1 glue, releases synced to ${bpm.toFixed(1)} BPM (${p.glueRelPeak} / ${p.glueRelRms} ms)`));
   if (dense) p.glueRatio = 1.1;
   p.colorDrive = dense ? 1.0 : 2.5;
-  why('colorDrive', dense ? 'すでに密な音源 → テープ倍音はごく軽く（1.0、にじみ防止）' : 'テープ系の倍音を軽く（ドライブ 2.5、音量は自動で合わせる）');
+  why('colorDrive', dense ? tr('すでに密な音源 → テープ倍音はごく軽く（1.0、にじみ防止）', 'Already dense source → very light tape harmonics (1.0, to avoid smearing)') : tr('テープ系の倍音を軽く（ドライブ 2.5、音量は自動で合わせる）', 'Light tape-style harmonics (drive 2.5, level auto-matched)'));
   p.spaceMix = dense ? 1.0 : 3.5; p.spacePredelay = +(beat / 4).toFixed(1); p.spaceDecay = ballad ? 1.8 : 1.2;
-  why('spaceMix', `ごく薄い空間 ${p.spaceMix}%（プリディレイ 16 分音符 = ${p.spacePredelay} ms）`);
+  why('spaceMix', tr(`ごく薄い空間 ${p.spaceMix}%（プリディレイ 16 分音符 = ${p.spacePredelay} ms）`, `Very light space ${p.spaceMix}% (pre-delay one 16th = ${p.spacePredelay} ms)`));
 
   const decisions = { bpm: +bpm.toFixed(1), is808, dense, movingBass, subBass, brightSource, veryDark, ballad, sparseDrums,
     highGrowthDb: +growthHigh.toFixed(1), sectionSpreadDb: +spread.toFixed(1) };

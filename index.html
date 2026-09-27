@@ -54,6 +54,9 @@
   .sitebar { max-width: 1200px; margin: 0 auto; padding: 10px 16px 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .sitebar a { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.025); color: var(--muted); font-size: 12px; font-weight: 500; text-decoration: none; transition: color .15s, border-color .15s, background .15s; }
   .sitebar a:hover { color: var(--text); border-color: var(--line2); background: rgba(255,255,255,.05); }
+  .sitebar .sright { display: inline-flex; gap: 8px; align-items: center; }
+  .sitebar .langsw { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.025); color: var(--muted); font: 500 12px/1.2 inherit; font-family: inherit; cursor: pointer; }
+  .sitebar .langsw:hover { color: var(--text); border-color: var(--line2); }
   .sitebar a svg { width: 14px; height: 14px; flex: none; }
   .sitebar a.player { color: var(--cyan); border-color: rgba(88,196,255,.3); background: var(--cyan-soft); }
   .sitebar a.player:hover { color: #9adcff; border-color: rgba(88,196,255,.55); }
@@ -362,7 +365,7 @@
 <body>
 <nav class="sitebar" aria-label="サイト">
   <a href="https://bito999p-ctrl.github.io/sonografica"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Sonografica</a>
-  <a class="player" href="https://aether-player-blush.vercel.app/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>AetherPlayer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+  <span class="sright"><button type="button" id="langSw" class="langsw">EN</button><a class="player" href="https://aether-player-blush.vercel.app/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>AetherPlayer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a></span>
 </nav>
 <div id="deck">
   <div class="deck-in">
