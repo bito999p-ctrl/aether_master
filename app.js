@@ -56,7 +56,7 @@ function onWorker(m) {
   if (m.type === 'progress') return status(`${m.stage} ${Math.round(m.f * 100)}%`);
   if (m.type === 'error') { console.error(m.message); status('エラー: ' + m.message.split('\n')[0]); solveBusy = false; return; }
   if (m.type === 'analyzed') {
-    diag = m.diag; lastAuto = m.auto; rawAuto = m.auto.params; start = { ...m.params, off: {} }; cur = structuredClone(start);
+    diag = m.diag; lastAuto = m.auto; rawAuto = m.auto.params; start = { ...m.params, off: {} }; cur = structuredClone(start); solvedAt = targetKey();
     spiceLv = {}; spiceStack = {}; genre = null; history = []; $('undo').disabled = true;
     buildUI(m.auto); renderSpices(); spiceMsg('');
     spec.setLtas(m.ltas);
@@ -84,10 +84,16 @@ function requestSolve() {
   $('solving').textContent = '調整中…';
   solveTimer = setTimeout(() => (solveBusy ? (solveQueued = true) : sendSolve()), 300);
 }
+// the loudness target itself always re-solves the limiter drive; the lock only decides
+// whether other edits are followed back to the target
+let solvedAt = '';
+const targetKey = () => `${cur.targetLufs}|${cur.ceilingDb}`;
 function sendSolve() {
   solveBusy = true;
-  $('solving').textContent = $('lock').checked ? 'ラウドネス合わせ中…' : '調整中…';
-  worker.postMessage({ type: 'solve', params: cur, lockLoudness: $('lock').checked });
+  const lock = $('lock').checked || targetKey() !== solvedAt;
+  solvedAt = targetKey();
+  $('solving').textContent = lock ? 'ラウドネス合わせ中…' : '調整中…';
+  worker.postMessage({ type: 'solve', params: cur, lockLoudness: lock });
 }
 function pushParams() {
   node.port.postMessage({ type: 'params', params: cur });
