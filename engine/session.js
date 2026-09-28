@@ -3,7 +3,7 @@
 import { resample } from './resample.js';
 import { renderOffline, renderLimiter, boostAt } from './chain.js';
 import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup, airShare } from './analyze.js';
-import { prescribe, AIR_CAP } from './prescribe.js';
+import { prescribe, AIR_CAP, SPIKE_CAP } from './prescribe.js';
 import { kPower100ms, integratedFromPowers, integrated, truePeakDb } from './loudness.js';
 
 const preKey = (params) => JSON.stringify({ ...params, driveDb: 0, targetLufs: 0, ceilingDb: 0, limRelease: 0 });
@@ -39,12 +39,13 @@ export class Session {
 
   // 9-10 kHz match (夜響 A/B 2026-09-28, "match typical masters"): loud-part 9-10 kHz share of the
   // master (after solveLoudness: one limiter pass on the cached pre render), in dB above the
-  // brightest reference track (<= 0: in range). The limiter itself adds -0.3..+0.9 dB here.
+  // brightest reference track, and its 9-10 kHz spike crest in dB above the spikiest one
+  // (<= 0: in range). The limiter itself adds -0.3..+0.9 dB to the share.
   airExcess(params) {
     if (preKey(params) !== this.preKey) throw new Error('airExcess: run solveLoudness first');
     const o = renderLimiter(this.pre.L, this.pre.R, this.fs, params);
     const s = airShare(o.L, o.R, this.fs);
-    return s == null ? 0 : +(s - AIR_CAP).toFixed(2);
+    return s == null ? { shareDb: 0, spikeDb: 0 } : { shareDb: +(s.share - AIR_CAP).toFixed(2), spikeDb: +(s.crest - SPIKE_CAP).toFixed(2) };
   }
 
   // Loudness lock: find the limiter drive that hits targetLufs (pre-limiter render cached).

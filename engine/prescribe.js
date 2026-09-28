@@ -103,7 +103,12 @@ export function prescribe(d) {
   // Loud-only cuts land at about half their depth in the loud-frame LTAS, so depth = 2x excess
   // (reference tracks 3.0-4.1 dB, median 3.9; 1x left 3.7-4.3, 2x lands ~3-3.5; 2026-09-28)
   const soft = ballad; // dark non-ballads get full cuts (鳴動 A/B 2026-09-28: silkier, less bite)
-  const peaks = (d.fixedPeaks || []).filter((r) => r.promDb >= (soft ? 4 : 3.5) && r.persist >= 0.15);
+  // Peaks within 1/12 octave are one resonance: keep the strongest only, or two Q8 bells stack
+  // (N2 2789 + 2810 Hz = up to 12 dB at 2.8 kHz; 2026-09-28).
+  const peaks = [];
+  for (const r of (d.fixedPeaks || []).filter((r) => r.promDb >= (soft ? 4 : 3.5) && r.persist >= 0.15).sort((a, b) => b.promDb - a.promDb))
+    if (!peaks.some((k) => Math.abs(Math.log2(r.hz / k.hz)) < 1 / 12)) peaks.push(r);
+  peaks.sort((a, b) => a.hz - b.hz);
   peaks.forEach((r, i) => {
     const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(2 * (r.promDb - 3), 1, 6)).toFixed(1);
     dyn.push({ id: `res${i}`, label: tr(`共振 ${r.hz} Hz`, `Resonance ${r.hz} Hz`), hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
@@ -150,19 +155,26 @@ export function prescribe(d) {
 }
 
 // 9-10 kHz match (夜響 A/B 2026-09-28, user: "match typical masters" → C: fizz 1→3 dB, shelf -0.3→-2 dB).
-// The shelf solve above only targets the >5 kHz share; songs whose 9-10 kHz sits brighter than every
-// reference track (loud share > -26.6 dB) get the fizz bell deepened and the shelf lowered by the excess,
-// measured on the loudness-locked master (Session.airExcess). Ballads and very dark songs are left alone.
+// Measured on the loudness-locked master (Session.airExcess) with the reference-track metric:
+// - share above the brightest reference track (-26.6 dB): fizz bell deepened by the excess, shelf only
+//   0.3x (N2 2026-09-28: a 0.8x shelf left >5 kHz 2.8 dB under target and dulled 2.5-5 kHz);
+// - spikes above the spikiest reference track (crest 11.1 dB; 夜響 11.8 at a normal share): fizz bell
+//   to full depth, since the loud-only bell is what catches spikes.
+// Ballads and very dark songs are left alone.
 export const AIR_CAP = -26.6;
-export function tameAir(auto, excessDb) {
-  const p = structuredClone(auto.params), e = Math.min(3, excessDb);
-  const dec = auto.decisions || {};
-  if (!(e > 0.5) || dec.ballad || dec.veryDark) return auto;
-  const sh = p.dyn.find((x) => x.id === 'shimmer');
-  if (sh) { sh.depth = +Math.min(3, sh.depth + e).toFixed(1); sh.on = true; }
-  p.highShelfDb = +Math.max(-8, p.highShelfDb - 0.8 * e).toFixed(1);
-  const reasons = [...auto.reasons, { key: 'air', text: tr(`大きい場面の 9〜10 kHz が一般的な楽曲の明るさの上限より ${e.toFixed(1)} dB 明るい → シャリシャリ抑えを ${sh ? sh.depth : 0} dB、4.3 kHz 以上を ${p.highShelfDb} dB に`, `9–10 kHz in loud parts is ${e.toFixed(1)} dB brighter than the upper end of typical masters → fizz control ${sh ? sh.depth : 0} dB, ${p.highShelfDb} dB above 4.3 kHz`) }];
-  return { ...auto, params: p, reasons, decisions: { ...dec, airExcessDb: +e.toFixed(1) } };
+export const SPIKE_CAP = 11.1;
+export function tameAir(auto, x) {
+  const p = structuredClone(auto.params), dec = auto.decisions || {};
+  const e = Math.min(3, x.shareDb), k = x.spikeDb;
+  const share = e > 0.5, spike = k > 0.3;
+  if (!(share || spike) || dec.ballad || dec.veryDark) return auto;
+  const sh = p.dyn.find((y) => y.id === 'shimmer');
+  if (sh) { sh.depth = +Math.min(3, spike ? 3 : sh.depth + e).toFixed(1); sh.on = true; }
+  if (share) p.highShelfDb = +Math.max(-8, p.highShelfDb - 0.3 * e).toFixed(1);
+  const why = [share && tr(`9〜10 kHz の量が一般的な楽曲の上限より ${e.toFixed(1)} dB 多い`, `9–10 kHz level ${e.toFixed(1)} dB above the upper end of typical masters`),
+    spike && tr(`9〜10 kHz の瞬間的な突き出しが一般的な楽曲の上限より ${k.toFixed(1)} dB 強い`, `9–10 kHz spikes ${k.toFixed(1)} dB above the upper end of typical masters`)].filter(Boolean).join(tr('／', ' / '));
+  const reasons = [...auto.reasons, { key: 'air', text: why + tr(` → シャリシャリ抑えを ${sh ? sh.depth : 0} dB${share ? `、4.3 kHz 以上を ${p.highShelfDb} dB` : ''} に（大きい瞬間だけ）`, ` → fizz control ${sh ? sh.depth : 0} dB${share ? `, ${p.highShelfDb} dB above 4.3 kHz` : ''} (loud moments only)`) }];
+  return { ...auto, params: p, reasons, decisions: { ...dec, airExcessDb: +e.toFixed(1), airSpikeDb: +k.toFixed(1) } };
 }
 
 const HF_TARGET = -16.9;

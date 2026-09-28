@@ -324,23 +324,34 @@ function lowOnsetRate(M, fs) {
   return count / (M.length / fs);
 }
 
-// Loud-part 9-10 kHz share of a render: 8.5-10.5 kHz energy re full band (4096 FFT, hop 1024),
-// median over the loud 30% of 400 ms blocks — the metric the reference tracks were measured
-// with (2026-09-28: -26.6 .. -35.4 dB, median -29.4).
+// Loud-part 9-10 kHz share of a render: energy through 2x (HP 8.5 kHz + LP 10.5 kHz, Q 0.707) re
+// full band, median over the loud 30% of 400 ms blocks — exactly the metric the reference tracks
+// were measured with (2026-09-28: -26.6 .. -35.4 dB, median -29.4). A brick-wall FFT band reads
+// 4-6 dB higher, so it must not be used against these numbers (2026-09-28).
+// crest: 9-10 kHz spikes — per loud block, the loudest 2 ms of the band over its median 2 ms
+// (median over blocks; reference tracks 7.9 .. 11.1 dB). 夜響 had 11.8 at a normal share (-28.6).
 export function airShare(L, R, fs) {
-  const n = 4096, hop = 1024, fft = new FFT(n), buf = new Float64Array(n / 2 + 1), M = new Float32Array(L.length);
-  for (let i = 0; i < L.length; i++) M[i] = 0.5 * (L[i] + R[i]);
-  const df = fs / n, a9 = Math.round(8500 / df), z9 = Math.round(10500 / df), G = Math.max(1, Math.round(0.4 * fs / hop));
-  const frames = Math.floor((M.length - n) / hop), eb = [], s9 = [];
-  let t = 0, e9 = 0;
-  for (let f = 0; f < frames; f++) {
-    fft.power(M, f * hop, buf);
-    for (let k = 1; k < buf.length; k++) { t += buf[k]; if (k >= a9 && k <= z9) e9 += buf[k]; }
-    if ((f + 1) % G === 0) { if (t > 0) { eb.push(t); s9.push(db(e9 / t)); } t = e9 = 0; }
+  const bq = [];
+  for (let i = 0; i < 2; i++) bq.push(new Biquad(1).set('highpass', fs, 8500, 0.707), new Biquad(1).set('lowpass', fs, 10500, 0.707));
+  const C = Math.round(0.002 * fs), K = 200, G = C * K, blocks = Math.floor(L.length / G), eb = [], s9 = [], cr = [];
+  const ch = new Float64Array(K);
+  for (let b = 0; b < blocks; b++) {
+    let t = 0, e9 = 0;
+    for (let c = 0; c < K; c++) {
+      let e = 0;
+      for (let i = b * G + c * C, z = i + C; i < z; i++) {
+        const m = 0.5 * (L[i] + R[i]);
+        let y = m;
+        for (const f of bq) y = f.tick(y, 0);
+        t += m * m; e += y * y;
+      }
+      ch[c] = e; e9 += e;
+    }
+    if (t > 0) { eb.push(t); s9.push(db(e9 / t)); cr.push(db(Math.max(...ch) / (median(Array.from(ch)) + 1e-30))); }
   }
   if (!eb.length) return null;
-  const thr = pct(eb, 70);
-  return median(s9.filter((_, i) => eb[i] >= thr));
+  const thr = pct(eb, 70), loud = (_, i) => eb[i] >= thr;
+  return { share: median(s9.filter(loud)), crest: median(cr.filter(loud)) };
 }
 
 // ---------------------------------------------------------------- calibration
