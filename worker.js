@@ -1,6 +1,6 @@
 // Offline side: analysis, auto prescription, calibration, loudness lock, export render.
 import { Session } from './engine/session.js';
-import { applyPrefs } from './engine/prescribe.js';
+import { applyPrefs, tameAir } from './engine/prescribe.js';
 import { tr } from './engine/i18n.js';
 
 let s = null;
@@ -13,10 +13,15 @@ self.onmessage = (e) => {
     if (m.type === 'load') {
       s = new Session(m.L, m.R, m.fs);
       const diag = s.analyze(progress(tr('解析', 'Analysing')));
-      const auto = s.auto();
-      const start = applyPrefs(auto.params, m.prefs);
-      const p = s.calibrate(start);
+      let auto = s.auto();
+      let p = s.calibrate(applyPrefs(auto.params, m.prefs));
       p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
+      const tamed = tameAir(auto, s.airExcess(p)); // 9-10 kHz brighter than the majors: re-solve once
+      if (tamed !== auto) {
+        auto = tamed;
+        p = s.calibrate(applyPrefs(auto.params, m.prefs));
+        p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
+      }
       post('analyzed', { diag: { ...diag, sectionLufs: undefined }, auto, params: p,
         ltas: { src: s.sourceLtas(p.targetLufs), master: s.masterLtas(p) } });
     } else if (m.type === 'solve') {

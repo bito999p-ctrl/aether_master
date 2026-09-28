@@ -146,6 +146,22 @@ export function prescribe(d) {
   return { params: p, reasons, decisions };
 }
 
+// 9-10 kHz match (夜響 A/B 2026-09-28, user: "match the majors" → C: fizz 1→3 dB, shelf -0.3→-2 dB).
+// The shelf solve above only targets the >5 kHz share; songs whose 9-10 kHz sits brighter than every
+// major master (loud share > -26.6 dB) get the fizz bell deepened and the shelf lowered by the excess,
+// measured on the loudness-locked master (Session.airExcess). Ballads and very dark songs are left alone.
+export const AIR_CAP = -26.6;
+export function tameAir(auto, excessDb) {
+  const p = structuredClone(auto.params), e = Math.min(3, excessDb);
+  const dec = auto.decisions || {};
+  if (!(e > 0.5) || dec.ballad || dec.veryDark) return auto;
+  const sh = p.dyn.find((x) => x.id === 'shimmer');
+  if (sh) { sh.depth = +Math.min(3, sh.depth + e).toFixed(1); sh.on = true; }
+  p.highShelfDb = +Math.max(-8, p.highShelfDb - 0.8 * e).toFixed(1);
+  const reasons = [...auto.reasons, { key: 'air', text: tr(`大きい場面の 9〜10 kHz が市販メジャー曲の最も明るい曲より ${e.toFixed(1)} dB 明るい → シャリシャリ抑えを ${sh ? sh.depth : 0} dB、4.3 kHz 以上を ${p.highShelfDb} dB に`, `9–10 kHz in loud parts is ${e.toFixed(1)} dB brighter than the brightest major-label master → fizz control ${sh ? sh.depth : 0} dB, ${p.highShelfDb} dB above 4.3 kHz`) }];
+  return { ...auto, params: p, reasons, decisions: { ...dec, airExcessDb: +e.toFixed(1) } };
+}
+
 const HF_TARGET = -16.9;
 const HF_OFFSET = -1.25; // renders land ~1.25 dB darker than the static prediction (fit on 5 v2 renders)
 

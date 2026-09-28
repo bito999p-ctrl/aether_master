@@ -323,6 +323,25 @@ function lowOnsetRate(M, fs) {
   return count / (M.length / fs);
 }
 
+// Loud-part 9-10 kHz share of a render: 8.5-10.5 kHz energy re full band (4096 FFT, hop 1024),
+// median over the loud 30% of 400 ms blocks — the metric the major-label masters were measured
+// with (2026-09-28: -26.6 .. -35.4 dB, median -29.4).
+export function airShare(L, R, fs) {
+  const n = 4096, hop = 1024, fft = new FFT(n), buf = new Float64Array(n / 2 + 1), M = new Float32Array(L.length);
+  for (let i = 0; i < L.length; i++) M[i] = 0.5 * (L[i] + R[i]);
+  const df = fs / n, a9 = Math.round(8500 / df), z9 = Math.round(10500 / df), G = Math.max(1, Math.round(0.4 * fs / hop));
+  const frames = Math.floor((M.length - n) / hop), eb = [], s9 = [];
+  let t = 0, e9 = 0;
+  for (let f = 0; f < frames; f++) {
+    fft.power(M, f * hop, buf);
+    for (let k = 1; k < buf.length; k++) { t += buf[k]; if (k >= a9 && k <= z9) e9 += buf[k]; }
+    if ((f + 1) % G === 0) { if (t > 0) { eb.push(t); s9.push(db(e9 / t)); } t = e9 = 0; }
+  }
+  if (!eb.length) return null;
+  const thr = pct(eb, 70);
+  return median(s9.filter((_, i) => eb[i] >= thr));
+}
+
 // ---------------------------------------------------------------- calibration
 // Envelope (dB, every 8 samples) of a dynamic bell's detector on the mono mid,
 // exactly as DynBand computes it, plus the 100 ms band loudness for "loud" frames.
