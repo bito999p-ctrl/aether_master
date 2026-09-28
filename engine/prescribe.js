@@ -78,7 +78,9 @@ export function prescribe(d) {
     why('highShelfDb', ballad ? tr('バラード → 4.3 kHz 以上は控えめに（空気感は残す）', 'Ballad → gentle cut above 4.3 kHz (air kept)') : veryDark ? tr('暗めの音源 → 4.3 kHz 以上を -3 dB だけ（空気感は残す）', 'Dark source → only -3 dB above 4.3 kHz (air kept)') : tr('4.3 kHz 以上をなだらかに -4.5 dB', 'Gentle -4.5 dB above 4.3 kHz'));
   } else {
     const at = (g) => hf.above5kDb + hfShift(d.loudSpec, p.highHz, g, p.airDb) + HF_OFFSET;
-    let lo = -8, hi = 4; // brighten at most +4 dB (dark masters; more would lift MP3 artefacts)
+    // brighten at most +4 dB (more would lift MP3 artefacts); very dark songs stay dark: +1 dB at most
+    // (鳴動 A/B 2026-09-28: +4 dB lifted 12-16 kHz 2 dB over the source and bit)
+    let lo = -8, hi = veryDark ? 1 : 4;
     for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (at(m) > HF_TARGET) hi = m; else lo = m; }
     p.highShelfDb = +((lo + hi) / 2).toFixed(1);
     why('highShelfDb', tr(`大きい場面の 5 kHz 以上の比率 ${hf.above5kDb.toFixed(1)} dB（9〜10 kHz ${hf.band9kDb.toFixed(1)} dB）→ 市販メジャー曲の中央値 ${HF_TARGET} dB に合わせて 4.3 kHz 以上を ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB`, `Share above 5 kHz in loud parts ${hf.above5kDb.toFixed(1)} dB (9–10 kHz ${hf.band9kDb.toFixed(1)} dB) → ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB above 4.3 kHz to match the major-label median of ${HF_TARGET} dB`));
@@ -98,7 +100,7 @@ export function prescribe(d) {
   // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): reference masters stay
   // <= 3 dB over their neighbourhood, so cut the excess, narrow and on loud moments only
   const peaks = (d.fixedPeaks || []).filter((r) => r.promDb >= 4 && r.persist >= 0.15);
-  const soft = ballad || veryDark;
+  const soft = ballad; // dark non-ballads get full cuts (鳴動 A/B 2026-09-28: silkier, less bite)
   peaks.forEach((r, i) => {
     const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(r.promDb - 2.5, 1, 4)).toFixed(1);
     dyn.push({ id: `res${i}`, label: tr(`共振 ${r.hz} Hz`, `Resonance ${r.hz} Hz`), hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
