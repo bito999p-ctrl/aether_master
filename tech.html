@@ -137,7 +137,7 @@
 <ol>
   <li><b>5 kHz 以上</b>：4.3 kHz のなだらかな高域シェルフを二分探索で決め、大きい場面の 5 kHz 以上の比率を市販メジャー曲の中央値 <span class="m">-16.9 dB</span> に合わせます（持ち上げは最大 +4 dB）。</li>
   <li><b>9〜10 kHz</b>：ラウドネスを固定した状態でマスターを実際にレンダリングし、大きい場面の 8.5〜10.5 kHz の比率を測ります。市販メジャー曲で一番明るい値 <span class="m">-26.6 dB</span> を 0.5 dB 以上超えた場合は、超えた分（最大 3 dB）だけシャリシャリ抑え（9.5 kHz）を深くし、高域シェルフを 0.8 倍下げてから、もう一度ラウドネスを解きます。バラードととても暗い音源は対象外です。</li>
-  <li><b>共振</b>：市販マスターでは周囲より +3 dB 以内に収まっているので、それを超える分を狭く（Q 8）、大きい瞬間だけカットします。</li>
+  <li><b>共振</b>：市販マスターでは周囲より +3〜4 dB に収まっているので、+3.5 dB 以上突き出たピークを狭く（Q 8）、大きい瞬間だけカットします。大きい瞬間だけのカットは曲全体では半分ほどしか効かないため、深さは超過分の 2 倍（最大 6 dB）。バラードは浅め（最大 1.5 dB）。</li>
 </ol>
 
 <h2 id="t7"><span class="n">07</span>ラウドネス制御</h2>
@@ -289,7 +289,7 @@
       <li>The loudness is then solved again.</li>
     </ul>
   </li>
-  <li><b>Resonances</b>: cut narrowly (Q 8) to within +3 dB of their neighbourhood, on loud moments only.</li>
+  <li><b>Resonances</b>: commercial masters keep them within +3–4 dB of their neighbourhood, so peaks ≥ +3.5 dB are cut narrowly (Q 8) on loud moments only. Loud-only cuts act at about half strength over the whole song, so the depth is 2× the excess (max 6 dB); shallower for ballads (max 1.5 dB).</li>
 </ul>
 
 <h2><span class="n">07</span>Loudness lock</h2>

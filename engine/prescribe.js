@@ -99,15 +99,17 @@ export function prescribe(d) {
     why('dyn8k', tr(`大きい瞬間だけ 8 kHz 帯を ${depth} dB 抑える（痛さ対策、普段は触らない）`, `8 kHz band reduced by ${depth} dB only at loud moments (against harshness, untouched otherwise)`));
   } else why('dyn8k', tr('非常に暗い音源 → 8 kHz のダイナミック処理なし', 'Very dark source → no dynamic 8 kHz processing'));
   // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): reference masters stay
-  // <= 3 dB over their neighbourhood, so cut the excess, narrow and on loud moments only
-  const peaks = (d.fixedPeaks || []).filter((r) => r.promDb >= 4 && r.persist >= 0.15);
+  // <= 3 dB over their neighbourhood, so cut the excess, narrow and on loud moments only.
+  // Loud-only cuts land at about half their depth in the loud-frame LTAS, so depth = 2x excess
+  // (majors 3.0-4.1 dB, median 3.9; 1x left 3.7-4.3, 2x lands ~3-3.5; 2026-09-28)
   const soft = ballad; // dark non-ballads get full cuts (鳴動 A/B 2026-09-28: silkier, less bite)
+  const peaks = (d.fixedPeaks || []).filter((r) => r.promDb >= (soft ? 4 : 3.5) && r.persist >= 0.15);
   peaks.forEach((r, i) => {
-    const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(r.promDb - 2.5, 1, 4)).toFixed(1);
+    const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(2 * (r.promDb - 3), 1, 6)).toFixed(1);
     dyn.push({ id: `res${i}`, label: tr(`共振 ${r.hz} Hz`, `Resonance ${r.hz} Hz`), hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
   });
   if (peaks.length) {
-    why('res', tr(`鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ市販マスター並み（+3 dB 以内）まで抑える`, `Persistent resonances ${peaks.map((r) => `${r.hz} Hz (+${r.promDb} dB)`).join(' / ')} narrowly cut (Q8) at loud moments only, down to commercial-master level (within +3 dB)`)
+    why('res', tr(`鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ市販マスター並み（+3〜3.5 dB）まで抑える`, `Persistent resonances ${peaks.map((r) => `${r.hz} Hz (+${r.promDb} dB)`).join(' / ')} narrowly cut (Q8) at loud moments only, down to commercial-master level (+3–3.5 dB)`)
       + (soft ? tr('。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を', '. Kept shallow since it may be the song\'s own notes (e.g. piano). Check by ear') : ''));
   }
   if (growthHigh >= 6 && !ballad) {
