@@ -24,7 +24,7 @@ export const GROUPS = [
     ['lowGainDb', tr('低域レベル', 'Low level'), -2, 3, 0.1, 'dB'],
   ]],
   [tr('グルー', 'Glue'), [
-    ['glueThr', tr('スレッショルド', 'Threshold'), -36, -6, 0.5, 'dB'],
+    ['glueDepth', tr('かかり量（大きい所）', 'Amount (loud parts)'), 0, 6, 0.1, 'dB'],
     ['glueRatio', tr('レシオ', 'Ratio'), 1, 3, 0.05, ':1'],
     ['glueAttack', tr('アタック', 'Attack'), 1, 80, 1, 'ms'],
     ['glueRelPeak', tr('リリース (速)', 'Release (fast)'), 20, 600, 1, 'ms'],

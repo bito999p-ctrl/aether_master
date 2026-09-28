@@ -36,7 +36,7 @@ export const AXES = [
       step: ({ dec }) => ({ punchDb: dec.sparseDrums ? 1.2 : 1.8, glueAttack: 8 }) } },
   { id: 'loud', title: tr('音圧', 'Loudness'),
     left: { label: tr('自然に・つぶさない', 'Natural, not squashed'), hint: tr('詰まって息苦しい、サビが盛り上がらない', 'Cramped, the chorus does not lift'), listen: tr('サビに入った瞬間の盛り上がり', 'The lift as the chorus comes in'),
-      step: () => ({ targetLufs: -1.5, glueRatio: -0.12, glueThr: 3 }) },
+      step: () => ({ targetLufs: -1.5, glueRatio: -0.2, glueDepth: -0.5 }) },
     right: { label: tr('音圧・迫力を上げる', 'Louder, more impact'), hint: tr('他の曲と並べると小さい', 'Quieter than other songs'), listen: tr('上げすぎるとサビが平たくなる。A/B で確認', 'Too much flattens the chorus. Check with A/B'),
       step: ({ p }) => ({ targetLufs: p.targetLufs >= -8.5 ? 0.5 : 1.0, colorDrive: 0.8, glueRatio: 0.1 }) } },
   { id: 'width', title: tr('広がり', 'Width'),

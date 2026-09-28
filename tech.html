@@ -96,7 +96,7 @@
 <h3>パンチ</h3>
 <p>150 Hz の相補分割（low = LP2(x)、high = x − low なので合計は常に入力と一致）。低域側だけで速い／遅いエンベロープの差からアタックと余韻を整形するので、スネアやシンバルは硬くなりません。整形による低域の音量変化は、オフラインで測ったメイクアップで打ち消します。</p>
 <h3>グルーコンプ</h3>
-<p>フィードフォワード、ステレオ連動。サイドチェーンは 100 Hz でハイパス。RMS（本体）とピークの二重検出、ソフトニー 6 dB、プログラム依存リリース。自動設定は 1.25:1（密な音源は 1.1:1）、アタック 30 ms、リリースは曲の BPM に同期します（16 分音符 / 8 分音符）。</p>
+<p>フィードフォワード、ステレオ連動。サイドチェーンは 100 Hz でハイパス。RMS（本体）とピークの二重検出、ソフトニー 6 dB、プログラム依存リリース。自動設定では「大きい所（音量上位 15%）で平均何 dB 抑えるか」を曲ごとに決め、スレッショルドはその量になるよう曲ごとに自動で合わせます（標準 1.5 dB、セクション間の音量差が大きい曲は 2 dB、密な音源とバラードは 1 dB）。静かな所はほぼ素通しになります。レシオは 2:1（密な音源は 1.5:1）、アタック 30 ms、リリースは曲の BPM に同期します（16 分音符 / 8 分音符）。</p>
 <h3>カラー</h3>
 <p>2 倍オーバーサンプリングの非対称 tanh サチュレーション（偶数次＋奇数次の倍音）。小信号ゲインを 1 に正規化してあるので、ドライブを上げても音量ではなく音色だけが変わります。</p>
 <h3>空間</h3>
@@ -242,7 +242,8 @@
     <ul>
       <li>The sidechain is high-passed at 100 Hz.</li>
       <li>Detection is dual (RMS and peak), with a 6 dB soft knee.</li>
-      <li>Auto settings are 1.25:1 with releases synced to the BPM.</li>
+      <li>Auto settings pick an amount per song: the average gain reduction on the loud parts (top 15%), 1.5 dB by default, 2 dB for songs with large section-to-section level changes and 1 dB for dense masters and ballads. The threshold is calibrated per song to hit that amount, so quiet parts pass almost untouched.</li>
+      <li>The ratio is 2:1 (1.5:1 for dense masters), the attack 30 ms, and the releases are synced to the BPM.</li>
     </ul>
   </li>
   <li><b>Colour</b>: asymmetric tanh at 2× oversampling, normalised to unity small-signal gain.</li>

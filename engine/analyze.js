@@ -392,6 +392,50 @@ export function calibrateThreshold({ env, loud }, depth, ratio, range) {
   return +((lo + hi) / 2).toFixed(2);
 }
 
+// Glue detector level (dB, every 8 samples) exactly as Glue computes it (RMS body, peaks 6 dB down),
+// on the source trimmed by gainDb, plus the loud-frame mask (loudest 15% of 100 ms frames).
+// It does not depend on threshold, ratio or attack, so it is computed once per release setting.
+export function glueLevels(L, R, fs, { releasePeak, releaseRms, scHz = 100 }, gainDb = 0) {
+  const hp = new Biquad(2).set('highpass', fs, scHz, 0.7071), g = 10 ** (gainDb / 20);
+  const cRms = coef(releaseRms, fs), cPkA = coef(0.5, fs), cPkR = coef(releasePeak, fs);
+  const n = Math.floor(L.length / 8), lv = new Float32Array(n);
+  const step = Math.round(fs * 0.1), frames = Math.floor(L.length / step), fpow = new Float64Array(frames);
+  let rms = 0, pk = 0;
+  for (let i = 0; i < L.length; i++) {
+    const sl = hp.tick(L[i] * g, 0), sr = hp.tick(R[i] * g, 1), d = Math.max(sl * sl, sr * sr);
+    rms += cRms * (d - rms);
+    pk += (d > pk ? cPkA : cPkR) * (d - pk);
+    if ((i & 7) === 0 && (i >> 3) < n) lv[i >> 3] = Math.max(10 * Math.log10(rms * 2 + 1e-20), 10 * Math.log10(pk + 1e-20) - 6);
+    const f = Math.floor(i / step);
+    if (f < frames) fpow[f] += d;
+  }
+  const loudThr = pct(fpow, 85), loud = new Uint8Array(n);
+  for (let j = 0; j < n; j++) { const f = Math.floor(j * 8 / step); loud[j] = f < frames && fpow[f] > loudThr ? 1 : 0; }
+  return { lv, loud };
+}
+
+// Glue threshold so the loud 15% gets on average `depth` dB of reduction, with the same soft knee
+// and attack/release smoothing as Glue (a mastering engineer sets the amount, not the threshold).
+export function calibrateGlue({ lv, loud }, depth, { ratio, attack, releasePeak, knee = 6 }, fs) {
+  const s = 1 - 1 / Math.max(1, ratio), cAtt = coef(attack / 8, fs), cRel = coef(releasePeak / 8, fs);
+  const meanGr = (thr) => {
+    let gdb = 0, sum = 0, c = 0;
+    for (let j = 0; j < lv.length; j++) {
+      const o = lv[j] - thr;
+      const want = o <= -knee / 2 ? 0 : o >= knee / 2 ? o * s : s * (o + knee / 2) ** 2 / (2 * knee);
+      gdb += (want > gdb ? cAtt : cRel) * (want - gdb);
+      if (loud[j]) { sum += gdb; c++; }
+    }
+    return sum / Math.max(1, c);
+  };
+  let lo = -60, hi = 0;
+  for (let it = 0; it < 20; it++) {
+    const mid = (lo + hi) / 2;
+    if (meanGr(mid) > depth) lo = mid; else hi = mid;
+  }
+  return +((lo + hi) / 2).toFixed(2);
+}
+
 // Level compensation for the punch shaper on the low band (power-weighted mean gain).
 export function punchMakeup(M, fs, attackDb, sustainDb, splitHz = 150) {
   if (Math.abs(attackDb) < 0.01 && Math.abs(sustainDb) < 0.01) return 0;

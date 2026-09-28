@@ -140,10 +140,15 @@ export function prescribe(d) {
   why('width', tr(`120 Hz 以下をモノラルにまとめ、ステレオ幅 +5%${d.lowSideDb > -10 ? `（低域にステレオ成分が多い: ${d.lowSideDb.toFixed(1)} dB）` : ''}`, `Mono below 120 Hz, stereo width +5%${d.lowSideDb > -10 ? ` (lots of stereo in the lows: ${d.lowSideDb.toFixed(1)} dB)` : ''}`));
 
   // glue / colour / space
-  p.glueThr = -20; p.glueRatio = 1.25; p.glueAttack = 30;
+  // Glue is set like a mastering engineer sets a bus compressor: by the amount on the loud parts
+  // (Session.calibrate solves the threshold per song), at 2:1 so it moves with the music instead of
+  // sitting at a constant 1-1.5 dB like the old fixed -20 dB / 1.25:1 did on flat Suno mixes.
+  // Songs whose sections differ get more (it evens them out); dense sources and ballads get less.
+  p.glueRatio = dense ? 1.5 : 2; p.glueAttack = 30;
+  p.glueDepth = dense || ballad ? 1.0 : spread >= 4 ? 2.0 : 1.5;
   p.glueRelPeak = +(beat / 4).toFixed(1); p.glueRelRms = +(beat / 2).toFixed(1);
-  why('glue', tr(`1.25:1 のゆるいグルー、リリースは ${bpm.toFixed(1)} BPM に同期（${p.glueRelPeak} / ${p.glueRelRms} ms）`, `Gentle 1.25:1 glue, releases synced to ${bpm.toFixed(1)} BPM (${p.glueRelPeak} / ${p.glueRelRms} ms)`));
-  if (dense) p.glueRatio = 1.1;
+  why('glue', tr(`グルーは大きい所で ${p.glueDepth} dB 抑える量に合わせる（${p.glueRatio}:1、${dense ? 'すでに密な音源なので浅く' : ballad ? 'バラードなので抑揚を残して浅く' : spread >= 4 ? `セクション差 ${spread.toFixed(1)} dB をならすため多め` : '標準'}）。リリースは ${bpm.toFixed(1)} BPM に同期（${p.glueRelPeak} / ${p.glueRelRms} ms）`,
+    `Glue set to ${p.glueDepth} dB on the loud parts (${p.glueRatio}:1, ${dense ? 'light: already dense' : ballad ? 'light: keeps the ballad\'s dynamics' : spread >= 4 ? `more: evens out a ${spread.toFixed(1)} dB section spread` : 'standard'}), releases synced to ${bpm.toFixed(1)} BPM (${p.glueRelPeak} / ${p.glueRelRms} ms)`));
   p.colorDrive = dense ? 1.0 : 2.5;
   why('colorDrive', dense ? tr('すでに密な音源 → テープ倍音はごく軽く（1.0、にじみ防止）', 'Already dense source → very light tape harmonics (1.0, to avoid smearing)') : tr('テープ系の倍音を軽く（ドライブ 2.5、音量は自動で合わせる）', 'Light tape-style harmonics (drive 2.5, level auto-matched)'));
   p.spaceMix = dense ? 1.0 : 3.5; p.spacePredelay = +(beat / 4).toFixed(1); p.spaceDecay = ballad ? 1.8 : 1.2;
@@ -210,7 +215,7 @@ function pct(a, p) {
 // ---------------------------------------------------------------- preferences
 // The user's typical deviation from the auto settings, learned per slider.
 export const PREF_KEYS = ['bassDb', 'lowDb', 'mudDb', 'highShelfDb', 'airDb', 'punchDb', 'tightDb', 'lowGainDb', 'presenceDb',
-  'glueThr', 'colorDrive', 'spaceMix', 'width', 'monoHz', 'targetLufs'];
+  'glueDepth', 'colorDrive', 'spaceMix', 'width', 'monoHz', 'targetLufs'];
 
 export function applyPrefs(params, prefs) {
   if (!prefs) return params;

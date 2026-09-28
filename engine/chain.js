@@ -26,7 +26,8 @@ export const DEFAULTS = {
   dyn: [],
   punchDb: 0, tightDb: 0, lowGainDb: 0, punchMakeupDb: 0,
   presenceDb: 0,
-  glueThr: -22, glueRatio: 1.25, glueAttack: 30, glueRelPeak: 125, glueRelRms: 250,
+  // glueDepth (dB on the loud 15%): when set, Session.calibrate solves glueThr for it; null = manual glueThr
+  glueDepth: null, glueThr: -22, glueRatio: 1.25, glueAttack: 30, glueRelPeak: 125, glueRelRms: 250,
   colorDrive: 0,
   spaceMix: 0, spaceDecay: 1.2, spacePredelay: 30,
   monoHz: 100, width: 0,

@@ -2,7 +2,7 @@
 // High-level engine API shared by the browser worker and the Node harness.
 import { resample } from './resample.js';
 import { renderOffline, renderLimiter, boostAt } from './chain.js';
-import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup, airShare } from './analyze.js';
+import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup, airShare, glueLevels, calibrateGlue } from './analyze.js';
 import { prescribe, AIR_CAP, SPIKE_CAP } from './prescribe.js';
 import { kPower100ms, integratedFromPowers, integrated, truePeakDb } from './loudness.js';
 
@@ -34,7 +34,26 @@ export class Session {
       d.thr = depth > 0 ? calibrateThreshold(this.envCache.get(key), depth, d.ratio, Math.max(6, depth * 3)) : 0;
     }
     p.punchMakeupDb = punchMakeup(this.M, this.fs, p.punchDb, p.tightDb);
+    // glue: the amount on the loud parts is the setting; the threshold follows the song
+    if (p.glueDepth != null && !(p.glueDepth > 0)) p.glueThr = 0;
+    else if (p.glueDepth > 0) {
+      const key = `glue|${p.glueRelPeak}|${p.glueRelRms}`;
+      if (!this.envCache.has(key)) this.envCache.set(key, glueLevels(this.L, this.R, this.fs, { releasePeak: p.glueRelPeak, releaseRms: p.glueRelRms }));
+      // levels are on the raw source: the threshold follows the input trim and what the tone EQ does
+      // to the loud-part spectrum above the 100 Hz sidechain filter
+      p.glueThr = +(calibrateGlue(this.envCache.get(key), p.glueDepth, { ratio: p.glueRatio, attack: p.glueAttack, releasePeak: p.glueRelPeak }, this.fs)
+        + p.inputDb + this.eqLevelDb(p)).toFixed(2);
+    }
     return p;
+  }
+
+  // Level change (dB) of the loud-part spectrum above 100 Hz from the static EQ.
+  eqLevelDb(p) {
+    const s = this.diag && this.diag.loudSpec;
+    if (!s) return 0;
+    let a = 0, b = 0;
+    s.hz.forEach((f, i) => { if (f < 100) return; const e = 10 ** (s.db[i] / 10); a += e * 10 ** (boostAt(p, f, this.fs) / 10); b += e; });
+    return b > 0 ? 10 * Math.log10(a / b) : 0;
   }
 
   // 9-10 kHz match (夜響 A/B 2026-09-28, "match typical masters"): loud-part 9-10 kHz share of the
