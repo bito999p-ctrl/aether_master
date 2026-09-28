@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Realtime preview: plays the loaded track through MasterChain.
 // A/B: "bypass" plays the untouched source, delayed by the chain latency.
 import { MasterChain } from './engine/chain.js';

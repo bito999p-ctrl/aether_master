@@ -1,0 +1,53 @@
+/* AetherMaster 5 — documentation pages (guide.html / tech.html)
+   Copyright (c) 2026 Sonografica. All rights reserved. */
+:root {
+  --bg: #0d0f13; --panel: #161a21; --panel2: #1c2029; --line: #262b36; --line2: #323846;
+  --text: #d9dde6; --muted: #858d9e; --dim: #5d6474;
+  --accent: #ffb03b; --accent-soft: rgba(255,176,59,.12); --cyan: #58c4ff;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body { font: 14.5px/1.75 Inter, 'Hiragino Sans', 'Yu Gothic UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: var(--cyan); }
+.bar { max-width: 880px; margin: 0 auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.bar a, .bar button { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.025); color: var(--muted); font: 500 12px/1.2 inherit; font-family: inherit; text-decoration: none; cursor: pointer; }
+.bar a:hover, .bar button:hover { color: var(--text); border-color: var(--line2); }
+.bar .r { display: inline-flex; gap: 8px; }
+main { max-width: 880px; margin: 0 auto; padding: 8px 16px 40px; }
+header.hero { padding: 28px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+header.hero .kick { font: 600 11px/1 var(--mono); letter-spacing: .14em; color: var(--accent); }
+h1 { font-size: 28px; line-height: 1.3; margin: 10px 0 6px; }
+header.hero p { margin: 0; color: var(--muted); }
+nav.toc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px; margin: 20px 0; font-size: 13.5px; }
+nav.toc ol { margin: 4px 0 0; padding-left: 22px; columns: 2; column-gap: 28px; }
+nav.toc a { color: var(--text); text-decoration: none; }
+nav.toc a:hover { color: var(--accent); }
+h2 { font-size: 20px; margin: 40px 0 10px; padding-top: 8px; scroll-margin-top: 12px; }
+h2 .n { font-family: var(--mono); color: var(--accent); margin-right: 8px; font-size: 16px; }
+h3 { font-size: 15.5px; margin: 24px 0 6px; }
+p, li { color: #c6ccd8; }
+ul, ol { padding-left: 22px; }
+code, kbd { font-family: var(--mono); font-size: 12.5px; background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; color: var(--text); }
+kbd { border-bottom-width: 2px; }
+pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; color: var(--text); }
+.tw { overflow-x: auto; margin: 10px 0 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { color: var(--muted); font-weight: 600; background: var(--panel); white-space: nowrap; }
+td.m, span.m { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+.note { background: var(--accent-soft); border: 1px solid rgba(255,176,59,.3); border-radius: 8px; padding: 10px 14px; margin: 14px 0; }
+.note b { color: var(--accent); }
+.steps { counter-reset: s; list-style: none; padding: 0; }
+.steps li { counter-increment: s; position: relative; padding: 10px 14px 10px 50px; margin: 8px 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.steps li::before { content: counter(s); position: absolute; left: 14px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #1a1204; font: 700 13px/24px var(--mono); text-align: center; }
+footer.legal { max-width: 880px; margin: 0 auto; padding: 22px 16px 40px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+footer.legal p { color: var(--muted); margin: 4px 0; }
+footer.legal .c { color: var(--text); font-weight: 600; }
+[data-lang] { display: none; }
+html[lang="ja"] [data-lang="ja"], html[lang="en"] [data-lang="en"] { display: revert; }
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  h1 { font-size: 23px; }
+  nav.toc ol { columns: 1; }
+}

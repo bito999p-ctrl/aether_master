@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Sonografica. All rights reserved.
 """Compare v5 renders against reference masters (J chain with real VSTs).
 usage: python compare.py <dir> name [name...]   (expects <name>_src/_ref/_v5.f32)"""
 import sys

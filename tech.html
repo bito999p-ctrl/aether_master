@@ -1,0 +1,340 @@
+<!doctype html>
+<!-- AetherMaster 5 — Technical Specification. Copyright (c) 2026 Sonografica. All rights reserved. -->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-ja="技術仕様 — AetherMaster 5" data-en="Technical Specification — AetherMaster 5">技術仕様 — AetherMaster 5</title>
+<meta name="description" content="AetherMaster 5 の技術仕様。信号処理チェーン、解析、自動設定、ラウドネス制御、書き出し。">
+<link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="docs.css">
+<script src="docs.js"></script>
+</head>
+<body>
+<nav class="bar">
+  <a href="./"><span data-lang="ja">← AetherMaster に戻る</span><span data-lang="en">← Back to AetherMaster</span></a>
+  <span class="r"><a href="guide.html"><span data-lang="ja">使い方ガイド</span><span data-lang="en">User's guide</span></a><button type="button" id="langSw">EN</button></span>
+</nav>
+
+<!-- ============================================================ 日本語 -->
+<main data-lang="ja">
+<header class="hero">
+  <div class="kick">AETHERMASTER 5 · TECHNICAL SPECIFICATION</div>
+  <h1>技術仕様</h1>
+  <p>エンジン <span class="m" id="verJa">2026-09-28.4</span> 時点の仕様です。数値は既定値・自動設定の値です。</p>
+</header>
+
+<nav class="toc"><b>目次</b><ol>
+  <li><a href="#t1">概要</a></li>
+  <li><a href="#t2">システム構成</a></li>
+  <li><a href="#t3">信号処理チェーン</a></li>
+  <li><a href="#t4">各モジュールの仕様</a></li>
+  <li><a href="#t5">解析（診断）</a></li>
+  <li><a href="#t6">自動設定（処方）</a></li>
+  <li><a href="#t7">ラウドネス制御</a></li>
+  <li><a href="#t8">ジャンルと好み</a></li>
+  <li><a href="#t9">書き出しと品質確認</a></li>
+  <li><a href="#t10">動作環境</a></li>
+</ol></nav>
+
+<h2 id="t1"><span class="n">01</span>概要</h2>
+<div class="tw"><table>
+  <tr><th>項目</th><th>仕様</th></tr>
+  <tr><td>種類</td><td>ブラウザ上で動くステレオ 2 ミックス用マスタリングエンジン（信号処理はすべて自作。外部ライブラリは MP3 エンコードの lamejs のみ）</td></tr>
+  <tr><td>内部処理</td><td>44.1 kHz、64 bit 浮動小数点（ブロック処理）</td></tr>
+  <tr><td>入力</td><td>ブラウザがデコードできる形式（WAV / MP3 / FLAC / M4A / AAC / OGG / Opus / AIFF）。読み込み時に 44.1 kHz へ変換</td></tr>
+  <tr><td>出力</td><td>WAV 16 bit（TPDF ディザ）/ WAV 24 bit / MP3 320 kbps、44.1 kHz または 48 kHz</td></tr>
+  <tr><td>ラウドネス測定</td><td>ITU-R BS.1770-4 / EBU R128（Integrated・Short-term・Momentary・LRA）、True Peak は 4 倍オーバーサンプリング</td></tr>
+  <tr><td>既定の目標</td><td>-10.8 LUFS / -1.0 dBTP</td></tr>
+  <tr><td>設計の元</td><td>AIDAW の「J チェーン」（ステム別マスタリング）を 2 ミックス用に移植。市販メジャー曲の測定値を基準にした自動設定</td></tr>
+</table></div>
+
+<h2 id="t2"><span class="n">02</span>システム構成</h2>
+<pre>メインスレッド (app.js)        UI・デコード・書き出しファイル生成（WAV / MP3）
+   │ postMessage
+   ├─ Web Worker (worker.js)     解析 → 自動設定 → 校正 → ラウドネス解決 → オフライン書き出し
+   │                              engine/session.js（Node 用ハーネス tools/ と共通）
+   └─ AudioWorklet (worklet.js)  リアルタイム再生：同じ MasterChain ＋ LiveMeter</pre>
+<p>リアルタイム再生と書き出しは同じ <code>MasterChain</code> を使うので、試聴した音と書き出した音は一致します（書き出しでは最終の音量・ピーク補正のみ追加）。</p>
+
+<h2 id="t3"><span class="n">03</span>信号処理チェーン</h2>
+<pre>入力トリム（-14 LUFS 基準にそろえる）
+ → HPF（4 次 Butterworth）
+ → トーン EQ（低域シェルフ 90 Hz / 低域ベル / こもり / 高域シェルフ / エア 16 kHz）
+ → 手動 EQ 4 バンド
+ → ダイナミック EQ（最大 10 バンド、大きい瞬間だけ働く）
+ → パンチ（150 Hz 以下のトランジェント）
+ → グルーコンプ
+ → カラー（テープ／真空管系の倍音）
+ → 空間（FDN リバーブ、数 % のみ）
+ → ステレオ（低域モノラル化・幅・M/S プレゼンス）
+ → True Peak リミッター（ラウドネス固定でドライブを自動決定）</pre>
+<p>各モジュールはスイッチで素通しにできます（素通し時は中立値で処理）。</p>
+
+<h2 id="t4"><span class="n">04</span>各モジュールの仕様</h2>
+<h3>トーン EQ（RBJ バイクアッド）</h3>
+<div class="tw"><table>
+  <tr><th>バンド</th><th>種類</th><th>周波数</th><th>Q</th><th>範囲</th></tr>
+  <tr><td>ローカット</td><td>HPF 4 次（Q 0.541 / 1.307）</td><td class="m">10–60 Hz</td><td>—</td><td>10 Hz 以下で無効</td></tr>
+  <tr><td>低域シェルフ</td><td>ローシェルフ</td><td class="m">90 Hz</td><td class="m">0.707</td><td class="m">±6 dB</td></tr>
+  <tr><td>低域ベル</td><td>ピーキング</td><td class="m">40–120 Hz</td><td class="m">1.2</td><td class="m">±4 dB</td></tr>
+  <tr><td>こもり</td><td>ピーキング</td><td class="m">150–500 Hz</td><td class="m">1.0</td><td class="m">-4〜+2 dB</td></tr>
+  <tr><td>高域シェルフ</td><td>ハイシェルフ（なだらか）</td><td class="m">2–10 kHz</td><td class="m">0.45</td><td class="m">-8〜+3 dB</td></tr>
+  <tr><td>エア</td><td>ハイシェルフ</td><td class="m">16 kHz</td><td class="m">0.707</td><td class="m">-4〜+5 dB</td></tr>
+  <tr><td>手動 EQ ×4</td><td>ピーキング</td><td class="m">20 Hz–20 kHz</td><td class="m">0.3–10</td><td class="m">±12 dB</td></tr>
+</table></div>
+<h3>ダイナミック EQ（ダイナミックベル）</h3>
+<ul>
+  <li>構造：<code>y = x + (g − 1)·BP(x)</code>。中心ゲイン 0 dB のバンドパスを使うので、係数を再計算せずにサンプルごとにゲインを動かせる正確なベルになります。</li>
+  <li>検出：バンド信号の L/R 連動ミッド、パワーエンベロープ。</li>
+  <li><b>自動校正</b>：スレッショルドは曲ごとに解析で決めます。曲の中で大きい上位 15 % の瞬間に、指定した深さ（dB）だけ効くように合わせます。EQ で同じ帯域を持ち上げている分は深さに足すので、大きい瞬間の正味のカット量が指定値になります。</li>
+  <li>主なバンド（自動）：8 kHz 刺さり抑え（Q 0.5）、2〜5 kHz の鳴り続ける共振（Q 8）、大きい場面で伸びる高域の刺さり（Q 3）、9.5 kHz シャリシャリ抑え（Q 2）、7 kHz 歯擦音（Q 2、速いアタック）。</li>
+</ul>
+<h3>パンチ</h3>
+<p>150 Hz の相補分割（low = LP2(x)、high = x − low なので合計は常に入力と一致）。低域側だけで速い／遅いエンベロープの差からアタックと余韻を整形するので、スネアやシンバルは硬くなりません。整形による低域の音量変化は、オフラインで測ったメイクアップで打ち消します。</p>
+<h3>グルーコンプ</h3>
+<p>フィードフォワード、ステレオ連動。サイドチェーンは 100 Hz でハイパス。RMS（本体）とピークの二重検出、ソフトニー 6 dB、プログラム依存リリース。自動設定は 1.25:1（密な音源は 1.1:1）、アタック 30 ms、リリースは曲の BPM に同期します（16 分音符 / 8 分音符）。</p>
+<h3>カラー</h3>
+<p>2 倍オーバーサンプリングの非対称 tanh サチュレーション（偶数次＋奇数次の倍音）。小信号ゲインを 1 に正規化してあるので、ドライブを上げても音量ではなく音色だけが変わります。</p>
+<h3>空間</h3>
+<p>8 ラインのフィードバックディレイネットワーク（アダマール行列、ループ内ダンピング、プリディレイ最大 250 ms）。ウェット信号を数 % だけ加えます。自動設定のプリディレイは 16 分音符の長さです。</p>
+<h3>ステレオ</h3>
+<p>M/S 処理。サイドを 4 次でハイパスして指定周波数以下をモノラル化します。サイドゲインでステレオ幅を調整します。プレゼンスはミッドの 3 kHz ベルを上げ、同じ帯域のサイドを半分だけ下げて、ボーカルを前に出します。</p>
+<h3>True Peak リミッター</h3>
+<ul>
+  <li>ルックアヘッド 2 ms。4 倍ポリフェーズ補間で、サンプル間ピークを含めた真のピークを検出します。</li>
+  <li>必要ゲイン → ルックアヘッド窓の最小値ホールド → リリース平滑化（長く続く圧縮には 6 倍遅いリリースを併用）→ 同じ長さの箱型フィルタ。窓の中のゲインはすべてピーク地点の必要ゲイン以下になるので、出力がシーリングを超えません。</li>
+</ul>
+
+<h2 id="t5"><span class="n">05</span>解析（診断）</h2>
+<div class="tw"><table>
+  <tr><th>項目</th><th>内容</th></tr>
+  <tr><td>音量</td><td>Integrated LUFS、LRA、10 秒ごとのセクション LUFS、クレストファクター</td></tr>
+  <tr><td>音色バランス</td><td>低域／高域比（20–250 Hz ÷ 4–16 kHz、dB）。平均スペクトル（8192 点 FFT）</td></tr>
+  <tr><td>大きい場面での変化</td><td>音量上位 15 % のフレームで伸びる帯域・ビン（刺さり候補）</td></tr>
+  <tr><td>共振</td><td>2〜5 kHz で周囲より突き出て鳴り続けるピーク（突出量 dB、持続率）</td></tr>
+  <tr><td>高域の量</td><td>大きい場面での 5 kHz 以上の比率、9〜10 kHz の比率</td></tr>
+  <tr><td>リズム</td><td>BPM（70–180 に折り返し）、低域のオンセット密度（ドラムの少なさ）</td></tr>
+  <tr><td>ベース</td><td>基音の分布（p10 / p50 / p90）と音域の広さ → 808（音程が動く超低域ベース）の判定</td></tr>
+  <tr><td>ステレオ</td><td>低域・高域のサイド成分の量</td></tr>
+</table></div>
+
+<h2 id="t6"><span class="n">06</span>自動設定（処方）</h2>
+<p>診断から全パラメータを決め、各項目に理由の文章を付けます。「すでにマスタリング済みか」は判定しません。質の低いマスターが付いた音源もあるので、どの音源も同じ測定基準に合わせます。</p>
+<div class="tw"><table>
+  <tr><th>判定</th><th>条件</th><th>主な変化</th></tr>
+  <tr><td>808</td><td>ベース p10 &lt; 45 Hz かつ p50 &lt; 50 Hz</td><td>-10.0 LUFS、HPF 25 Hz、低域シェルフなし</td></tr>
+  <tr><td>バラード</td><td>クレスト ≥ 15 dB かつセクション差 ≥ 6 dB</td><td>-13 LUFS、半分のテンポでリリース、共振カットは浅め、8k・シャリシャリ処理なし</td></tr>
+  <tr><td>密な音源</td><td>クレスト &lt; 12.5 dB</td><td>キック・倍音・空間・低域の足し算を控えめに</td></tr>
+  <tr><td>ドラムが少ない</td><td>低域オンセット &lt; 0.6 / 秒</td><td>パンチ控えめ、低域ベルなし</td></tr>
+  <tr><td>明るい音源</td><td>低域／高域比 &lt; 10 dB</td><td>8k は -1 dB のみ、歯擦音処理オフ</td></tr>
+  <tr><td>とても暗い音源</td><td>低域／高域比 ≥ 15 dB</td><td>高域の持ち上げは最大 +1 dB</td></tr>
+</table></div>
+<h3>高域の合わせ込み（市販曲基準）</h3>
+<ol>
+  <li><b>5 kHz 以上</b>：4.3 kHz のなだらかな高域シェルフを二分探索で決め、大きい場面の 5 kHz 以上の比率を市販メジャー曲の中央値 <span class="m">-16.9 dB</span> に合わせます（持ち上げは最大 +4 dB）。</li>
+  <li><b>9〜10 kHz</b>：ラウドネスを固定した状態でマスターを実際にレンダリングし、大きい場面の 8.5〜10.5 kHz の比率を測ります。市販メジャー曲で一番明るい値 <span class="m">-26.6 dB</span> を 0.5 dB 以上超えた場合は、超えた分（最大 3 dB）だけシャリシャリ抑え（9.5 kHz）を深くし、高域シェルフを 0.8 倍下げてから、もう一度ラウドネスを解きます。バラードととても暗い音源は対象外です。</li>
+  <li><b>共振</b>：市販マスターでは周囲より +3 dB 以内に収まっているので、それを超える分を狭く（Q 8）、大きい瞬間だけカットします。</li>
+</ol>
+
+<h2 id="t7"><span class="n">07</span>ラウドネス制御</h2>
+<ul>
+  <li>リミッター手前までの処理結果をキャッシュし、リミッターのドライブだけを割線法で解いて、目標 Integrated LUFS に合わせます（許容誤差 0.05 LU）。</li>
+  <li>高速化のため、先に曲中の 8 か所の 4 秒抜粋（1.5 秒の助走付き）で解き、全曲との差を記録します。以後の編集中は抜粋だけで解き直します（約 5 倍速）。</li>
+  <li>書き出し時は全曲で測り直して、目標から 0.1 LU 以上ずれていればドライブを補正します。</li>
+</ul>
+
+<h2 id="t8"><span class="n">08</span>ジャンルと好み</h2>
+<ul>
+  <li><b>ジャンル</b>：自動設定の上に重ねる層です。各ジャンルは目標（LUFS、低域／高域比、幅）と固定の性格付けを持ちます。音色と幅の動かし方は曲の診断値から決めます（例：低域／高域比の差 × 0.45 を低域シェルフに、× −0.35 を高域シェルフに、それぞれ ±3 / ±2.5 dB まで）。</li>
+  <li><b>好み（スパイス）</b>：8 つの方向軸（±3 段）と 3 つの補正（0〜3 段）。1 段ごとに複数のスライダーを診断に応じた量だけ動かします。適用量は記録されるので、正確に元に戻せます。</li>
+  <li><b>好みの学習</b>：書き出しのたびに、自動設定と最終設定の差を学習率 0.35 の移動平均で覚え、次の曲の自動設定に加えます。</li>
+</ul>
+
+<h2 id="t9"><span class="n">09</span>書き出しと品質確認</h2>
+<ol>
+  <li>曲全体をオフラインで処理します（リアルタイム再生と同じチェーン、レイテンシ補正済み）。</li>
+  <li>Integrated LUFS を測り、目標とのずれを補正します（最大 2 回）。</li>
+  <li>True Peak がシーリングを超えていれば、シーリングを下げて再処理します（最大 5 回）。</li>
+  <li>48 kHz 書き出しはリサンプル後に True Peak を再確認し、超えた分だけ全体を下げます。</li>
+  <li>16 bit は 1 LSB の TPDF ディザを加えて量子化します。MP3 は lamejs で 320 kbps にエンコードします。</li>
+  <li>最終的な kHz / LUFS / dBTP を画面に表示します。</li>
+</ol>
+
+<h2 id="t10"><span class="n">10</span>動作環境</h2>
+<ul>
+  <li>AudioWorklet・Web Worker（module）・Web Audio API に対応したブラウザ（Chrome / Edge / Safari / Firefox の最新版）。</li>
+  <li>処理はすべてローカルで行い、音声データを外部に送信しません。</li>
+  <li>設定・プリセット・学習データ・言語の選択は、ブラウザの localStorage に保存します。</li>
+  <li>外部から読み込むもの：lamejs（MP3 エンコーダ, jsDelivr）、Google Fonts。</li>
+</ul>
+</main>
+
+<!-- ============================================================ English -->
+<main data-lang="en">
+<header class="hero">
+  <div class="kick">AETHERMASTER 5 · TECHNICAL SPECIFICATION</div>
+  <h1>Technical Specification</h1>
+  <p>As of engine <span class="m">2026-09-28.4</span>. Figures are defaults or auto-prescription values.</p>
+</header>
+
+<h2><span class="n">01</span>Overview</h2>
+<ul>
+  <li><b>What it is</b>: a stereo mastering engine that runs in the browser. The DSP is written from scratch; the only library is lamejs, for MP3 encoding.</li>
+  <li><b>Processing</b>: 44.1 kHz, 64-bit float, block processing.</li>
+  <li><b>Input</b>: any format the browser can decode. It is converted to 44.1 kHz on load.</li>
+  <li><b>Output</b>:
+    <ul>
+      <li>WAV 16-bit (TPDF dither), WAV 24-bit or MP3 320 kbps;</li>
+      <li>44.1 or 48 kHz.</li>
+    </ul>
+  </li>
+  <li><b>Metering</b>:
+    <ul>
+      <li>ITU-R BS.1770-4 / EBU R128: integrated, short-term and momentary loudness, and LRA;</li>
+      <li>true peak with 4× oversampling.</li>
+    </ul>
+  </li>
+  <li><b>Default target</b>: -10.8 LUFS / -1.0 dBTP.</li>
+  <li><b>Origin</b>: a 2-mix port of the AIDAW "J chain", referenced to measurements of major-label masters.</li>
+</ul>
+
+<h2><span class="n">02</span>Architecture</h2>
+<pre>Main thread (app.js)          UI, decoding, WAV/MP3 file encoding
+   ├─ Web Worker (worker.js)   analysis → prescription → calibration → loudness solve → offline render
+   └─ AudioWorklet             realtime playback: the same MasterChain + LiveMeter</pre>
+
+<h2><span class="n">03</span>Signal chain</h2>
+<pre>input trim (to -14 LUFS) → HPF (4th-order Butterworth) → tone EQ → manual EQ ×4
+ → dynamic EQ (up to 10 bands, loud moments only) → punch (&lt;150 Hz transients)
+ → glue compressor → colour (saturation) → space (FDN) → stereo (mono lows, width, M/S presence)
+ → true-peak limiter (drive solved by the loudness lock)</pre>
+
+<h2><span class="n">04</span>Modules</h2>
+<ul>
+  <li><b>Tone EQ</b> (RBJ biquads):
+    <ul>
+      <li>90 Hz low shelf, ±6 dB;</li>
+      <li>low bell, 40–120 Hz, Q 1.2;</li>
+      <li>mud bell, 150–500 Hz, Q 1.0;</li>
+      <li>broad high shelf, 2–10 kHz, Q 0.45, -8 to +3 dB;</li>
+      <li>16 kHz air shelf;</li>
+      <li>4 manual peaking bands (±12 dB, Q 0.3–10).</li>
+    </ul>
+  </li>
+  <li><b>Dynamic bells</b>:
+    <ul>
+      <li>They compute <code>y = x + (g−1)·BP(x)</code> with a 0 dB bandpass, which gives an exact bell whose gain can change every sample.</li>
+      <li>Thresholds are calibrated per song, so the loudest 15 % of the song gets the set depth.</li>
+      <li>Static EQ boosts at the same frequency are added to the depth.</li>
+    </ul>
+  </li>
+  <li><b>Punch</b>: a complementary split at 150 Hz, with transient shaping on the low band only and a measured makeup.</li>
+  <li><b>Glue</b>: a feed-forward, linked compressor.
+    <ul>
+      <li>The sidechain is high-passed at 100 Hz.</li>
+      <li>Detection is dual (RMS and peak), with a 6 dB soft knee.</li>
+      <li>Auto settings are 1.25:1 with releases synced to the BPM.</li>
+    </ul>
+  </li>
+  <li><b>Colour</b>: asymmetric tanh at 2× oversampling, normalised to unity small-signal gain.</li>
+  <li><b>Space</b>: an 8-line FDN (Hadamard mixing, damped loop, pre-delay up to 250 ms), used at a few percent wet.</li>
+  <li><b>Stereo</b>:
+    <ul>
+      <li>The side is high-passed (4th order) to make the lows mono.</li>
+      <li>Width is the side gain.</li>
+      <li>Presence adds a mid bell at 3 kHz and cuts the side there by half as much.</li>
+    </ul>
+  </li>
+  <li><b>Limiter</b>:
+    <ul>
+      <li>2 ms lookahead, with true-peak detection by 4× polyphase interpolation.</li>
+      <li>The required gain goes through a sliding-window minimum, release smoothing (plus a 6× slower second release) and a box filter of the same length, so the output never exceeds the ceiling.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2><span class="n">05</span>Analysis</h2>
+<ul>
+  <li><b>Loudness</b>: integrated LUFS, LRA, 10 s section loudness and crest factor.</li>
+  <li><b>Tone</b>: low/high ratio (20–250 Hz vs 4–16 kHz) and the long-term spectrum.</li>
+  <li><b>Loud parts</b>: bands that grow in the loudest 15 % of frames.</li>
+  <li><b>Resonances</b>: persistent 2–5 kHz peaks.</li>
+  <li><b>Treble</b>: the share above 5 kHz and at 9–10 kHz in loud parts.</li>
+  <li><b>Rhythm</b>: BPM, folded into 70–180, and low-band onset rate.</li>
+  <li><b>Bass</b>: the f0 distribution, used to detect 808s.</li>
+  <li><b>Stereo</b>: side energy in the lows and highs.</li>
+</ul>
+
+<h2><span class="n">06</span>Auto prescription</h2>
+<ul>
+  <li>Every source is taken to the same measured targets. There is no "already mastered" verdict.</li>
+  <li><b>Special cases</b>:
+    <ul>
+      <li>808 → -10 LUFS, HPF 25 Hz;</li>
+      <li>ballad (crest ≥ 15 dB, section spread ≥ 6 dB) → -13 LUFS, half-tempo releases;</li>
+      <li>dense source (crest &lt; 12.5 dB) → lighter additive moves;</li>
+      <li>bright source → lighter high control;</li>
+      <li>very dark source → treble lift of +1 dB at most.</li>
+    </ul>
+  </li>
+  <li><b>Treble above 5 kHz</b>: the 4.3 kHz shelf is solved so the loud-part share above 5 kHz hits the major-label median of -16.9 dB.</li>
+  <li><b>9–10 kHz</b>:
+    <ul>
+      <li>The loudness-locked master is rendered and its loud-part 8.5–10.5 kHz share is measured.</li>
+      <li>If it is more than 0.5 dB above the brightest major master (-26.6 dB), the 9.5 kHz bell is deepened by the excess (at most 3 dB) and the shelf is lowered by 0.8 × the excess.</li>
+      <li>The loudness is then solved again.</li>
+    </ul>
+  </li>
+  <li><b>Resonances</b>: cut narrowly (Q 8) to within +3 dB of their neighbourhood, on loud moments only.</li>
+</ul>
+
+<h2><span class="n">07</span>Loudness lock</h2>
+<ul>
+  <li>The pre-limiter render is cached, and the limiter drive is solved by the secant method to the target (±0.05 LU).</li>
+  <li>Edits are re-solved on eight 4 s excerpts plus the measured excerpt/full offset, which is about 5× faster.</li>
+  <li>The export re-measures the whole song.</li>
+</ul>
+
+<h2><span class="n">08</span>Genres, taste and learning</h2>
+<ul>
+  <li><b>Genres</b> are a layer on top of the auto settings. Their tone and width moves are sized from the diagnosis.</li>
+  <li><b>Taste</b>: 8 axes (±3 steps) and 3 fixes (0–3). The applied deltas are recorded, so undo is exact.</li>
+  <li><b>Learning</b>: an exponential average (rate 0.35) of your final-minus-auto offsets, applied to the next song.</li>
+</ul>
+
+<h2><span class="n">09</span>Export and QC</h2>
+<ol>
+  <li>An offline render of the whole song, latency-compensated.</li>
+  <li>A LUFS correction, up to 2 passes.</li>
+  <li>A true-peak correction, up to 5 passes.</li>
+  <li>At 48 kHz, resampling followed by a peak re-check.</li>
+  <li>A 1 LSB TPDF dither for 16-bit, or lamejs at 320 kbps for MP3.</li>
+  <li>The measured kHz / LUFS / dBTP are shown.</li>
+</ol>
+
+<h2><span class="n">10</span>Requirements</h2>
+<ul>
+  <li>A browser with AudioWorklet, module Web Workers and the Web Audio API.</li>
+  <li>All processing is local, and no audio is sent anywhere.</li>
+  <li>Settings, presets, learning and the language choice are stored in localStorage.</li>
+  <li>External loads: lamejs (jsDelivr) and Google Fonts.</li>
+</ul>
+</main>
+
+<footer class="legal">
+  <p class="c">© 2026 Sonografica. All rights reserved.</p>
+  <p data-lang="ja">AetherMaster のプログラム（JavaScript・HTML・CSS）、信号処理アルゴリズム、自動設定のルール、本ドキュメントの著作権は Sonografica に帰属します。許可のない複製・改変・再配布・転載を禁じます。処理した楽曲の権利は、その楽曲の権利者に帰属します。</p>
+  <p data-lang="en">The AetherMaster program code (JavaScript, HTML, CSS), its signal-processing algorithms, its auto-setting rules and this documentation are copyright Sonografica. Copying, modifying, redistributing or republishing them without permission is prohibited. Rights to the music you process remain with its owners.</p>
+  <p data-lang="ja">第三者ソフトウェア: lamejs 1.2.1（MP3 エンコード, LGPL-3.0）、フォント Inter / JetBrains Mono（SIL Open Font License 1.1）。</p>
+  <p data-lang="en">Third-party software: lamejs 1.2.1 (MP3 encoding, LGPL-3.0); fonts Inter and JetBrains Mono (SIL Open Font License 1.1).</p>
+</footer>
+<script type="module">
+  import { ENGINE_VERSION } from './engine/version.js';
+  document.querySelectorAll('.hero .m').forEach((e) => { e.textContent = ENGINE_VERSION; });
+</script>
+</body>
+</html>

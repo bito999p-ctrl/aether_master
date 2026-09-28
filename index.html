@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- AetherMaster 5. Copyright (c) 2026 Sonografica. All rights reserved. -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -139,6 +140,12 @@
   #drop .classic { display: inline-block; margin-top: 14px; font-size: 11px; color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--line2); }
   #drop .classic:hover { color: var(--accent); border-color: var(--accent); }
   #drop .engine-ver { margin-top: 10px; font-size: 10.5px; color: var(--muted); }
+  .sitefoot { max-width: 1200px; margin: 28px auto 0; padding: 16px 16px 28px; border-top: 1px solid var(--line); color: var(--dim); font-size: 11px; line-height: 1.6; }
+  .sitefoot .docs { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+  .sitefoot .docs a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--line2); font-size: 12px; }
+  .sitefoot .docs a:hover { color: var(--accent); border-color: var(--accent); }
+  .sitefoot p { margin: 2px 0; }
+  .sitefoot .c { color: var(--muted); font-weight: 600; }
   @media (max-width: 760px) { #drop { margin: 24px 12px; padding: 40px 16px; } }
 
   /* ---------------------------------------------------------------- main */
@@ -473,6 +480,13 @@
 
   <div id="spiceFoot"><button id="undo" disabled>↶ 元に戻す</button><div id="spiceMsg"></div><span id="qc"></span></div>
 </div>
+
+<footer class="sitefoot">
+  <div class="docs"><a href="guide.html">使い方ガイド</a><a href="tech.html">技術仕様</a><a href="classic/">AetherMaster Classic</a></div>
+  <p class="c">© 2026 Sonografica. All rights reserved.</p>
+  <p id="copyNote">AetherMaster のプログラム（JavaScript・HTML・CSS）、信号処理アルゴリズム、自動設定のルールの著作権は Sonografica に帰属します。許可のない複製・改変・再配布・転載を禁じます。</p>
+  <p id="thirdNote">第三者ソフトウェア: lamejs 1.2.1（MP3 エンコード, LGPL-3.0）、フォント Inter / JetBrains Mono（SIL OFL 1.1）</p>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js" defer></script>
 <script type="module" src="app.js"></script>

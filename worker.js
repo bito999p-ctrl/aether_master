@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Offline side: analysis, auto prescription, calibration, loudness lock, export render.
 import { Session } from './engine/session.js';
 import { applyPrefs, tameAir } from './engine/prescribe.js';

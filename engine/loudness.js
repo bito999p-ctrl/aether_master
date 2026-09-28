@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // ITU-R BS.1770-4 loudness (integrated / short-term / momentary) and true peak.
 import { Biquad, Upsampler } from './filters.js';
 

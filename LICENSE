@@ -1,0 +1,31 @@
+AetherMaster
+Copyright (c) 2026 Sonografica. All rights reserved.
+
+【日本語】
+本リポジトリに含まれる AetherMaster のプログラム（JavaScript・HTML・CSS・Python を含む
+すべてのソースコード）、信号処理アルゴリズム、自動設定のルール、ドキュメント
+（guide.html / tech.html ほか）の著作権は Sonografica に帰属します。
+
+公開されている Web ページ上でツールとして使うことはできます。ただし、著作権者の
+書面による許可なく、本ソフトウェアの全部または一部を複製・改変・再配布・転載・
+販売したり、別のサービスや製品に組み込んだりすることを禁じます。
+
+AetherMaster で処理した楽曲の権利は、その楽曲の権利者に帰属します。
+
+[English]
+All program code in this repository (JavaScript, HTML, CSS and Python sources),
+its signal-processing algorithms, auto-setting rules and documentation are
+copyright Sonografica. You may use the tool through the published web page.
+No part of this software may be copied, modified, redistributed, republished,
+sold or incorporated into other services or products without prior written
+permission from the copyright holder.
+Rights to audio processed with AetherMaster remain with its owners.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+--------------------------------------------------------------------------------
+Third-party components (not covered by the notice above)
+- lamejs 1.2.1 (MP3 encoder), LGPL-3.0, loaded from jsDelivr:
+  https://github.com/zhuker/lamejs
+- Inter and JetBrains Mono fonts, SIL Open Font License 1.1, via Google Fonts.
+- The classic/ directory (AetherMaster Classic v4) keeps its own notices.

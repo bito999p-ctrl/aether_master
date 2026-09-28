@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Interactive 4-band EQ graph: drag a node (frequency / gain), wheel over it for Q, double-click = flat.
 // Also draws the auto tone EQ faintly so the manual bands are seen in context.
 import { magDb } from './engine/chain.js';

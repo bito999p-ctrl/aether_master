@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 import { readF32 } from './io.js';
 import { renderOffline, DEFAULTS } from '../engine/chain.js';
 import { integrated, truePeakDb } from '../engine/loudness.js';

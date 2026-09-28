@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Diagnosis -> slider settings ("処方箋"). 2-mix port of chain_j.auto_prescription:
 // same rules and lessons, with stem-specific moves replaced by mix-level ones.
 import { DEFAULTS } from './chain.js';

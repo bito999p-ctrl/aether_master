@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Dynamic processors: Nova-style dynamic bell, low-band punch shaper, glue compressor.
 import { Biquad, coef, dbToLin } from './filters.js';
 

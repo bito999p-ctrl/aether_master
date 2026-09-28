@@ -7,8 +7,9 @@
     "dev": "npx http-server -p 8082 -c-1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Sonografica",
+  "license": "UNLICENSED",
+  "private": true,
   "dependencies": {
     "puppeteer": "^25.3.0"
   },

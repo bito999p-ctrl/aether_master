@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Beginner menu ("Spice"). Two kinds of moves:
 //  - AXES: taste directions, one row each (◀ left | right ▶), level -3..+3.
 //    Tapping the other side first walks back the current side.

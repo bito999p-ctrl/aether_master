@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // The mastering chain (2-mix port of the AIDAW "J" chain):
 // input trim -> HPF -> tone EQ -> dynamic bells -> low punch -> M/S presence
 // -> glue comp -> colour -> space -> stereo -> true-peak limiter.

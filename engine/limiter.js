@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // True-peak lookahead limiter (LoudMax-like, ISP on).
 // 1. drive, 2. per-sample true peak (4x polyphase interpolation),
 // 3. required gain -> min-hold over the lookahead window -> release smoothing

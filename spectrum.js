@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Spectrum (log frequency): live analyser as a faint background, whole-song average lines for
 // the original and the master (loudness-matched), and the static EQ curve.
 import { tr } from './engine/i18n.js';

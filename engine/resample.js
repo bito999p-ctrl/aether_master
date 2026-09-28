@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Rational-ratio resampler (Kaiser-windowed sinc, polyphase) for export, e.g. 44.1 k -> 48 k (160/147).
 const TAPS = 64; // per phase
 

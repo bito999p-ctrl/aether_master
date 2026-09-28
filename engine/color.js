@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Tone colour and space: oversampled tape/tube-style saturation (IVGI-like),
 // small FDN room (RAUM-like, used at a few % wet), M/S imaging.
 import { Biquad, Upsampler, Downsampler, coef } from './filters.js';

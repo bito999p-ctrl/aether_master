@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Genre presets: a base layer on top of the auto prescription. Each genre has a target
 // (loudness, low/high balance, width) and a character (fixed nudges). The tone and width
 // moves are sized from the diagnosis, so a song that already has the genre's balance moves less.

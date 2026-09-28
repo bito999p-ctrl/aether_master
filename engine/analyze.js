@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // 2-mix diagnosis (port of aidaw_mastering.analyze without stems) and
 // calibration helpers for the dynamic processors.
 import { Biquad, coef } from './filters.js';

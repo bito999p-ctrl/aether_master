@@ -1,0 +1,320 @@
+<!doctype html>
+<!-- AetherMaster 5 — User's Guide. Copyright (c) 2026 Sonografica. All rights reserved. -->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-ja="使い方ガイド — AetherMaster 5" data-en="User's Guide — AetherMaster 5">使い方ガイド — AetherMaster 5</title>
+<meta name="description" content="AetherMaster 5 の使い方ガイド。曲を読み込んでから書き出すまで。">
+<link rel="icon" href="https://bito999p-ctrl.github.io/sonografica/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="docs.css">
+<script src="docs.js"></script>
+</head>
+<body>
+<nav class="bar">
+  <a href="./"><span data-lang="ja">← AetherMaster に戻る</span><span data-lang="en">← Back to AetherMaster</span></a>
+  <span class="r"><a href="tech.html"><span data-lang="ja">技術仕様</span><span data-lang="en">Technical spec</span></a><button type="button" id="langSw">EN</button></span>
+</nav>
+
+<!-- ============================================================ 日本語 -->
+<main data-lang="ja">
+<header class="hero">
+  <div class="kick">AETHERMASTER 5 · USER'S GUIDE</div>
+  <h1>使い方ガイド</h1>
+  <p>曲を読み込むだけで自動解析し、その曲に合ったマスタリングを設定するブラウザ用ツールです。</p>
+</header>
+
+<nav class="toc"><b>目次</b><ol>
+  <li><a href="#j1">AetherMaster 5 とは</a></li>
+  <li><a href="#j2">はじめかた（3 ステップ）</a></li>
+  <li><a href="#j3">画面の見かた</a></li>
+  <li><a href="#j4">AUTO モード</a></li>
+  <li><a href="#j5">CUSTOM モード</a></li>
+  <li><a href="#j6">ラウドネス固定</a></li>
+  <li><a href="#j7">プリセットと好みの学習</a></li>
+  <li><a href="#j8">書き出し</a></li>
+  <li><a href="#j9">キーボード操作</a></li>
+  <li><a href="#j10">よくある質問</a></li>
+</ol></nav>
+
+<h2 id="j1"><span class="n">01</span>AetherMaster 5 とは</h2>
+<p>AetherMaster 5 は、完成した 2 ミックス（ステレオの曲ファイル）を配信・共有できる音量と質感に仕上げるマスタリングツールです。</p>
+<ul>
+  <li><b>自動で解析して設定</b>：音量、低域と高域のバランス、ダイナミクス、テンポ、ベースの種類、鳴り続ける共振、大きい場面での刺さりを測ります。その結果から、各処理の設定と「なぜそう設定したか」の理由を作ります。</li>
+  <li><b>市販曲を基準にする</b>：高域の量（5 kHz 以上と 9〜10 kHz）や共振の目立ち方は、市販のメジャー曲のマスターを測った値に合わせます。</li>
+  <li><b>すべてブラウザの中で処理</b>：曲はサーバーに送られません。</li>
+  <li><b>2 つのモード</b>：ジャンルと「好み」をタップするだけの <b>AUTO</b>、全パラメータを自分で動かせる <b>CUSTOM</b>。</li>
+</ul>
+
+<h2 id="j2"><span class="n">02</span>はじめかた（3 ステップ）</h2>
+<ol class="steps">
+  <li><b>曲を読み込む</b> — ページに曲をドラッグ＆ドロップするか「ファイルを選ぶ」を押します。WAV / MP3 / FLAC / M4A / AAC / OGG / Opus / AIFF に対応します。解析と自動設定には、曲の長さに応じて数秒〜数十秒かかります。</li>
+  <li><b>聴いて比べる</b> — <kbd>Space</kbd> で再生し、<kbd>B</kbd>（または「マスター／原音」ボタン）で加工前と切り替えます。気になる所があれば AUTO モードでジャンルや好みを選びます。</li>
+  <li><b>書き出す</b> — 右上の「書き出し」から、サンプルレート（44.1 / 48 kHz）と形式（WAV 16bit / WAV 24bit / MP3 320kbps）を選びます。</li>
+</ol>
+<div class="note"><b>ヒント：</b>自動設定の目標は <b>-10.8 LUFS / -1.0 dBTP</b> です（808 系のヒップホップは -10.0、バラードは -13）。多くの配信サービスで、ほかの曲と並べても聴き劣りしない音量です。</div>
+
+<h2 id="j3"><span class="n">03</span>画面の見かた</h2>
+<h3>上部バー</h3>
+<ul>
+  <li><b>ステータス</b>：解析や書き出しの進み具合を表示します。</li>
+  <li><b>プリセット</b>：設定の保存・読込と、好みの学習（<a href="#j7">07</a>）。</li>
+  <li><b>書き出し</b>：完成した音を保存します（<a href="#j8">08</a>）。</li>
+</ul>
+<h3>再生バー</h3>
+<ul>
+  <li><b>再生／停止</b>と<b>再生位置</b>のスライダー。</li>
+  <li><b>マスター／原音</b>：加工後と加工前を切り替えます。原音は元の音量のまま再生されるので、たいていマスターより小さく聴こえます。音量ではなく音色の違いで判断してください。</li>
+  <li><b>ラウドネス固定</b>：スライダーを動かしても音量を目標に保ちます（<a href="#j6">06</a>）。</li>
+</ul>
+<h3>スペクトルとメーター</h3>
+<ul>
+  <li><b>スペクトル</b>：いま鳴っている音の周波数分布です。曲全体の平均スペクトルを、原音とマスターで重ねて表示します（どちらも目標の音量にそろえてあるので、音色の差だけが見えます）。カーソルを合わせると周波数が出ます。</li>
+  <li><b>Short-term</b>：直近 3 秒の音量（LUFS）。目標値も一緒に表示します。</li>
+  <li><b>Momentary</b>：直近 0.4 秒の音量。<b>Peak</b>：瞬間の最大レベル。</li>
+  <li><b>Glue GR / Limiter GR</b>：グルーコンプとリミッターが音量を下げている量（dB）。</li>
+</ul>
+
+<h2 id="j4"><span class="n">04</span>AUTO モード（おまかせで仕上げる）</h2>
+<p>読み込み直後は、自動設定がかかった状態で始まります。そこから次の 3 つで好みに寄せます。</p>
+<h3>ジャンル</h3>
+<p>8 つのジャンルから選ぶと、そのジャンルらしい音量、低域と高域のバランス、ステレオ幅に寄せます。★ の付いたものが、解析から推定したジャンルです。寄せる量は曲に合わせて決まり、すでにジャンルの目安に近い曲はあまり動きません。</p>
+<div class="tw"><table>
+  <tr><th>ジャンル</th><th>方向</th><th>こんな時に</th><th>目標</th></tr>
+  <tr><td>J-POP / ポップ</td><td>歌を前に、明るく聴きやすく</td><td>歌が埋もれて聴こえる</td><td class="m">-10.5 LUFS</td></tr>
+  <tr><td>ロック</td><td>倍音で太く熱く、中域に厚み</td><td>音が薄い・軽い</td><td class="m">-10.0 LUFS</td></tr>
+  <tr><td>EDM / ダンス</td><td>キックと低音を強く、左右に広く</td><td>ノリや迫力が足りない</td><td class="m">-9.0 LUFS</td></tr>
+  <tr><td>ヒップホップ / トラップ</td><td>低音を太く、声を近く</td><td>低音が物足りない</td><td class="m">-9.5 LUFS</td></tr>
+  <tr><td>アニソン / ボカロ</td><td>高域をきらびやかに、華やかに</td><td>こもって聴こえる</td><td class="m">-9.5 LUFS</td></tr>
+  <tr><td>バラード</td><td>余韻を豊かに、抑揚を残す</td><td>詰まって息苦しい</td><td class="m">-13.0 LUFS</td></tr>
+  <tr><td>アコースティック / ジャズ</td><td>加工感を抑えて自然に</td><td>音がきつい・作り物っぽい</td><td class="m">-14.0 LUFS</td></tr>
+  <tr><td>Lo-fi / チル</td><td>高域を丸く、温かく</td><td>シャリシャリして耳が痛い</td><td class="m">-12.0 LUFS</td></tr>
+</table></div>
+<p>抑揚がとても大きい曲は、音圧の高いジャンルを選んでも -11 LUFS までに留めます（潰れ防止）。</p>
+<h3>おすすめ</h3>
+<p>解析結果から「この曲はこうすると良さそう」という候補を、理由と一緒に表示します。タップすると 1 段かかります。A/B で聴き比べて、好みでなければ「↶ 元に戻す」で戻せます。</p>
+<h3>好み（スパイス）</h3>
+<ul>
+  <li><b>方向の軸</b>（左 ◀ ｜ 右 ▶）：「落ち着いた音に ⇔ 明るく・抜けよく」「オケになじませる ⇔ 前に出す」「すっきり締める ⇔ 太く・重く」「やわらかく ⇔ パンチを出す」「自然に・つぶさない ⇔ 音圧・迫力を上げる」「真ん中にまとめる ⇔ 左右に広く」「近く・生々しく ⇔ 奥行きを出す」「クリーンに ⇔ アナログの温かみ」。片側に最大 3 段階まで動かせ、反対側をタップすると 1 段ずつ戻ります。</li>
+  <li><b>気になる所を直す</b>：「耳に痛い・刺さる」「こもり・にごりを取る」「シャリシャリ・ザラつきを抑える」。タップするたびに 弱 → 中 → 強 になり、× で解除します。</li>
+</ul>
+<p>1 回のタップで、関係する複数のスライダーが曲の解析結果に合わせた量だけ動きます。何が変わったかは画面下に表示されます。<b>↶ 元に戻す</b>（<kbd>Ctrl</kbd>+<kbd>Z</kbd>）で 1 つずつ戻せます。<b>↺ リセット</b>を押すと、すべて解析直後の自動設定に戻ります。</p>
+
+<h2 id="j5"><span class="n">05</span>CUSTOM モード（すべて自分で追い込む）</h2>
+<h3>解析結果と自動設定の理由</h3>
+<p>一番上の欄を開くと、この曲の診断（音量、クレスト、低域／高域比、BPM、共振など）と、各設定を選んだ理由が読めます。</p>
+<h3>モジュール</h3>
+<div class="tw"><table>
+  <tr><th>モジュール</th><th>主なつまみ</th><th>役割</th></tr>
+  <tr><td>トーン</td><td>ローカット、低域シェルフ、低域ベル、こもり、高域シェルフ、エア (16k)</td><td>曲全体の音色バランス</td></tr>
+  <tr><td>手動 EQ</td><td>4 バンド（周波数・増減・幅 Q）</td><td>特定の帯域を削る・足す。EQ グラフ上で点をドラッグ（周波数・増減）、ホイールで幅、ダブルクリックでフラット</td></tr>
+  <tr><td>ダイナミック EQ</td><td>各バンドの深さ</td><td>大きい瞬間だけ働くカット（8k の刺さり、共振、9.5k のシャリシャリ、歯擦音など）</td></tr>
+  <tr><td>パンチ</td><td>アタック（低域）、余韻の締め、低域レベル</td><td>150 Hz 以下だけのトランジェント調整。キックを前に出します</td></tr>
+  <tr><td>グルー</td><td>スレッショルド、レシオ、アタック、リリース 2 種</td><td>全体をなじませるゆるいコンプ</td></tr>
+  <tr><td>カラー／空間</td><td>テープ倍音、空間の量・長さ、プリディレイ</td><td>倍音の厚みとごく薄い響き</td></tr>
+  <tr><td>ステレオ</td><td>センター前に、モノラル化、ステレオ幅</td><td>歌の前後感と左右の広がり</td></tr>
+  <tr><td>ラウドネス</td><td>目標 LUFS、シーリング、リミッター リリース</td><td>最終音量と、ピークの上限</td></tr>
+</table></div>
+<ul>
+  <li>スライダーを動かすと、すぐ音に反映されます。<b>水色の目盛り</b>がオート設定の位置です。</li>
+  <li><b>↺</b> を押すか、ラベルをダブルクリックすると、その項目がオートの値に戻ります。</li>
+  <li>各モジュールの <b>ON／OFF</b> スイッチで、そのモジュールを素通しにできます。</li>
+  <li><b>すべてバイパス</b>にすると、音量合わせのリミッターだけを残してゼロから組めます。</li>
+</ul>
+
+<h2 id="j6"><span class="n">06</span>ラウドネス固定</h2>
+<p>ON にすると、EQ やコンプを動かしても出力の音量（Integrated LUFS）が目標値に保たれます。「大きくなったから良く聴こえる」という錯覚を避けて、音色の変化だけで判断できます。スライダーを動かした後、短い計算（「調整中…」）が入ります。書き出しでは常に目標 LUFS に合わせます。</p>
+
+<h2 id="j7"><span class="n">07</span>プリセットと好みの学習</h2>
+<ul>
+  <li><b>プリセット</b>：いまの設定に名前を付けて保存し、ほかの曲で読み込めます。保存先はこのブラウザ（localStorage）です。ブラウザのデータを消すと消えます。</li>
+  <li><b>好みの学習</b>：ON にしておくと、書き出したときに「自動設定からどれだけ動かしたか」を少しずつ覚えます。次の曲の自動設定に反映されるので、使うほど自分の好みに近い状態から始まります。「学習をリセット」でいつでも初期状態に戻せます。</li>
+</ul>
+
+<h2 id="j8"><span class="n">08</span>書き出し</h2>
+<div class="tw"><table>
+  <tr><th>形式</th><th>内容</th><th>用途</th></tr>
+  <tr><td>WAV 16bit</td><td>TPDF ディザ付き</td><td>CD・配信サービスへの提出</td></tr>
+  <tr><td>WAV 24bit</td><td>高解像度</td><td>保管用、ほかのツールでの追加作業</td></tr>
+  <tr><td>MP3</td><td>320 kbps（lamejs）</td><td>共有・試聴用</td></tr>
+</table></div>
+<p>サンプルレートは 44.1 kHz と 48 kHz から選べます（動画用なら 48 kHz）。書き出しでは曲全体を最初から最後まで処理し、目標 LUFS とシーリング（True Peak）に収まるよう最終確認します。終わると画面下に、実際の <span class="m">kHz / LUFS / dBTP</span> が表示されます。</p>
+
+<h2 id="j9"><span class="n">09</span>キーボード操作</h2>
+<div class="tw"><table>
+  <tr><th>キー</th><th>動作</th></tr>
+  <tr><td><kbd>Space</kbd></td><td>再生／停止</td></tr>
+  <tr><td><kbd>B</kbd></td><td>マスター／原音の切り替え</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd>（Mac は <kbd>⌘</kbd>+<kbd>Z</kbd>）</td><td>元に戻す</td></tr>
+</table></div>
+
+<h2 id="j10"><span class="n">10</span>よくある質問</h2>
+<h3>曲はどこかにアップロードされますか？</h3>
+<p>されません。解析・処理・書き出しは、すべてお使いのブラウザの中で行われます。</p>
+<h3>高域が痛い／こもる</h3>
+<p>AUTO の「耳に痛い・刺さる」「シャリシャリ・ザラつきを抑える」「こもり・にごりを取る」を 1 段ずつ試してください。CUSTOM では、ダイナミック EQ の 8k・9.5k の深さと、高域シェルフで調整できます。</p>
+<h3>音が潰れて聴こえる</h3>
+<p>「自然に・つぶさない」側に動かすか、目標 LUFS を下げてください（-12〜-13 LUFS）。Limiter GR が大きく振れている場合は、音量を上げすぎています。</p>
+<h3>スマートフォンでも使えますか？</h3>
+<p>使えます。ただし長い曲は、解析と書き出しにパソコンより時間がかかります。</p>
+<h3>対応ブラウザ</h3>
+<p>Chrome / Edge / Safari / Firefox の最新版（AudioWorklet と Web Worker に対応したブラウザ）。</p>
+</main>
+
+<!-- ============================================================ English -->
+<main data-lang="en">
+<header class="hero">
+  <div class="kick">AETHERMASTER 5 · USER'S GUIDE</div>
+  <h1>User's Guide</h1>
+  <p>A browser mastering tool: load a song and it analyses it and sets up a mastering that suits it.</p>
+</header>
+
+<nav class="toc"><b>Contents</b><ol>
+  <li><a href="#e1">What is AetherMaster 5</a></li>
+  <li><a href="#e2">Getting started</a></li>
+  <li><a href="#e3">The screen</a></li>
+  <li><a href="#e4">AUTO mode</a></li>
+  <li><a href="#e5">CUSTOM mode</a></li>
+  <li><a href="#e6">Loudness lock</a></li>
+  <li><a href="#e7">Presets and taste learning</a></li>
+  <li><a href="#e8">Export</a></li>
+  <li><a href="#e9">Keyboard</a></li>
+  <li><a href="#e10">FAQ</a></li>
+</ol></nav>
+
+<h2 id="e1"><span class="n">01</span>What is AetherMaster 5</h2>
+<p>AetherMaster 5 finishes a stereo mix to release loudness and tone.</p>
+<ul>
+  <li><b>Automatic analysis and setup</b>: it measures loudness, low/high balance, dynamics, tempo, bass type, persistent resonances and harshness in loud parts. From these it sets every module and explains why.</li>
+  <li><b>Referenced to commercial masters</b>: the amount of treble (above 5 kHz and at 9–10 kHz) and how far resonances stick out are matched to measurements of major-label masters.</li>
+  <li><b>Runs entirely in your browser</b>: your audio is never uploaded.</li>
+  <li><b>Two modes</b>: <b>AUTO</b> (tap a genre and your taste) and <b>CUSTOM</b> (every parameter).</li>
+</ul>
+
+<h2 id="e2"><span class="n">02</span>Getting started</h2>
+<ol class="steps">
+  <li><b>Load a song</b>: drop a file on the page or press "Choose a file". Supported formats are WAV, MP3, FLAC, M4A, AAC, OGG, Opus and AIFF. Analysis takes a few seconds to a few tens of seconds.</li>
+  <li><b>Listen and compare</b>: <kbd>Space</kbd> plays; <kbd>B</kbd> (or the Master/Original button) switches to the untouched source. Adjust with a genre or your taste in AUTO mode.</li>
+  <li><b>Export</b>: choose the sample rate (44.1 / 48 kHz) and the format (WAV 16-bit / WAV 24-bit / MP3 320 kbps) from "Export".</li>
+</ol>
+<div class="note"><b>Tip:</b> the auto target is <b>-10.8 LUFS / -1.0 dBTP</b> (-10.0 for 808 hip-hop, -13 for ballads).</div>
+
+<h2 id="e3"><span class="n">03</span>The screen</h2>
+<ul>
+  <li><b>Top bar</b>: status, presets and taste learning (<a href="#e7">07</a>), export (<a href="#e8">08</a>).</li>
+  <li><b>Transport</b>: play/stop and position.
+    <ul>
+      <li><b>Master/Original</b>: the original plays at its own level, usually quieter. Judge the tone, not the volume.</li>
+      <li><b>Loudness lock</b>: see <a href="#e6">06</a>.</li>
+    </ul>
+  </li>
+  <li><b>Spectrum</b>: the live spectrum, over the whole-song average spectra of the source and the master. Both are matched to the target loudness, so only the tone difference shows.</li>
+  <li><b>Meters</b>:
+    <ul>
+      <li>Short-term (3 s) LUFS with the target;</li>
+      <li>Momentary (0.4 s);</li>
+      <li>Peak;</li>
+      <li>gain reduction of the glue compressor and the limiter.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="e4"><span class="n">04</span>AUTO mode</h2>
+<h3>Genres</h3>
+<p>Eight genres move the loudness, the low/high balance and the width toward the genre. The genre marked ★ is the one guessed from the analysis.</p>
+<p>The moves are sized to the song, so a song that already fits the genre moves little. Very dynamic songs stop at -11 LUFS.</p>
+<div class="tw"><table>
+  <tr><th>Genre</th><th>Direction</th><th>Target</th></tr>
+  <tr><td>J-Pop / Pop</td><td>Vocals forward, bright</td><td class="m">-10.5</td></tr>
+  <tr><td>Rock</td><td>Thick harmonics, full mids</td><td class="m">-10.0</td></tr>
+  <tr><td>EDM / Dance</td><td>Strong kick and bass, wide</td><td class="m">-9.0</td></tr>
+  <tr><td>Hip-hop / Trap</td><td>Fat low end, close vocals</td><td class="m">-9.5</td></tr>
+  <tr><td>Anime / Vocaloid</td><td>Sparkling highs</td><td class="m">-9.5</td></tr>
+  <tr><td>Ballad</td><td>Rich tails, dynamics kept</td><td class="m">-13.0</td></tr>
+  <tr><td>Acoustic / Jazz</td><td>Natural, little processing</td><td class="m">-14.0</td></tr>
+  <tr><td>Lo-fi / Chill</td><td>Rounded, warm highs</td><td class="m">-12.0</td></tr>
+</table></div>
+<h3>Suggestions and taste</h3>
+<ul>
+  <li><b>Suggestions</b> come from the analysis, each with a reason. Each tap adds one step.</li>
+  <li><b>Eight taste axes</b> go up to 3 steps each way. Tapping the other side walks back one step.</li>
+  <li><b>Three fixes</b> (harsh, muddy, fizzy) go light → medium → strong; × removes one.</li>
+  <li>Each tap moves several sliders by amounts fitted to the song.</li>
+  <li><b>↶ Undo</b> (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) steps back; <b>↺ Reset</b> returns to the auto settings.</li>
+</ul>
+
+<h2 id="e5"><span class="n">05</span>CUSTOM mode</h2>
+<p>The top panel shows the diagnosis and the reason for each auto setting. The modules are:</p>
+<ul>
+  <li>Tone;</li>
+  <li>Manual EQ (4 bands, also draggable on the graph);</li>
+  <li>Dynamic EQ (loud-moment-only cuts);</li>
+  <li>Punch (transients below 150 Hz);</li>
+  <li>Glue;</li>
+  <li>Colour/Space;</li>
+  <li>Stereo;</li>
+  <li>Loudness.</li>
+</ul>
+<ul>
+  <li>The cyan tick marks the auto value.</li>
+  <li>↺ or double-clicking a label resets that item.</li>
+  <li>ON/OFF bypasses a module.</li>
+  <li>"Bypass all" leaves only the loudness limiter.</li>
+</ul>
+
+<h2 id="e6"><span class="n">06</span>Loudness lock</h2>
+<p>When it is on, the output stays at the target integrated LUFS while you edit. You then hear tone changes, not level changes. Exports always hit the target.</p>
+
+<h2 id="e7"><span class="n">07</span>Presets and taste learning</h2>
+<ul>
+  <li><b>Presets</b> are stored in this browser (localStorage).</li>
+  <li><b>Taste learning</b>: when it is on, each export learns how far you moved from the auto settings. The next song's auto settings follow that. "Reset learning" clears it.</li>
+</ul>
+
+<h2 id="e8"><span class="n">08</span>Export</h2>
+<ul>
+  <li><b>Formats</b>:
+    <ul>
+      <li>WAV 16-bit (TPDF dither), for CD and streaming;</li>
+      <li>WAV 24-bit, for archiving;</li>
+      <li>MP3 320 kbps (lamejs), for sharing.</li>
+    </ul>
+  </li>
+  <li><b>Sample rate</b>: 44.1 or 48 kHz.</li>
+  <li>The whole song is rendered, then checked against the target LUFS and the true-peak ceiling.</li>
+  <li>The measured kHz / LUFS / dBTP are shown when it finishes.</li>
+</ul>
+
+<h2 id="e9"><span class="n">09</span>Keyboard</h2>
+<ul>
+  <li><kbd>Space</kbd>: play/stop.</li>
+  <li><kbd>B</kbd>: Master/Original.</li>
+  <li><kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Z</kbd>: undo.</li>
+</ul>
+
+<h2 id="e10"><span class="n">10</span>FAQ</h2>
+<ul>
+  <li><b>Is my song uploaded?</b> No. Everything runs in your browser.</li>
+  <li><b>Harsh or dull highs?</b>
+    <ul>
+      <li>In AUTO, try the harsh / fizzy / muddy fixes.</li>
+      <li>In CUSTOM, use the 8k and 9.5k dynamic bells and the high shelf.</li>
+    </ul>
+  </li>
+  <li><b>Squashed?</b> Move toward "Natural", or lower the target to -12 to -13 LUFS.</li>
+  <li><b>Browsers:</b> current Chrome, Edge, Safari or Firefox (AudioWorklet and Web Worker).</li>
+</ul>
+</main>
+
+<footer class="legal">
+  <p class="c">© 2026 Sonografica. All rights reserved.</p>
+  <p data-lang="ja">AetherMaster のプログラム（JavaScript・HTML・CSS）、信号処理アルゴリズム、自動設定のルール、本ドキュメントの著作権は Sonografica に帰属します。許可のない複製・改変・再配布・転載を禁じます。処理した楽曲の権利は、その楽曲の権利者に帰属します。</p>
+  <p data-lang="en">The AetherMaster program code (JavaScript, HTML, CSS), its signal-processing algorithms, its auto-setting rules and this documentation are copyright Sonografica. Copying, modifying, redistributing or republishing them without permission is prohibited. Rights to the music you process remain with its owners.</p>
+  <p data-lang="ja">第三者ソフトウェア: lamejs 1.2.1（MP3 エンコード, LGPL-3.0）、フォント Inter / JetBrains Mono（SIL Open Font License 1.1）。</p>
+  <p data-lang="en">Third-party software: lamejs 1.2.1 (MP3 encoding, LGPL-3.0); fonts Inter and JetBrains Mono (SIL Open Font License 1.1).</p>
+</footer>
+</body>
+</html>

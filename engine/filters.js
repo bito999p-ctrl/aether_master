@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Shared filter primitives. Pure JS (no Web Audio), so the same code runs in the
 // AudioWorklet (realtime preview), in a Worker (offline export) and in Node (tests).
 

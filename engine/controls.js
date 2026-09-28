@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Slider definitions shared by the UI and the spice menu: [key, label, min, max, step, unit, log?]
 import { tr } from './i18n.js';
 export const GROUPS = [

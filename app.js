@@ -634,6 +634,10 @@ function translateStatic() {
     'この曲の解析結果と、自動設定の理由': 'Analysis of this song and why it was set this way', '診断': 'Diagnosis', '自動設定の理由': 'Why these settings',
     '全モジュールを素通しにして、ゼロから自分で組む（音量合わせのリミッターだけ残ります）': 'Bypass every module and build from scratch (only the loudness limiter stays)',
     'すべてバイパス': 'Bypass all', 'すべてON': 'All on', '↶ 元に戻す': '↶ Undo',
+    '使い方ガイド': "User's guide", '技術仕様': 'Technical spec',
+    'AetherMaster のプログラム（JavaScript・HTML・CSS）、信号処理アルゴリズム、自動設定のルールの著作権は Sonografica に帰属します。許可のない複製・改変・再配布・転載を禁じます。':
+      'The AetherMaster program code (JavaScript, HTML, CSS), its signal-processing algorithms and its auto-setting rules are copyright Sonografica. Copying, modifying, redistributing or republishing them without permission is prohibited.',
+    '第三者ソフトウェア: lamejs 1.2.1（MP3 エンコード, LGPL-3.0）、フォント Inter / JetBrains Mono（SIL OFL 1.1）': 'Third-party software: lamejs 1.2.1 (MP3 encoding, LGPL-3.0); fonts Inter and JetBrains Mono (SIL OFL 1.1)',
   };
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let n; (n = w.nextNode());) { const k = n.nodeValue.trim(); if (EN[k]) n.nodeValue = n.nodeValue.replace(k, EN[k]); }

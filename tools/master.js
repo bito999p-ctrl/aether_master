@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Offline harness: analyze -> auto prescription -> calibrate -> loudness lock -> render.
 // usage: node tools/master.js <src.f32> <out.f32> [overrides.json]
 import fs from 'node:fs';

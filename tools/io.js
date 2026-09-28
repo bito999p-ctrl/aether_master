@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // Node helpers for the offline test harness: raw f32le stereo I/O.
 import fs from 'node:fs';
 export function readF32(path) {

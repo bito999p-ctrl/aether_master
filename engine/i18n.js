@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // UI language for engine texts: ?lang=ja|en (pages pass it on to their workers), else the saved
 // choice, else the browser language (Japanese browsers get Japanese, everyone else English).
 const pick = () => {

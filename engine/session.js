@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Sonografica. All rights reserved.
 // High-level engine API shared by the browser worker and the Node harness.
 import { resample } from './resample.js';
 import { renderOffline, renderLimiter, boostAt } from './chain.js';
