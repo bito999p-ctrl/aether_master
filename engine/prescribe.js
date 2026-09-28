@@ -67,8 +67,8 @@ export function prescribe(d) {
     why('punchDb', tr('150 Hz 以下だけアタックを強調（スネア・シンバルは硬くしない）＋余韻を少し締めてキックを前に', 'Attack boosted below 150 Hz only (snare and cymbals stay soft) + slightly tighter tails to bring the kick forward'));
   }
 
-  // highs: solve the broad 4.3 kHz shelf so the loud parts' >5 kHz share lands on the major-label
-  // median (6 majors, 2026-09-28: -16.9 dB; their 9-10 kHz follows at ~12.5 dB below). Predicted
+  // highs: solve the broad 4.3 kHz shelf so the loud parts' >5 kHz share lands on the typical-master
+  // median (6 reference tracks, 2026-09-28: -16.9 dB; their 9-10 kHz follows at ~12.5 dB below). Predicted
   // from the loud-frame spectrum; HF_OFFSET is what the loud-only bells / colour / limiter add
   // on top (fitted on renders). Ballads keep their approved darker balance (白夜); dark non-ballads are brought up to the target.
   p.highHz = 4300;
@@ -84,12 +84,12 @@ export function prescribe(d) {
     let lo = -8, hi = veryDark ? 1 : 4;
     for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (at(m) > HF_TARGET) hi = m; else lo = m; }
     p.highShelfDb = +((lo + hi) / 2).toFixed(1);
-    why('highShelfDb', tr(`大きい場面の 5 kHz 以上の比率 ${hf.above5kDb.toFixed(1)} dB（9〜10 kHz ${hf.band9kDb.toFixed(1)} dB）→ 市販メジャー曲の中央値 ${HF_TARGET} dB に合わせて 4.3 kHz 以上を ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB`, `Share above 5 kHz in loud parts ${hf.above5kDb.toFixed(1)} dB (9–10 kHz ${hf.band9kDb.toFixed(1)} dB) → ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB above 4.3 kHz to match the major-label median of ${HF_TARGET} dB`));
+    why('highShelfDb', tr(`大きい場面の 5 kHz 以上の比率 ${hf.above5kDb.toFixed(1)} dB（9〜10 kHz ${hf.band9kDb.toFixed(1)} dB）→ 一般的な楽曲の中央値 ${HF_TARGET} dB に合わせて 4.3 kHz 以上を ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB`, `Share above 5 kHz in loud parts ${hf.above5kDb.toFixed(1)} dB (9–10 kHz ${hf.band9kDb.toFixed(1)} dB) → ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB above 4.3 kHz to match the typical median of ${HF_TARGET} dB`));
   }
   if (p.highShelfDb > -2) p.airDb = 1.0;
   why('airDb', tr(`16 kHz 以上を +${p.airDb} dB（広いシェルフで落ちすぎる最上域を戻して艶を残す）`, `+${p.airDb} dB above 16 kHz (restores the top octave the broad shelf takes, keeps the sheen)`));
   p.bassDb = is808 || dense ? 0 : 1.0;
-  why('bassDb', is808 ? tr('808 の低域はそのまま', '808 low end left as is') : dense ? tr('すでに密な音源 → 低域シェルフはそのまま', 'Already dense source → low shelf left as is') : tr('90 Hz 以下をシェルフで +1 dB（市販マスター並みの低域の厚み）', '+1 dB shelf below 90 Hz (low-end weight like commercial masters)'));
+  why('bassDb', is808 ? tr('808 の低域はそのまま', '808 low end left as is') : dense ? tr('すでに密な音源 → 低域シェルフはそのまま', 'Already dense source → low shelf left as is') : tr('90 Hz 以下をシェルフで +1 dB（一般的なマスター並みの低域の厚み）', '+1 dB shelf below 90 Hz (typical low-end weight)'));
 
   // dynamic bells (loud-moment only)
   const dyn = [];
@@ -101,7 +101,7 @@ export function prescribe(d) {
   // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): reference masters stay
   // <= 3 dB over their neighbourhood, so cut the excess, narrow and on loud moments only.
   // Loud-only cuts land at about half their depth in the loud-frame LTAS, so depth = 2x excess
-  // (majors 3.0-4.1 dB, median 3.9; 1x left 3.7-4.3, 2x lands ~3-3.5; 2026-09-28)
+  // (reference tracks 3.0-4.1 dB, median 3.9; 1x left 3.7-4.3, 2x lands ~3-3.5; 2026-09-28)
   const soft = ballad; // dark non-ballads get full cuts (鳴動 A/B 2026-09-28: silkier, less bite)
   const peaks = (d.fixedPeaks || []).filter((r) => r.promDb >= (soft ? 4 : 3.5) && r.persist >= 0.15);
   peaks.forEach((r, i) => {
@@ -109,7 +109,7 @@ export function prescribe(d) {
     dyn.push({ id: `res${i}`, label: tr(`共振 ${r.hz} Hz`, `Resonance ${r.hz} Hz`), hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
   });
   if (peaks.length) {
-    why('res', tr(`鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ市販マスター並み（+3〜3.5 dB）まで抑える`, `Persistent resonances ${peaks.map((r) => `${r.hz} Hz (+${r.promDb} dB)`).join(' / ')} narrowly cut (Q8) at loud moments only, down to commercial-master level (+3–3.5 dB)`)
+    why('res', tr(`鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ一般的な楽曲の目安（+3〜3.5 dB）まで抑える`, `Persistent resonances ${peaks.map((r) => `${r.hz} Hz (+${r.promDb} dB)`).join(' / ')} narrowly cut (Q8) at loud moments only, down to the typical range (+3–3.5 dB)`)
       + (soft ? tr('。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を', '. Kept shallow since it may be the song\'s own notes (e.g. piano). Check by ear') : ''));
   }
   if (growthHigh >= 6 && !ballad) {
@@ -149,9 +149,9 @@ export function prescribe(d) {
   return { params: p, reasons, decisions };
 }
 
-// 9-10 kHz match (夜響 A/B 2026-09-28, user: "match the majors" → C: fizz 1→3 dB, shelf -0.3→-2 dB).
+// 9-10 kHz match (夜響 A/B 2026-09-28, user: "match typical masters" → C: fizz 1→3 dB, shelf -0.3→-2 dB).
 // The shelf solve above only targets the >5 kHz share; songs whose 9-10 kHz sits brighter than every
-// major master (loud share > -26.6 dB) get the fizz bell deepened and the shelf lowered by the excess,
+// reference track (loud share > -26.6 dB) get the fizz bell deepened and the shelf lowered by the excess,
 // measured on the loudness-locked master (Session.airExcess). Ballads and very dark songs are left alone.
 export const AIR_CAP = -26.6;
 export function tameAir(auto, excessDb) {
@@ -161,7 +161,7 @@ export function tameAir(auto, excessDb) {
   const sh = p.dyn.find((x) => x.id === 'shimmer');
   if (sh) { sh.depth = +Math.min(3, sh.depth + e).toFixed(1); sh.on = true; }
   p.highShelfDb = +Math.max(-8, p.highShelfDb - 0.8 * e).toFixed(1);
-  const reasons = [...auto.reasons, { key: 'air', text: tr(`大きい場面の 9〜10 kHz が市販メジャー曲の最も明るい曲より ${e.toFixed(1)} dB 明るい → シャリシャリ抑えを ${sh ? sh.depth : 0} dB、4.3 kHz 以上を ${p.highShelfDb} dB に`, `9–10 kHz in loud parts is ${e.toFixed(1)} dB brighter than the brightest major-label master → fizz control ${sh ? sh.depth : 0} dB, ${p.highShelfDb} dB above 4.3 kHz`) }];
+  const reasons = [...auto.reasons, { key: 'air', text: tr(`大きい場面の 9〜10 kHz が一般的な楽曲の明るさの上限より ${e.toFixed(1)} dB 明るい → シャリシャリ抑えを ${sh ? sh.depth : 0} dB、4.3 kHz 以上を ${p.highShelfDb} dB に`, `9–10 kHz in loud parts is ${e.toFixed(1)} dB brighter than the upper end of typical masters → fizz control ${sh ? sh.depth : 0} dB, ${p.highShelfDb} dB above 4.3 kHz`) }];
   return { ...auto, params: p, reasons, decisions: { ...dec, airExcessDb: +e.toFixed(1) } };
 }
 

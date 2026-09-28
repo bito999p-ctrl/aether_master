@@ -49,7 +49,7 @@
   <tr><td>出力</td><td>WAV 16 bit（TPDF ディザ）/ WAV 24 bit / MP3 320 kbps、44.1 kHz または 48 kHz</td></tr>
   <tr><td>ラウドネス測定</td><td>ITU-R BS.1770-4 / EBU R128（Integrated・Short-term・Momentary・LRA）、True Peak は 4 倍オーバーサンプリング</td></tr>
   <tr><td>既定の目標</td><td>-10.8 LUFS / -1.0 dBTP</td></tr>
-  <tr><td>設計の元</td><td>AIDAW の「J チェーン」（ステム別マスタリング）を 2 ミックス用に移植。市販メジャー曲の測定値を基準にした自動設定</td></tr>
+  <tr><td>設計の元</td><td>AIDAW のステム別マスタリングチェーンを 2 ミックス用に移植。一般的な楽曲の測定値を目安にした自動設定</td></tr>
 </table></div>
 
 <h2 id="t2"><span class="n">02</span>システム構成</h2>
@@ -133,11 +133,11 @@
   <tr><td>明るい音源</td><td>低域／高域比 &lt; 10 dB</td><td>8k は -1 dB のみ、歯擦音処理オフ</td></tr>
   <tr><td>とても暗い音源</td><td>低域／高域比 ≥ 15 dB</td><td>高域の持ち上げは最大 +1 dB</td></tr>
 </table></div>
-<h3>高域の合わせ込み（市販曲基準）</h3>
+<h3>高域の合わせ込み（一般的な楽曲の目安）</h3>
 <ol>
-  <li><b>5 kHz 以上</b>：4.3 kHz のなだらかな高域シェルフを二分探索で決め、大きい場面の 5 kHz 以上の比率を市販メジャー曲の中央値 <span class="m">-16.9 dB</span> に合わせます（持ち上げは最大 +4 dB）。</li>
-  <li><b>9〜10 kHz</b>：ラウドネスを固定した状態でマスターを実際にレンダリングし、大きい場面の 8.5〜10.5 kHz の比率を測ります。市販メジャー曲で一番明るい値 <span class="m">-26.6 dB</span> を 0.5 dB 以上超えた場合は、超えた分（最大 3 dB）だけシャリシャリ抑え（9.5 kHz）を深くし、高域シェルフを 0.8 倍下げてから、もう一度ラウドネスを解きます。バラードととても暗い音源は対象外です。</li>
-  <li><b>共振</b>：市販マスターでは周囲より +3〜4 dB に収まっているので、+3.5 dB 以上突き出たピークを狭く（Q 8）、大きい瞬間だけカットします。大きい瞬間だけのカットは曲全体では半分ほどしか効かないため、深さは超過分の 2 倍（最大 6 dB）。バラードは浅め（最大 1.5 dB）。</li>
+  <li><b>5 kHz 以上</b>：4.3 kHz のなだらかな高域シェルフを二分探索で決め、大きい場面の 5 kHz 以上の比率を一般的な楽曲の中央値 <span class="m">-16.9 dB</span> に合わせます（持ち上げは最大 +4 dB）。</li>
+  <li><b>9〜10 kHz</b>：ラウドネスを固定した状態でマスターを実際にレンダリングし、大きい場面の 8.5〜10.5 kHz の比率を測ります。一般的な楽曲の明るさの上限 <span class="m">-26.6 dB</span> を 0.5 dB 以上超えた場合は、超えた分（最大 3 dB）だけシャリシャリ抑え（9.5 kHz）を深くし、高域シェルフを 0.8 倍下げてから、もう一度ラウドネスを解きます。バラードととても暗い音源は対象外です。</li>
+  <li>共振：一般的な楽曲では周囲より +3〜4 dB に収まっているので、+3.5 dB 以上突き出たピークを狭く（Q 8）、大きい瞬間だけカットします。大きい瞬間だけのカットは曲全体では半分ほどしか効かないため、深さは超過分の 2 倍（最大 6 dB）。バラードは浅め（最大 1.5 dB）。</li>
 </ol>
 
 <h2 id="t7"><span class="n">07</span>ラウドネス制御</h2>
@@ -199,7 +199,7 @@
     </ul>
   </li>
   <li><b>Default target</b>: -10.8 LUFS / -1.0 dBTP.</li>
-  <li><b>Origin</b>: a 2-mix port of the AIDAW "J chain", referenced to measurements of major-label masters.</li>
+  <li><b>Origin</b>: a 2-mix port of the AIDAW stem-mastering chain, with automatic settings guided by measurements of typical masters.</li>
 </ul>
 
 <h2><span class="n">02</span>Architecture</h2>
@@ -281,15 +281,15 @@
       <li>very dark source → treble lift of +1 dB at most.</li>
     </ul>
   </li>
-  <li><b>Treble above 5 kHz</b>: the 4.3 kHz shelf is solved so the loud-part share above 5 kHz hits the major-label median of -16.9 dB.</li>
+  <li><b>Treble above 5 kHz</b>: the 4.3 kHz shelf is solved so the loud-part share above 5 kHz hits the typical median of -16.9 dB.</li>
   <li><b>9–10 kHz</b>:
     <ul>
       <li>The loudness-locked master is rendered and its loud-part 8.5–10.5 kHz share is measured.</li>
-      <li>If it is more than 0.5 dB above the brightest major master (-26.6 dB), the 9.5 kHz bell is deepened by the excess (at most 3 dB) and the shelf is lowered by 0.8 × the excess.</li>
+      <li>If it is more than 0.5 dB above the upper end of typical masters (-26.6 dB), the 9.5 kHz bell is deepened by the excess (at most 3 dB) and the shelf is lowered by 0.8 × the excess.</li>
       <li>The loudness is then solved again.</li>
     </ul>
   </li>
-  <li><b>Resonances</b>: commercial masters keep them within +3–4 dB of their neighbourhood, so peaks ≥ +3.5 dB are cut narrowly (Q 8) on loud moments only. Loud-only cuts act at about half strength over the whole song, so the depth is 2× the excess (max 6 dB); shallower for ballads (max 1.5 dB).</li>
+  <li><b>Resonances</b>: typical masters keep them within +3–4 dB of their neighbourhood, so peaks ≥ +3.5 dB are cut narrowly (Q 8) on loud moments only. Loud-only cuts act at about half strength over the whole song, so the depth is 2× the excess (max 6 dB); shallower for ballads (max 1.5 dB).</li>
 </ul>
 
 <h2><span class="n">07</span>Loudness lock</h2>

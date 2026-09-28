@@ -37,9 +37,9 @@ export class Session {
     return p;
   }
 
-  // 9-10 kHz match (夜響 A/B 2026-09-28, "match the majors"): loud-part 9-10 kHz share of the
+  // 9-10 kHz match (夜響 A/B 2026-09-28, "match typical masters"): loud-part 9-10 kHz share of the
   // master (after solveLoudness: one limiter pass on the cached pre render), in dB above the
-  // brightest major master (<= 0: in range). The limiter itself adds -0.3..+0.9 dB here.
+  // brightest reference track (<= 0: in range). The limiter itself adds -0.3..+0.9 dB here.
   airExcess(params) {
     if (preKey(params) !== this.preKey) throw new Error('airExcess: run solveLoudness first');
     const o = renderLimiter(this.pre.L, this.pre.R, this.fs, params);

@@ -325,7 +325,7 @@ function lowOnsetRate(M, fs) {
 }
 
 // Loud-part 9-10 kHz share of a render: 8.5-10.5 kHz energy re full band (4096 FFT, hop 1024),
-// median over the loud 30% of 400 ms blocks — the metric the major-label masters were measured
+// median over the loud 30% of 400 ms blocks — the metric the reference tracks were measured
 // with (2026-09-28: -26.6 .. -35.4 dB, median -29.4).
 export function airShare(L, R, fs) {
   const n = 4096, hop = 1024, fft = new FFT(n), buf = new Float64Array(n / 2 + 1), M = new Float32Array(L.length);
