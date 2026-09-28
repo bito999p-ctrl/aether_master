@@ -1,6 +1,6 @@
 // High-level engine API shared by the browser worker and the Node harness.
 import { resample } from './resample.js';
-import { renderOffline, renderLimiter } from './chain.js';
+import { renderOffline, renderLimiter, boostAt } from './chain.js';
 import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup } from './analyze.js';
 import { prescribe } from './prescribe.js';
 import { kPower100ms, integratedFromPowers, integrated, truePeakDb } from './loudness.js';
@@ -27,7 +27,10 @@ export class Session {
     for (const d of p.dyn) {
       const key = `${d.hz}|${d.q}|${d.att}|${d.rel}`;
       if (!this.envCache.has(key)) this.envCache.set(key, bandEnvelope(this.M, this.fs, d));
-      d.thr = d.depth > 0 ? calibrateThreshold(this.envCache.get(key), d.depth, d.ratio, Math.max(6, d.depth * 3)) : 0;
+      // cut back what the EQ stages add at this frequency, so the loud-moment net is -depth
+      const depth = d.depth > 0 ? d.depth + Math.max(0, boostAt(p, d.hz, this.fs)) : 0;
+      d.cut = depth;
+      d.thr = depth > 0 ? calibrateThreshold(this.envCache.get(key), depth, d.ratio, Math.max(6, depth * 3)) : 0;
     }
     p.punchMakeupDb = punchMakeup(this.M, this.fs, p.punchDb, p.tightDb);
     return p;

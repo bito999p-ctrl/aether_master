@@ -57,6 +57,23 @@ export function magDb(c, f, fs) {
   return 10 * Math.log10((nr * nr + ni * ni) / (dr * dr + di * di));
 }
 
+// Static boost at f from everything that lifts the dyn bells' band: tone EQ, manual EQ and the
+// M/S presence bell (mid). Calibration adds it to the bell depth so the net cut on loud moments
+// is the prescribed depth, not depth minus whatever the EQ put back. Keep in sync with setParams.
+export function boostAt(params, f, fs) {
+  const p = effective({ ...DEFAULTS, ...params });
+  let g = 0;
+  const add = (type, hz, q, db) => { if (Math.abs(db) >= 1e-3) g += magDb(design(type, fs, hz, q, db), f, fs); };
+  add('lowshelf', 90, 0.7071, p.bassDb);
+  add('peaking', p.lowHz, 1.2, p.lowDb);
+  add('peaking', p.mudHz, 1.0, p.mudDb);
+  add('highshelf', p.highHz, 0.45, p.highShelfDb);
+  add('highshelf', 16000, 0.7071, p.airDb);
+  for (let k = 1; k <= 4; k++) add('peaking', p[`eq${k}Hz`], p[`eq${k}Q`], p[`eq${k}Db`]);
+  add('peaking', 3000, 0.7, p.presenceDb);
+  return g;
+}
+
 export class MasterChain {
   constructor(fs) {
     this.fs = fs;
@@ -97,7 +114,7 @@ export class MasterChain {
     for (let i = 0; i < MAX_DYN; i++) {
       const d = p.dyn[i];
       if (!d || !d.on || !(d.depth > 0) || d.thr == null) { this.dyn[i].set({ on: false }); continue; }
-      this.dyn[i].set({ hz: d.hz, q: d.q, ratio: d.ratio, att: d.att, rel: d.rel, range: Math.max(6, d.depth * 3),
+      this.dyn[i].set({ hz: d.hz, q: d.q, ratio: d.ratio, att: d.att, rel: d.rel, range: Math.max(6, (d.cut ?? d.depth) * 3),
         // thr is calibrated on the raw source; follow the input trim and static EQ
         thr: d.thr + p.inputDb + this.staticGainAt(d.hz), on: true });
     }
