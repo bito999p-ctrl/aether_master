@@ -87,6 +87,9 @@ export function prescribe(d) {
     why('highShelfDb', tr(`大きい場面の 5 kHz 以上の比率 ${hf.above5kDb.toFixed(1)} dB（9〜10 kHz ${hf.band9kDb.toFixed(1)} dB）→ 一般的な楽曲の中央値 ${HF_TARGET} dB に合わせて 4.3 kHz 以上を ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB`, `Share above 5 kHz in loud parts ${hf.above5kDb.toFixed(1)} dB (9–10 kHz ${hf.band9kDb.toFixed(1)} dB) → ${p.highShelfDb > 0 ? '+' : ''}${p.highShelfDb} dB above 4.3 kHz to match the typical median of ${HF_TARGET} dB`));
   }
   if (p.highShelfDb > -2) p.airDb = 1.0;
+  // a little more air on non-dark, non-ballad songs: cymbal moments read ~2 dB darker than typical
+  // masters after the hat/crash control; 16 kHz stays clear of the 10 kHz band that tires the ear
+  if (!ballad && !veryDark) p.airDb += AIR_LIFT;
   why('airDb', tr(`16 kHz 以上を +${p.airDb} dB（広いシェルフで落ちすぎる最上域を戻して艶を残す）`, `+${p.airDb} dB above 16 kHz (restores the top octave the broad shelf takes, keeps the sheen)`));
   p.bassDb = is808 || dense ? 0 : 1.0;
   why('bassDb', is808 ? tr('808 の低域はそのまま', '808 low end left as is') : dense ? tr('すでに密な音源 → 低域シェルフはそのまま', 'Already dense source → low shelf left as is') : tr('90 Hz 以下をシェルフで +1 dB（一般的なマスター並みの低域の厚み）', '+1 dB shelf below 90 Hz (typical low-end weight)'));
@@ -97,10 +100,11 @@ export function prescribe(d) {
     // Cymbals: one DynBand class, two settings. A single bell for both (9 kHz Q0.6, cuts added)
     // missed YK's hats at ~10 kHz (+0.5 dB stab), so crash and hat keep their own bands:
     // - crash (here): the band's loudest 15% are mostly crash / ride wash, which rings for 1-2 s, so
-    //   4 dB (2 for bright sources) at 8 kHz with a 200 ms release holds through the ring (YK/E1 A/B 2026-09-29);
+    //   3 dB (1.5 for bright sources) at 8 kHz with a 200 ms release holds through the ring (YK/E1 A/B 2026-09-29
+    //   chose 4; eased to 3 with AIR_LIFT in .11, A/B 2026-09-29: .10 read darker than typical masters);
     // - hat (added by tameAir, after the master measurement): each hit that jumps 1 dB over the
     //   10 kHz band's average gets up to 6 dB for ~40 ms, quiet hats included.
-    const depth = brightSource ? 2.0 : 4.0;
+    const depth = brightSource ? CRASH_DB / 2 : CRASH_DB;
     dyn.push({ id: 'high', label: tr('シンバル抑え (8k)', 'Cymbal control (8k)'), hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 200, on: true });
     why('high', tr(`クラッシュが鳴っている間だけ 8 kHz 付近を ${depth} dB 抑える（普段の空気感はそのまま）`,
       `${depth} dB around 8 kHz only while a crash rings (the air is untouched otherwise)`));
@@ -217,6 +221,7 @@ export function tameAir(auto, x) {
 }
 
 const HF_TARGET = -16.9;
+const AIR_LIFT = 0.75, CRASH_DB = 3;
 const HF_OFFSET = -1.25; // renders land ~1.25 dB darker than the static prediction (fit on 5 v2 renders)
 
 // Change (dB) in the >5 kHz share of a loud-frame spectrum when the high shelf (Q 0.45) is set

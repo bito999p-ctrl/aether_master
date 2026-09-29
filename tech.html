@@ -91,7 +91,7 @@
   <li>構造：<code>y = x + (g − 1)·BP(x)</code>。中心ゲイン 0 dB のバンドパスを使うので、係数を再計算せずにサンプルごとにゲインを動かせる正確なベルになります。</li>
   <li>検出：バンド信号の L/R 連動ミッド、パワーエンベロープ。</li>
   <li><b>自動校正</b>：スレッショルドは曲ごとに解析で決めます。曲の中で大きい上位 15 % の瞬間に、指定した深さ（dB）だけ効くように合わせます。EQ で同じ帯域を持ち上げている分は深さに足すので、大きい瞬間の正味のカット量が指定値になります。</li>
-  <li>主なバンド（自動）：8 kHz 刺さり・クラッシュ抑え（Q 0.5、2〜4 dB、リリース 200 ms。この帯域が大きい上位 15 % はほぼクラッシュシンバルが鳴っている間なので、鳴り続ける間ずっと効きます）、2〜5 kHz の鳴り続ける共振（Q 8）、大きい場面で伸びる高域の刺さり（Q 3）、9.5 kHz シャリシャリ抑え（Q 2）、7 kHz 歯擦音（Q 2、速いアタック）、11 kHz 高域のざらつき抑え（Q 1.5、条件付き）。</li>
+  <li>主なバンド（自動）：8 kHz 刺さり・クラッシュ抑え（Q 0.5、1.5〜3 dB、リリース 200 ms。この帯域が大きい上位 15 % はほぼクラッシュシンバルが鳴っている間なので、鳴り続ける間ずっと効きます）、2〜5 kHz の鳴り続ける共振（Q 8）、大きい場面で伸びる高域の刺さり（Q 3）、9.5 kHz シャリシャリ抑え（Q 2）、7 kHz 歯擦音（Q 2、速いアタック）、11 kHz 高域のざらつき抑え（Q 1.5、条件付き）。</li>
 </ul>
 <h3>ハイハット抑え</h3>
 <p>10 kHz・Q 0.8（おおよそ 7〜14 kHz）の幅広いダイナミックベル。検出は音量ではなく「瞬間的な飛び出し」です。速いエンベロープ（0.2 ms / 5 ms）が、その帯域の平均（15 ms / 120 ms）より 1 dB 以上跳ねた分の 3/4 を、最大 6 dB、リリース 40 ms で下げます。ハイハットの一打ごとに効き、静かな場面のハイハットも対象です。シンバルの伸びや高域全体の量はほとんど変わりません。ほかのバンドと同じダイナミック EQ の 1 バンド（音量での深さは 0、飛び出し検出だけ）で、CUSTOM の「ハイハット抑え (10k)」で最大量を変えられます。クラッシュ（8 kHz）と 1 つのバンドにまとめると 10 kHz 付近のハイハットを拾いきれないため、別のバンドにしています。</p>
@@ -132,7 +132,7 @@
   <tr><td>バラード</td><td>クレスト ≥ 15 dB かつセクション差 ≥ 6 dB</td><td>-13 LUFS、半分のテンポでリリース、共振カットは浅め、8k・シャリシャリ・ハイハット抑えなし</td></tr>
   <tr><td>密な音源</td><td>クレスト &lt; 12.5 dB</td><td>キック・倍音・空間・低域の足し算を控えめに</td></tr>
   <tr><td>ドラムが少ない</td><td>低域オンセット &lt; 0.6 / 秒</td><td>パンチ控えめ、低域ベルなし</td></tr>
-  <tr><td>明るい音源</td><td>低域／高域比 &lt; 10 dB</td><td>8k は -2 dB のみ、歯擦音処理オフ</td></tr>
+  <tr><td>明るい音源</td><td>低域／高域比 &lt; 10 dB</td><td>8k は -1.5 dB のみ、歯擦音処理オフ</td></tr>
   <tr><td>とても暗い音源</td><td>低域／高域比 ≥ 15 dB</td><td>高域の持ち上げは最大 +1 dB</td></tr>
 </table></div>
 <h3>高域の合わせ込み（一般的な楽曲の目安）</h3>
@@ -302,7 +302,7 @@
   </li>
   <li><b>10.5–12.5 kHz</b>: on the same master's loud parts (top 15 % of 100 ms blocks), the band's p95 over its median is measured. Above the typical 4.3 dB, 11.3 kHz (Q 1.5) is cut on loud moments by 6× the excess (1.5–4 dB). Not for ballads.</li>
   <li><b>Hi-hat tamer</b>: on for every song except ballads (up to 6 dB). The two measurements above are made without it; it is added afterwards, after the 11 kHz bell, and the loudness is solved again.</li>
-  <li><b>8 kHz bell</b>: 4 dB (2 dB for bright sources), 200 ms release. The band's loudest 15 % is mostly crash cymbal ring, so it holds while the crash rings.</li>
+  <li><b>8 kHz bell</b>: 3 dB (1.5 dB for bright sources), 200 ms release. The band's loudest 15 % is mostly crash cymbal ring, so it holds while the crash rings.</li>
   <li><b>Resonances</b>: persistent peaks ≥ +4 dB over their neighbourhood are cut narrowly (Q 8) on loud moments only, by the excess (prominence − 2.5 dB, 1–4 dB); peaks within 1/12 octave of each other share one cut. Deeper cuts took the gloss off the vocal, so only the excess is cut. Shallower for ballads (max 1.5 dB).</li>
 </ul>
 
