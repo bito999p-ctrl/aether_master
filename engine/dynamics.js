@@ -9,13 +9,18 @@ import { Biquad, coef, dbToLin } from './filters.js';
 // Detection = linked mid of the band signal, power envelope.
 // `thr` is absolute (dB, power of the band); calibrate() in analyze.js sets it
 // so that the loudest 15% of the track gets `depth` dB of reduction.
+// Optional second detector (`fast` > 0, the 10 kHz "hat" band): keyed on jumps, not level.
+// A fast envelope (0.2 / 5 ms) over the band's own running average (15 / 120 ms); each hit that
+// jumps `sens` dB gets (jump - sens) * (1 - 1/fratio), at most `fast` dB, released in `frel` ms,
+// so quiet hats are caught as well as loud ones. The cut is the larger of the two, at most `cap` dB.
 export class DynBand {
   constructor(fs) {
     this.fs = fs;
     this.bp = new Biquad(2);
-    this.env = 0;
+    this.cf = coef(0.2, fs); this.cfr = coef(5, fs); this.cs = coef(15, fs); this.csr = coef(120, fs);
+    this.env = 0; this.fe = 0; this.se = 0; this.hg = 0;
     this.gr = 0; // last gain reduction in dB (for metering)
-    this.set({ hz: 1000, q: 2, thr: 0, ratio: 3, att: 5, rel: 80, range: 12, on: false });
+    this.set({ hz: 1000, q: 2, thr: 0, ratio: 3, att: 5, rel: 80, range: 12, fast: 0, sens: 1, fratio: 4, frel: 40, cap: 8, on: false });
   }
   set(p) {
     this.p = { ...this.p, ...p };
@@ -23,29 +28,39 @@ export class DynBand {
     this.bp.set('bandpass', this.fs, hz, q);
     this.ca = coef(att, this.fs);
     this.cr = coef(rel, this.fs);
+    this.cfrel = coef(this.p.frel, this.fs);
     this.slope = 1 - 1 / Math.max(1, this.p.ratio);
+    this.fslope = 1 - 1 / Math.max(1, this.p.fratio);
   }
   process(L, R, n) {
     if (!this.p.on) { this.gr = 0; return; }
-    const { thr, range } = this.p, slope = this.slope, bp = this.bp, ca = this.ca, cr = this.cr;
-    let env = this.env, g = 1, gr = 0;
+    const { thr, range, fast, sens, cap } = this.p, slope = this.slope, bp = this.bp, ca = this.ca, cr = this.cr;
+    const hat = fast > 0, fslope = this.fslope, cf = this.cf, cfr = this.cfr, cs = this.cs, csr = this.csr, crel = this.cfrel * 8;
+    let env = this.env, fe = this.fe, se = this.se, hg = this.hg, gr = this.gr, g = dbToLin(-gr);
     for (let i = 0; i < n; i++) {
       const bl = bp.tick(L[i], 0), br = bp.tick(R[i], 1);
       const m = 0.5 * (bl + br), d = m * m;
       env += (d > env ? ca : cr) * (d - env);
-      // update the gain every 8 samples (envelope is already smooth)
+      if (hat) { fe += (d > fe ? cf : cfr) * (d - fe); se += (fe > se ? cs : csr) * (fe - se); }
+      // update the gain every 8 samples (envelopes are already smooth)
       if ((i & 7) === 0) {
         const lv = 10 * Math.log10(env + 1e-20);
         gr = lv > thr ? Math.min(range, (lv - thr) * slope) : 0;
+        if (hat) {
+          const x = 10 * Math.log10((fe + 1e-20) / (se + 1e-20)) - sens;
+          const t = x > 0 ? Math.min(fast, x * fslope) : 0;
+          hg = t > hg ? t : hg + crel * (t - hg);
+          gr = Math.min(cap, Math.max(gr, hg));
+        }
         g = gr > 0 ? dbToLin(-gr) : 1;
       }
       L[i] += (g - 1) * bl;
       R[i] += (g - 1) * br;
     }
-    this.env = env;
+    this.env = env; this.fe = fe; this.se = se; this.hg = hg;
     this.gr = gr;
   }
-  reset() { this.env = 0; this.bp.reset(); }
+  reset() { this.env = this.fe = this.se = this.hg = this.gr = 0; this.bp.reset(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -145,47 +160,3 @@ export class Glue {
   }
   reset() { this.rms = this.pk = this.gdb = 0; this.hp.reset(); }
 }
-
-// ---------------------------------------------------------------------------
-// Hi-hat / cymbal stab tamer: a wide dynamic bell (same exact-bell trick as DynBand)
-// keyed on *transients*, not level. fast = band power env (0.2 ms / 5 ms), slow = its
-// running average (15 ms / 120 ms); each hit that jumps `sens` dB over the band's own
-// average gets up to `depth` dB, released in `rel` ms. Quiet hats are caught as well as loud ones.
-export class HatTamer {
-  constructor(fs) {
-    this.fs = fs;
-    this.bp = new Biquad(2);
-    this.cf = coef(0.2, fs); this.cfr = coef(5, fs); this.cs = coef(15, fs); this.csr = coef(120, fs);
-    this.fast = 0; this.slow = 0; this.gr = 0;
-    this.set({ hz: 10000, q: 0.8, depth: 0, sens: 6, ratio: 4, rel: 40 });
-  }
-  set(p) {
-    this.p = { ...this.p, ...p };
-    this.bp.set('bandpass', this.fs, this.p.hz, this.p.q);
-    this.crel = coef(this.p.rel, this.fs);
-    this.slope = 1 - 1 / Math.max(1, this.p.ratio);
-  }
-  process(L, R, n) {
-    const { depth, sens } = this.p;
-    if (!(depth > 0)) { this.gr = 0; return; }
-    const bp = this.bp, slope = this.slope, cf = this.cf, cfr = this.cfr, cs = this.cs, csr = this.csr, crel = this.crel;
-    let fast = this.fast, slow = this.slow, gr = this.gr, k = dbToLin(-gr) - 1;
-    for (let i = 0; i < n; i++) {
-      const bl = bp.tick(L[i], 0), br = bp.tick(R[i], 1);
-      const m = 0.5 * (bl + br), d = m * m;
-      fast += (d > fast ? cf : cfr) * (d - fast);
-      slow += (fast > slow ? cs : csr) * (fast - slow);
-      if ((i & 3) === 0) {
-        const x = 10 * Math.log10((fast + 1e-20) / (slow + 1e-20)) - sens;
-        const t = x > 0 ? Math.min(depth, x * slope) : 0;
-        gr = t > gr ? t : gr + crel * 4 * (t - gr);
-        k = dbToLin(-gr) - 1;
-      }
-      L[i] += k * bl;
-      R[i] += k * br;
-    }
-    this.fast = fast; this.slow = slow; this.gr = gr;
-  }
-  reset() { this.fast = this.slow = this.gr = 0; this.bp.reset(); }
-}
-

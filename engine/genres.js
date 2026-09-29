@@ -19,7 +19,7 @@ export const GENRES = [
   { id: 'hiphop', label: tr('ヒップホップ / トラップ', 'Hip-hop / Trap'), hint: tr('低音を太く、声を近く', 'Fat low end, close vocals'), use: tr('低音が物足りない時', 'When the bass feels weak'), lufs: -9.5, lh: 17,
     d: { punchDb: 2, lowDb: 1.5, presenceDb: 1.5, monoHz: 40, width: -10, airDb: -0.5, spaceMix: -1.5, 'dyn:deess': 1 } },
   { id: 'anison', label: tr('アニソン / ボカロ', 'Anime / Vocaloid'), hint: tr('高域をきらびやかに、華やかに', 'Sparkling, glamorous highs'), use: tr('こもって聴こえる時', 'When it sounds muffled'), lufs: -9.5, lh: 10.5,
-    d: { presenceDb: 1.5, airDb: 2, highShelfDb: 1, glueRatio: 0.4, width: 12, colorDrive: 1, 'dyn:shimmer': 1 } },
+    d: { presenceDb: 1.5, airDb: 2, highShelfDb: 1, glueRatio: 0.4, width: 12, colorDrive: 1, 'dyn:fizz': 1 } },
   { id: 'ballad', label: tr('バラード', 'Ballad'), hint: tr('余韻を豊かに、抑揚を残す', 'Rich tails, dynamics kept'), use: tr('詰まって息苦しく感じる時', 'When it feels cramped and breathless'), lufs: -13, lh: 12,
     d: { glueRatio: -0.2, spaceMix: 4, spaceDecay: 0.8, punchDb: -2, limRelease: 80, presenceDb: 1, airDb: 0.5, colorDrive: -1 } },
   { id: 'acoustic', label: tr('アコースティック / ジャズ', 'Acoustic / Jazz'), hint: tr('加工感を抑えて自然に', 'Natural, little processing'), use: tr('音がきつい・作り物っぽい時', 'When it sounds harsh or artificial'), lufs: -14, lh: 11,

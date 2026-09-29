@@ -14,7 +14,7 @@ export const MAX_LEVEL = 3;
 export const AXES = [
   { id: 'bright', title: tr('明るさ', 'Brightness'),
     left: { label: tr('落ち着いた音に', 'Calmer'), hint: tr('シャカシャカして聴き疲れする', 'Fizzy and tiring to listen to'), listen: tr('長く聴いても疲れないか', 'Is it still comfortable after a while?'),
-      step: () => ({ highShelfDb: -1.5, 'dyn:dyn8k': 0.8 }) },
+      step: () => ({ highShelfDb: -1.5, 'dyn:high': 0.8 }) },
     right: { label: tr('明るく・抜けよく', 'Brighter, more open'), hint: tr('暗い、遠い、ベールがかかった感じ', 'Dark, distant, veiled'), listen: tr('シンバルとボーカルの息づかい', 'Cymbals and the breath in the vocal'),
       // songs that get harsh when loud: open the top octave rather than the 4-8 kHz bite
       step: ({ dec }) => (dec.highGrowthDb >= 6 ? { airDb: 1.5, highShelfDb: 0.6 } : { highShelfDb: 1.5, airDb: 0.8 }) } },
@@ -58,11 +58,11 @@ export const AXES = [
 
 export const FIXES = [
   { id: 'harsh', label: tr('耳に痛い・刺さる', 'Harsh, piercing'), hint: tr('高い声、サ行、サビのシンバルがキンキン刺さる', 'High notes, S sounds or chorus cymbals pierce your ears'), listen: tr('サビの一番高い音、サ行の多い歌詞', 'The highest chorus note, lyrics with many S sounds'),
-    step: () => ({ 'dyn:res': 1.5, 'dyn:harsh': 1.5, 'dyn:dyn8k': 1.2, 'dyn:deess': 1.2, 'dyn:shimmer': 0.5 }) },
+    step: () => ({ 'dyn:res': 1.5, 'dyn:harsh': 1.5, 'dyn:high': 1.2, 'dyn:deess': 1.2, 'dyn:fizz': 0.5 }) },
   { id: 'muddy', label: tr('こもり・にごりを取る', 'Remove mud'), hint: tr('布をかぶせたよう、全体がもやっとする', 'Like a blanket over it, hazy overall'), listen: tr('ギター・ピアノの輪郭、スネアの抜け', 'Edges of guitar and piano, snare cutting through'),
     step: () => ({ mudDb: -1.2, lowDb: -0.3, highShelfDb: 0.5 }) },
   { id: 'shimmer', label: tr('シャリシャリ・ザラつきを抑える', 'Tame fizz and grit'), hint: tr('Suno 特有の金属っぽい、チリチリした高域（9〜10 kHz）', 'Suno\'s metallic, sizzling highs (9–10 kHz)'), listen: tr('シンバルと声の「サー」という成分', 'The hiss in cymbals and voice'),
-    step: () => ({ 'dyn:shimmer': 1.5, airDb: -0.6, 'dyn:dyn8k': 0.4, colorDrive: -0.6 }) },
+    step: () => ({ 'dyn:fizz': 1.5, airDb: -0.6, 'dyn:high': 0.4, colorDrive: -0.6 }) },
 ];
 
 // Diagnosis-based suggestions: [{ axis, dir (-1/+1) | fix, why }] — why is plain language for beginners

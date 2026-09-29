@@ -272,7 +272,8 @@ function buildUI(auto) {
   const md = makeModule(g, MODS.dyn, tr('ダイナミックEQ', 'Dynamic EQ'));
   for (const d of cur.dyn) {
     const a = start.dyn.find((x) => x.id === d.id);
-    fader(md, 'dyn:' + d.id, d.label, 0, 6, 0.1, 'dB', () => d.depth, (v) => { d.depth = v; }, a.depth, { dyn: d });
+    const k = a.fast ? 'fast' : 'depth'; // the hi-hat band's amount is its jump detector
+    fader(md, 'dyn:' + d.id, d.label, 0, 6, 0.1, 'dB', () => d[k], (v) => { d[k] = v; }, a[k], { dyn: d });
   }
   for (const [title, defs] of GROUPS) {
     const meta = MODS[title] || { color: '#858d9e', sub: '' };

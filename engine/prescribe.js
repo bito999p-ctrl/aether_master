@@ -94,12 +94,17 @@ export function prescribe(d) {
   // dynamic bells (loud-moment only)
   const dyn = [];
   if (!ballad) {
-    // The band's own loudest 15% are mostly crash / ride wash, which rings for 1-2 s. 4 dB with a
-    // 200 ms release holds through the ring (YK/E1 A/B 2026-09-29: "crash is loud", 4 dB chosen over 6).
+    // Cymbals: one DynBand class, two settings. A single bell for both (9 kHz Q0.6, cuts added)
+    // missed YK's hats at ~10 kHz (+0.5 dB stab), so crash and hat keep their own bands:
+    // - crash (here): the band's loudest 15% are mostly crash / ride wash, which rings for 1-2 s, so
+    //   4 dB (2 for bright sources) at 8 kHz with a 200 ms release holds through the ring (YK/E1 A/B 2026-09-29);
+    // - hat (added by tameAir, after the master measurement): each hit that jumps 1 dB over the
+    //   10 kHz band's average gets up to 6 dB for ~40 ms, quiet hats included.
     const depth = brightSource ? 2.0 : 4.0;
-    dyn.push({ id: 'dyn8k', label: tr('高域・クラッシュ抑え (8k)', 'High bite / crash control (8k)'), hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 200, on: true });
-    why('dyn8k', tr(`8 kHz 帯が大きい瞬間（主にクラッシュシンバルが鳴っている間）だけ ${depth} dB 抑える（普段は触らない）`, `8 kHz band reduced by ${depth} dB only while it is loud (mostly while a crash cymbal rings; untouched otherwise)`));
-  } else why('dyn8k', tr('バラード → 8 kHz のダイナミック処理・ハイハット抑えなし', 'Ballad → no dynamic 8 kHz processing or hi-hat control'));
+    dyn.push({ id: 'high', label: tr('シンバル抑え (8k)', 'Cymbal control (8k)'), hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 200, on: true });
+    why('high', tr(`クラッシュが鳴っている間だけ 8 kHz 付近を ${depth} dB 抑える（普段の空気感はそのまま）`,
+      `${depth} dB around 8 kHz only while a crash rings (the air is untouched otherwise)`));
+  } else why('high', tr('バラード → シンバル・ハイハット抑えなし', 'Ballad → no cymbal / hi-hat control'));
   // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): cut the excess over
   // +2.5 dB, narrow and on loud moments only. A 2x-excess rule (max 6) matched the loud-frame LTAS
   // of typical masters better but lost vocal gloss (E1 A/B 2026-09-29), so back to 1x (max 4).
@@ -124,11 +129,11 @@ export function prescribe(d) {
     });
     if (d.harshBins.length) why('harsh', tr(`サビなど大きい場面で高域が ${growthHigh.toFixed(1)} dB 伸びる → ${d.harshBins.map((b) => b.hz + ' Hz').join(' / ')} を大きい瞬間だけ狭くカット（シェルフで削ると遠くなるので使わない）`, `Highs grow ${growthHigh.toFixed(1)} dB in loud parts such as the chorus → narrow cuts at ${d.harshBins.map((b) => b.hz + ' Hz').join(' / ')} at loud moments only (no shelf, which would sound distant)`));
   }
-  // Suno "shimmer": metallic hash centred around 9-10 kHz (cymbals / vocal air). Narrow and
-  // loud-only, so the top end keeps its sheen the rest of the time.
-  const shimDepth = ballad ? 0 : brightSource ? 2.0 : 1.0;
-  dyn.push({ id: 'shimmer', label: tr('シャリシャリ抑え (9.5k)', 'Fizz control (9.5k)'), hz: 9500, q: 2, depth: shimDepth, ratio: 3, att: 2, rel: 80, on: shimDepth > 0 });
-  why('shimmer', shimDepth ? tr(`Suno 特有のシャリシャリ（9〜10 kHz）を大きい瞬間だけ ${shimDepth} dB 抑える`, `Suno's fizz (9–10 kHz) reduced by ${shimDepth} dB at loud moments only`) : tr('非常に暗い音源 → シャリシャリ処理なし', 'Very dark source → no fizz control'));
+  // Suno fizz: metallic hash centred around 9-10 kHz (cymbals / vocal air). Narrow and loud-only,
+  // so the top keeps its sheen the rest of the time; deepened by the master measurement (tameAir).
+  const fizzDepth = ballad ? 0 : brightSource ? 2.0 : 1.0;
+  dyn.push({ id: 'fizz', label: tr('シャリシャリ抑え (9.5k)', 'Fizz control (9.5k)'), hz: 9500, q: 2, depth: fizzDepth, ratio: 3, att: 2, rel: 80, on: fizzDepth > 0 });
+  why('fizz', fizzDepth ? tr(`Suno 特有のシャリシャリ（9〜10 kHz）を大きい瞬間だけ ${fizzDepth} dB 抑える`, `Suno's fizz (9–10 kHz) reduced by ${fizzDepth} dB at loud moments only`) : tr('バラード → シャリシャリ処理なし', 'Ballad → no fizz control'));
   const sibDepth = ballad || brightSource ? 0 : 1.5;
   dyn.push({ id: 'deess', label: tr('歯擦音', 'Sibilance'), hz: 7000, q: 2, depth: sibDepth, ratio: 3, att: 1, rel: 50, on: sibDepth > 0 });
   why('deess', sibDepth ? tr('歯擦音（6〜8 kHz）を速いアタックで軽く抑える', 'Light, fast-attack control of sibilance (6–8 kHz)') : tr('明るい／暗い音源なので歯擦音処理はオフ（艶を守る）', 'Bright/dark source, so sibilance control is off (keeps the sheen)'));
@@ -175,27 +180,24 @@ export function prescribe(d) {
 export const TOP_CAP = 4.3;
 export const AIR_CAP = -26.6;
 export const SPIKE_CAP = 11.1;
+// 9.5k fizz and 11.3k grit stay two bells: one bell between them (10-10.3 kHz) or at 11.3 kHz only
+// left YK's hats +0.6 dB and E1's crashes +1 dB louder, and let the 11 kHz surge back.
 export function tameAir(auto, x) {
-  const p = structuredClone(auto.params), dec = auto.decisions || {};
+  const dec = auto.decisions || {};
   const e = Math.min(3, x.shareDb), k = x.spikeDb, tx = x.topDb || 0;
   const share = e > 0.5, spike = k > 0.3, air = (share || spike) && !dec.ballad && !dec.veryDark;
-  const top = tx > 0 && !dec.ballad, hat = !dec.ballad;
-  if (!air && !top && !hat) return auto;
-  const reasons = [...auto.reasons];
-  // Hi-hat stabs: each hit that jumps over the 7-14 kHz average gets up to 6 dB for ~40 ms, quiet
-  // hats included (loud-only bells can't see single hits; YK/E1 A/B 2026-09-29, strong chosen).
-  // Added here, after the air / top measurement: those caps were set on masters without it.
-  if (hat) {
-    p.hatDb = 6; p.hatSens = 1;
-    reasons.push({ key: 'hat', text: tr('ハイハットの一打ごとの刺さり（7〜14 kHz の瞬間的な突き出し）を最大 6 dB、約 40 ms だけ抑える（シンバルの伸びや空気感はそのまま）', 'Hi-hat stabs (momentary 7–14 kHz jumps) reduced by up to 6 dB for about 40 ms per hit (cymbal ring and air kept)') });
-  }
+  const top = tx > 0 && !dec.ballad;
+  const out = { ...auto, decisions: { ...dec, airExcessDb: +e.toFixed(1), airSpikeDb: +k.toFixed(1), topSurgeDb: +(TOP_CAP + tx).toFixed(1) } };
+  const high = auto.params.dyn.some((y) => y.id === 'high' && y.on);
+  if (!air && !top && !high) return out;
+  const p = structuredClone(auto.params), reasons = [...auto.reasons];
   if (air) {
-    const sh = p.dyn.find((y) => y.id === 'shimmer');
-    if (sh) { sh.depth = +Math.min(3, spike ? 3 : sh.depth + e).toFixed(1); sh.on = true; }
+    const fz = p.dyn.find((y) => y.id === 'fizz');
+    if (fz) { fz.depth = +Math.min(3, spike ? 3 : fz.depth + e).toFixed(1); fz.on = true; }
     if (share) p.highShelfDb = +Math.max(-8, p.highShelfDb - 0.3 * e).toFixed(1);
     const why = [share && tr(`9〜10 kHz の量が一般的な楽曲の上限より ${e.toFixed(1)} dB 多い`, `9–10 kHz level ${e.toFixed(1)} dB above the upper end of typical masters`),
       spike && tr(`9〜10 kHz の瞬間的な突き出しが一般的な楽曲の上限より ${k.toFixed(1)} dB 強い`, `9–10 kHz spikes ${k.toFixed(1)} dB above the upper end of typical masters`)].filter(Boolean).join(tr('／', ' / '));
-    reasons.push({ key: 'air', text: why + tr(` → シャリシャリ抑えを ${sh ? sh.depth : 0} dB${share ? `、4.3 kHz 以上を ${p.highShelfDb} dB` : ''} に（大きい瞬間だけ）`, ` → fizz control ${sh ? sh.depth : 0} dB${share ? `, ${p.highShelfDb} dB above 4.3 kHz` : ''} (loud moments only)`) });
+    reasons.push({ key: 'air', text: why + tr(` → シャリシャリ抑えを ${fz ? fz.depth : 0} dB${share ? `、4.3 kHz 以上を ${p.highShelfDb} dB` : ''} に（大きい瞬間だけ）`, ` → fizz control ${fz ? fz.depth : 0} dB${share ? `, ${p.highShelfDb} dB above 4.3 kHz` : ''} (loud moments only)`) });
   }
   if (top) {
     const depth = +Math.min(4, Math.max(1.5, 6 * tx)).toFixed(1), surge = (TOP_CAP + tx).toFixed(1);
@@ -203,7 +205,15 @@ export function tameAir(auto, x) {
     reasons.push({ key: 'top', text: tr(`大きい所で 10.5〜12.5 kHz が波打つように突き出る（${surge} dB、目安 ${TOP_CAP} dB 以下）→ 11 kHz 付近を大きい瞬間だけ ${depth} dB 抑える（高域全体は削らないのでこもらない）`,
       `10.5–12.5 kHz surges on the loud parts (${surge} dB, typical ≤ ${TOP_CAP} dB) → ${depth} dB around 11 kHz at loud moments only (the rest of the top is kept, so it doesn't dull)`) });
   }
-  return { ...auto, params: p, reasons, decisions: { ...dec, airExcessDb: +e.toFixed(1), airSpikeDb: +k.toFixed(1), topSurgeDb: +(TOP_CAP + tx).toFixed(1) } };
+  // hi-hat band added only now (the caps above were set on masters without it), and last:
+  // after the 11k bell it catches what is left (YK stab 7.75 vs 7.90 before it)
+  if (high) {
+    p.dyn.push({ id: 'hat', label: tr('ハイハット抑え (10k)', 'Hi-hat control (10k)'), hz: 10000, q: 0.8, depth: 0, ratio: 1.5, att: 5, rel: 200,
+      fast: 6, sens: 1, fratio: 4, frel: 40, cap: 6, on: true });
+    reasons.push({ key: 'hat', text: tr('ハイハットの一打ごとの突き出しを 10 kHz 付近で最大 6 dB・約 40 ms 抑える（小さいハイハットも対象、普段の空気感はそのまま）',
+      'Each hi-hat stab gets up to 6 dB for about 40 ms around 10 kHz (quiet hats included; the air is untouched otherwise)') });
+  }
+  return { ...out, params: p, reasons };
 }
 
 const HF_TARGET = -16.9;
@@ -245,7 +255,11 @@ export function applyPrefs(params, prefs) {
   if (!prefs) return params;
   const p = structuredClone(params);
   for (const k of PREF_KEYS) if (prefs[k] && prefs[k].n > 0) p[k] = +(p[k] + prefs[k].offset).toFixed(2);
-  for (const d of p.dyn) { const o = prefs['dyn:' + d.id.replace(/\d+$/, '')]; if (o && o.n > 0) d.depth = Math.max(0, +(d.depth + o.offset).toFixed(2)); }
+  const legacy = { high: 'dyn:dyn8k', fizz: 'dyn:shimmer' }; // ids before engine .10
+  for (const d of p.dyn) {
+    const id = d.id.replace(/\d+$/, ''), o = prefs['dyn:' + id] || prefs[legacy[id]];
+    if (o && o.n > 0) d.depth = Math.max(0, +(d.depth + o.offset).toFixed(2));
+  }
   return p;
 }
 

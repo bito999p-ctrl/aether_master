@@ -94,7 +94,7 @@
   <li>主なバンド（自動）：8 kHz 刺さり・クラッシュ抑え（Q 0.5、2〜4 dB、リリース 200 ms。この帯域が大きい上位 15 % はほぼクラッシュシンバルが鳴っている間なので、鳴り続ける間ずっと効きます）、2〜5 kHz の鳴り続ける共振（Q 8）、大きい場面で伸びる高域の刺さり（Q 3）、9.5 kHz シャリシャリ抑え（Q 2）、7 kHz 歯擦音（Q 2、速いアタック）、11 kHz 高域のざらつき抑え（Q 1.5、条件付き）。</li>
 </ul>
 <h3>ハイハット抑え</h3>
-<p>10 kHz・Q 0.8（おおよそ 7〜14 kHz）の幅広いダイナミックベル。検出は音量ではなく「瞬間的な飛び出し」です。速いエンベロープ（0.2 ms / 5 ms）が、その帯域の平均（15 ms / 120 ms）より 1 dB 以上跳ねた分の 3/4 を、最大 6 dB、リリース 40 ms で下げます。ハイハットの一打ごとに効き、静かな場面のハイハットも対象です。シンバルの伸びや高域全体の量はほとんど変わりません。</p>
+<p>10 kHz・Q 0.8（おおよそ 7〜14 kHz）の幅広いダイナミックベル。検出は音量ではなく「瞬間的な飛び出し」です。速いエンベロープ（0.2 ms / 5 ms）が、その帯域の平均（15 ms / 120 ms）より 1 dB 以上跳ねた分の 3/4 を、最大 6 dB、リリース 40 ms で下げます。ハイハットの一打ごとに効き、静かな場面のハイハットも対象です。シンバルの伸びや高域全体の量はほとんど変わりません。ほかのバンドと同じダイナミック EQ の 1 バンド（音量での深さは 0、飛び出し検出だけ）で、CUSTOM の「ハイハット抑え (10k)」で最大量を変えられます。クラッシュ（8 kHz）と 1 つのバンドにまとめると 10 kHz 付近のハイハットを拾いきれないため、別のバンドにしています。</p>
 <h3>パンチ</h3>
 <p>150 Hz の相補分割（low = LP2(x)、high = x − low なので合計は常に入力と一致）。低域側だけで速い／遅いエンベロープの差からアタックと余韻を整形するので、スネアやシンバルは硬くなりません。整形による低域の音量変化は、オフラインで測ったメイクアップで打ち消します。</p>
 <h3>グルーコンプ</h3>
@@ -145,7 +145,7 @@
     </ul>
     バラードととても暗い音源は対象外です。</li>
   <li><b>10.5〜12.5 kHz</b>：同じマスターの大きい場面（100 ms ブロックの上位 15 %）で、この帯域の p95 と中央値の差を測ります。一般的な楽曲の目安 <span class="m">4.3 dB</span> を超えたら、11.3 kHz（Q 1.5）を大きい瞬間だけ超過分の 6 倍（1.5〜4 dB）抑えます。バラードは対象外です。</li>
-  <li><b>ハイハット抑え</b>：バラード以外は常にオン（最大 6 dB）。上の 2 つの測定はハイハット抑えなしのマスターで行い、そのあとで加えます。最後にもう一度ラウドネスを解きます。</li>
+  <li><b>ハイハット抑え</b>：バラード以外は常にオン（最大 6 dB）。上の 2 つの測定はハイハット抑えなしのマスターで行い、そのあとで、11 kHz のバンドより後ろに加えます。最後にもう一度ラウドネスを解きます。</li>
   <li>共振：周囲より +4 dB 以上突き出て鳴り続けるピークを狭く（Q 8）、大きい瞬間だけ、はみ出し分（突出量 − 2.5 dB、1〜4 dB）カットします。1/12 オクターブ以内のピークは 1 つのカットにまとめます。深く削ると声の艶が消えるので、はみ出し分だけにしています。バラードは浅め（最大 1.5 dB）。</li>
 </ol>
 
@@ -241,7 +241,7 @@
       <li>Static EQ boosts at the same frequency are added to the depth.</li>
     </ul>
   </li>
-  <li><b>Hi-hat tamer</b>: a wide dynamic bell at 10 kHz, Q 0.8 (about 7–14 kHz), keyed on jumps rather than level: when a fast envelope (0.2 / 5 ms) rises more than 1 dB over the band's own average (15 / 120 ms), 3/4 of the jump is taken off, at most 6 dB, released in 40 ms. It acts on every hit, quiet hats included; cymbal ring and the overall top end are barely touched.</li>
+  <li><b>Hi-hat tamer</b>: a wide dynamic bell at 10 kHz, Q 0.8 (about 7–14 kHz), keyed on jumps rather than level: when a fast envelope (0.2 / 5 ms) rises more than 1 dB over the band's own average (15 / 120 ms), 3/4 of the jump is taken off, at most 6 dB, released in 40 ms. It acts on every hit, quiet hats included; cymbal ring and the overall top end are barely touched. It is an ordinary dynamic EQ band (level depth 0, jump detector only), so CUSTOM shows it as "Hi-hat control (10k)" with its maximum as the slider. It stays separate from the 8 kHz crash band: one band for both missed the hats around 10 kHz.</li>
   <li><b>Punch</b>: a complementary split at 150 Hz, with transient shaping on the low band only and a measured makeup.</li>
   <li><b>Glue</b>: a feed-forward, linked compressor.
     <ul>
@@ -301,7 +301,7 @@
     </ul>
   </li>
   <li><b>10.5–12.5 kHz</b>: on the same master's loud parts (top 15 % of 100 ms blocks), the band's p95 over its median is measured. Above the typical 4.3 dB, 11.3 kHz (Q 1.5) is cut on loud moments by 6× the excess (1.5–4 dB). Not for ballads.</li>
-  <li><b>Hi-hat tamer</b>: on for every song except ballads (up to 6 dB). The two measurements above are made without it; it is added afterwards and the loudness is solved again.</li>
+  <li><b>Hi-hat tamer</b>: on for every song except ballads (up to 6 dB). The two measurements above are made without it; it is added afterwards, after the 11 kHz bell, and the loudness is solved again.</li>
   <li><b>8 kHz bell</b>: 4 dB (2 dB for bright sources), 200 ms release. The band's loudest 15 % is mostly crash cymbal ring, so it holds while the crash rings.</li>
   <li><b>Resonances</b>: persistent peaks ≥ +4 dB over their neighbourhood are cut narrowly (Q 8) on loud moments only, by the excess (prominence − 2.5 dB, 1–4 dB); peaks within 1/12 octave of each other share one cut. Deeper cuts took the gloss off the vocal, so only the excess is cut. Shallower for ballads (max 1.5 dB).</li>
 </ul>
