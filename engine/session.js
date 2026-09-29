@@ -71,12 +71,12 @@ export class Session {
     return s == null ? { shareDb: 0, spikeDb: 0, topDb } : { shareDb: +(s.share - AIR_CAP).toFixed(2), spikeDb: +(s.crest - SPIKE_CAP).toFixed(2), topDb };
   }
 
-  // Loud-part >5 kHz share (dB) of the loudness-locked master, with every loud-only bell in place.
+  // Loud-part >5 kHz and >12 kHz shares (dB) of the loudness-locked master, with every loud-only bell in place.
   masterHf(params) {
     if (preKey(params) !== this.preKey) throw new Error('masterHf: run solveLoudness first');
     const o = renderLimiter(this.pre.L, this.pre.R, this.fs, params), M = new Float32Array(o.L.length);
     for (let i = 0; i < M.length; i++) M[i] = 0.5 * (o.L[i] + o.R[i]);
-    return hfLoud(M, this.fs).above5kDb;
+    return hfLoud(M, this.fs);
   }
 
   // Loudness lock: find the limiter drive that hits targetLufs (pre-limiter render cached).

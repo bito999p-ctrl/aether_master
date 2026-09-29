@@ -262,21 +262,22 @@ function fixedPeaks(spec, tot, loud, freqs, maxBin) {
 // High-frequency level in the loud 30% of 400 ms blocks, dB re the block's full-band energy:
 // band9kDb = 8.5-10.5 kHz (4th-order band), above5kDb = > 5 kHz (RBJ HPF). Suno 2-mixes sit
 // 3-8 dB above finished masters here, and their 9-10 kHz is a steady wash rather than spikes.
+// above12kDb (RBJ HPF): the top octave where Suno's codec swirl (シュワシュワ) lives.
 export function hfLoud(M, fs) {
   const bp = [new Biquad(1).set('highpass', fs, 8500, 0.707), new Biquad(1).set('lowpass', fs, 10500, 0.707),
     new Biquad(1).set('highpass', fs, 8500, 0.707), new Biquad(1).set('lowpass', fs, 10500, 0.707)];
-  const hp = new Biquad(1).set('highpass', fs, 5000, 0.707);
+  const hp = new Biquad(1).set('highpass', fs, 5000, 0.707), hp12 = new Biquad(1).set('highpass', fs, 12000, 0.707);
   const B = Math.round(fs * 0.4), nb = Math.floor(M.length / B);
-  const eb = new Float64Array(nb), eh = new Float64Array(nb), ef = new Float64Array(nb);
+  const eb = new Float64Array(nb), eh = new Float64Array(nb), et = new Float64Array(nb), ef = new Float64Array(nb);
   for (let i = 0; i < nb * B; i++) {
     const x = M[i];
     let y = x; for (const f of bp) y = f.tick(y, 0);
-    const h = hp.tick(x, 0), b = (i / B) | 0;
-    eb[b] += y * y; eh[b] += h * h; ef[b] += x * x;
+    const h = hp.tick(x, 0), t = hp12.tick(x, 0), b = (i / B) | 0;
+    eb[b] += y * y; eh[b] += h * h; et[b] += t * t; ef[b] += x * x;
   }
-  const thr = pct(ef, 70), s9 = [], s5 = [];
-  for (let b = 0; b < nb; b++) if (ef[b] >= thr && ef[b] > 0) { s9.push(db(eb[b] / ef[b])); s5.push(db(eh[b] / ef[b])); }
-  return { band9kDb: +median(s9).toFixed(2), above5kDb: +median(s5).toFixed(2) };
+  const thr = pct(ef, 70), s9 = [], s5 = [], s12 = [];
+  for (let b = 0; b < nb; b++) if (ef[b] >= thr && ef[b] > 0) { s9.push(db(eb[b] / ef[b])); s5.push(db(eh[b] / ef[b])); s12.push(db(et[b] / ef[b])); }
+  return { band9kDb: +median(s9).toFixed(2), above5kDb: +median(s5).toFixed(2), above12kDb: +median(s12).toFixed(2) };
 }
 
 function bassProfile(M, fs) {

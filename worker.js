@@ -24,7 +24,7 @@ self.onmessage = (e) => {
         p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
       }
       // highs the loud-only bells took too far: raise the broad shelf to the target, re-solve once
-      const lifted = liftHigh(auto, s.masterHf(p), diag.loudSpec);
+      const lifted = liftHigh(auto, s.masterHf(p), diag.loudSpec, diag.hfLoud && diag.hfLoud.above12kDb);
       if (lifted.params !== auto.params) {
         auto = lifted;
         p = s.calibrate(applyPrefs(auto.params, m.prefs));

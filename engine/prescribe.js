@@ -223,37 +223,52 @@ export function tameAir(auto, x) {
 // Over-cut highs (2026-09-29, user: raising the broad shelf after the resonance cuts brings the outline back
 // without harshness): the shelf is solved on the source, but the resonance / fizz / crash / hat / 11k bells
 // then take 0-2.3 dB more off the loud parts (E1 -19.2, YK -19.1 vs -16.9). Measured on the finished master
-// and the shelf raised by what is missing, at most HF_LIFT_MAX. Only raises; ballads and dark songs keep theirs.
+// (m = Session.masterHf) and the shelf raised by what is missing, at most HF_LIFT_MAX. Only raises; ballads
+// and dark songs keep theirs.
+// The top octave carries Suno's codec swirl (シュワシュワ): E1 .12 put >12 kHz 2.4 dB over the source and the
+// user heard it. So after a lift a 12 kHz shelf (top12Db) takes >12 kHz back to the source (srcTopDb); the 16 kHz air
+// shelf alone only fixed 16-20 kHz (12-16 kHz stayed +1.8 dB).
 export const HF_LIFT_MAX = 2.5;
-export function liftHigh(auto, masterDb, spec) {
-  const dec = auto.decisions || {}, miss = HF_TARGET - masterDb;
-  const out = { ...auto, decisions: { ...dec, masterHfDb: +masterDb.toFixed(1) } };
+export function liftHigh(auto, m, spec, srcTopDb) {
+  const dec = auto.decisions || {}, miss = HF_TARGET - m.above5kDb;
+  const out = { ...auto, decisions: { ...dec, masterHfDb: +m.above5kDb.toFixed(1) } };
   if (miss < 0.3 || dec.ballad || dec.veryDark || !spec) return out;
-  const p = structuredClone(auto.params), g0 = p.highShelfDb;
-  const d0 = hfShift(spec, p.highHz, g0, p.airDb);
+  const p = structuredClone(auto.params), g0 = p.highShelfDb, a0 = p.airDb;
+  const d0 = hfShift(spec, p.highHz, g0, a0);
   let lo = g0, hi = Math.min(4, g0 + HF_LIFT_MAX);
-  for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (hfShift(spec, p.highHz, m, p.airDb) - d0 > miss) hi = m; else lo = m; }
+  for (let i = 0; i < 30; i++) { const x = (lo + hi) / 2; if (hfShift(spec, p.highHz, x, a0) - d0 > miss) hi = x; else lo = x; }
   p.highShelfDb = +((lo + hi) / 2).toFixed(1);
   if (p.highShelfDb - g0 < 0.2) return out;
-  const reasons = [...auto.reasons, { key: 'hfLift', text: tr(`共振・シンバル抑えのあと大きい場面の 5 kHz 以上が ${masterDb.toFixed(1)} dB（目標 ${HF_TARGET} dB）→ 削りすぎた分を戻して 4.3 kHz 以上を ${g0} → ${p.highShelfDb} dB（音の輪郭）`,
-    `After the resonance / cymbal control the loud parts' >5 kHz share is ${masterDb.toFixed(1)} dB (target ${HF_TARGET} dB) → shelf above 4.3 kHz ${g0} → ${p.highShelfDb} dB to restore the outline`) }];
+  const t0 = hfShift(spec, p.highHz, g0, a0, 12000);
+  const top = (t) => m.above12kDb + hfShift(spec, p.highHz, p.highShelfDb, a0, 12000, t) - t0;
+  // aim 0.5 dB under the source: the static prediction misses the master by ~0.4 dB (E1: >12k -25.6 vs -25.95)
+  const aim = srcTopDb - 0.5;
+  if (srcTopDb != null && m.above12kDb != null && top(0) > aim) {
+    let lo2 = TOP_MIN, hi2 = 0;
+    for (let i = 0; i < 30; i++) { const x = (lo2 + hi2) / 2; if (top(x) > aim) hi2 = x; else lo2 = x; }
+    p.top12Db = +lo2.toFixed(1);
+  }
+  const airTxt = p.top12Db < 0 ? tr(`。12 kHz 以上が元の音源を超えないよう 12 kHz 以上を ${p.top12Db} dB（音源のシュワシュワを持ち上げない）`, `; ${p.top12Db} dB above 12 kHz so the top octave stays at the source (doesn't lift the codec swirl)`) : '';
+  const reasons = [...auto.reasons, { key: 'hfLift', text: tr(`共振・シンバル抑えのあと大きい場面の 5 kHz 以上が ${m.above5kDb.toFixed(1)} dB（目標 ${HF_TARGET} dB）→ 削りすぎた分を戻して 4.3 kHz 以上を ${g0} → ${p.highShelfDb} dB（音の輪郭）`,
+    `After the resonance / cymbal control the loud parts' >5 kHz share is ${m.above5kDb.toFixed(1)} dB (target ${HF_TARGET} dB) → shelf above 4.3 kHz ${g0} → ${p.highShelfDb} dB to restore the outline`) + airTxt }];
   return { ...out, params: p, reasons };
 }
+const TOP_MIN = -4;
 
 const HF_TARGET = -16.9;
 const AIR_LIFT = 0.75, CRASH_DB = 3;
 const HF_OFFSET = -1.25; // renders land ~1.25 dB darker than the static prediction (fit on 5 v2 renders)
 
-// Change (dB) in the >5 kHz share of a loud-frame spectrum when the high shelf (Q 0.45) is set
+// Change (dB) in the >cut (default 5 kHz) share of a loud-frame spectrum when the high shelf (Q 0.45) is set
 // to g dB and the 16 kHz air shelf to air dB.
-function hfShift(spec, hz, g, air) {
-  const fs = 44100, sh = [design('highshelf', fs, hz, 0.45, g), design('highshelf', fs, 16000, 0.7071, air)];
+function hfShift(spec, hz, g, air, cut = 5000, top = 0) {
+  const fs = 44100, sh = [design('highshelf', fs, hz, 0.45, g), design('highshelf', fs, 16000, 0.7071, air), design('highshelf', fs, 12000, 0.7071, top)];
   const share = (fl) => {
     let hi = 0, all = 0;
     spec.hz.forEach((f, i) => {
       let e = 10 ** (spec.db[i] / 10);
       if (fl) for (const c of sh) e *= mag2(c, f, fs);
-      all += e; if (f >= 5000) hi += e;
+      all += e; if (f >= cut) hi += e;
     });
     return 10 * Math.log10(hi / all);
   };

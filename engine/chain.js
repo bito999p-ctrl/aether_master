@@ -17,6 +17,7 @@ export const DEFAULTS = {
   bassDb: 0,           // low shelf 90 Hz
   highHz: 7000, highShelfDb: 0, // broad high shelf (Q 0.45)
   airDb: 0,
+  top12Db: 0,          // 12 kHz shelf: set only by the auto top-octave guard (codec swirl)
   // manual parametric EQ (user only, flat by default)
   eq1Hz: 100, eq1Db: 0, eq1Q: 1.4,
   eq2Hz: 400, eq2Db: 0, eq2Q: 1.4,
@@ -42,7 +43,7 @@ function effective(p) {
   const o = p.off;
   if (!o) return p;
   const e = { ...p };
-  if (o.tone) Object.assign(e, { hpfHz: 10, bassDb: 0, lowDb: 0, mudDb: 0, highShelfDb: 0, airDb: 0 });
+  if (o.tone) Object.assign(e, { hpfHz: 10, bassDb: 0, lowDb: 0, mudDb: 0, highShelfDb: 0, airDb: 0, top12Db: 0 });
   if (o.eq) Object.assign(e, { eq1Db: 0, eq2Db: 0, eq3Db: 0, eq4Db: 0 });
   if (o.dyn) e.dyn = [];
   if (o.punch) Object.assign(e, { punchDb: 0, tightDb: 0, lowGainDb: 0, punchMakeupDb: 0 });
@@ -72,6 +73,7 @@ export function boostAt(params, f, fs) {
   add('peaking', p.mudHz, 1.0, p.mudDb);
   add('highshelf', p.highHz, 0.45, p.highShelfDb);
   add('highshelf', 16000, 0.7071, p.airDb);
+  add('highshelf', 12000, 0.7071, p.top12Db || 0);
   for (let k = 1; k <= 4; k++) add('peaking', p[`eq${k}Hz`], p[`eq${k}Q`], p[`eq${k}Db`]);
   add('peaking', 3000, 0.7, p.presenceDb);
   return g;
@@ -81,7 +83,7 @@ export class MasterChain {
   constructor(fs) {
     this.fs = fs;
     this.hpf = [new Biquad(2), new Biquad(2)];
-    this.eq = { bass: new Biquad(2), low: new Biquad(2), mud: new Biquad(2), high: new Biquad(2), air: new Biquad(2),
+    this.eq = { bass: new Biquad(2), low: new Biquad(2), mud: new Biquad(2), high: new Biquad(2), air: new Biquad(2), top: new Biquad(2),
       u1: new Biquad(2), u2: new Biquad(2), u3: new Biquad(2), u4: new Biquad(2) };
     this.dyn = Array.from({ length: MAX_DYN }, () => new DynBand(fs));
     this.punch = new Punch(fs);
@@ -113,6 +115,7 @@ export class MasterChain {
     this.eq.mud.set('peaking', fs, p.mudHz, 1.0, p.mudDb);
     this.eq.high.set('highshelf', fs, p.highHz, 0.45, p.highShelfDb);
     this.eq.air.set('highshelf', fs, 16000, 0.7071, p.airDb);
+    this.eq.top.set('highshelf', fs, 12000, 0.7071, p.top12Db || 0);
     for (let k = 1; k <= 4; k++) this.eq['u' + k].set('peaking', fs, p[`eq${k}Hz`], p[`eq${k}Q`], p[`eq${k}Db`]);
     for (let i = 0; i < MAX_DYN; i++) {
       const d = p.dyn[i];

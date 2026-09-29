@@ -137,7 +137,7 @@
 </table></div>
 <h3>高域の合わせ込み（一般的な楽曲の目安）</h3>
 <ol>
-  <li><b>5 kHz 以上</b>：4.3 kHz のなだらかな高域シェルフを二分探索で決め、大きい場面の 5 kHz 以上の比率を一般的な楽曲の中央値 <span class="m">-16.9 dB</span> に合わせます（持ち上げは最大 +4 dB）。そのあと、共振・シンバル・シャリシャリなどの抑えをすべて入れたマスターで同じ比率を測り直し、目標に届かなければ足りない分だけシェルフを上げて（最大 +2.5 dB、上げる方向のみ）ラウドネスを合わせ直します。削りすぎた高域を戻すと声の輪郭が出ます。バラードと暗い音源は対象外です。</li>
+  <li><b>5 kHz 以上</b>：4.3 kHz のなだらかな高域シェルフを二分探索で決め、大きい場面の 5 kHz 以上の比率を一般的な楽曲の中央値 <span class="m">-16.9 dB</span> に合わせます（持ち上げは最大 +4 dB）。そのあと、共振・シンバル・シャリシャリなどの抑えをすべて入れたマスターで同じ比率を測り直し、目標に届かなければ足りない分だけシェルフを上げて（最大 +2.5 dB、上げる方向のみ）ラウドネスを合わせ直します。削りすぎた高域を戻すと声の輪郭が出ます。シェルフを上げると 12 kHz 以上に元の音源のシュワシュワ（圧縮の揺れ）まで持ち上がるため、大きい場面の 12 kHz 以上が元の音源を超える分は 12 kHz シェルフで戻します（最大 -4 dB、音源より 0.5 dB 下を狙う）。バラードと暗い音源は対象外です。</li>
   <li><b>9〜10 kHz</b>：ラウドネスを固定した状態でマスターを実際にレンダリングし、大きい場面の 8.5〜10.5 kHz を 2 つの値で測ります（8.5 kHz ハイパスと 10.5 kHz ローパスの 2 段フィルター、2 ms 単位）。
     <ul>
       <li><b>量</b>（帯域の比率）：一般的な楽曲の上限 <span class="m">-26.6 dB</span> を 0.5 dB 以上超えたら、超えた分（最大 3 dB）だけシャリシャリ抑え（9.5 kHz）を深くし、高域シェルフは超過分の 0.3 倍だけ下げます（暗くしすぎないよう、主役はシャリシャリ抑え）。</li>
@@ -292,7 +292,7 @@
       <li>very dark source → treble lift of +1 dB at most.</li>
     </ul>
   </li>
-  <li><b>Treble above 5 kHz</b>: the 4.3 kHz shelf is solved so the loud-part share above 5 kHz hits the typical median of -16.9 dB. After every loud-only bell is in place, the master is measured again; if it falls short, the shelf is raised by the missing amount (at most +2.5 dB, raise only) and the loudness re-locked, which brings back the outline of the voice. Ballads and very dark sources are skipped.</li>
+  <li><b>Treble above 5 kHz</b>: the 4.3 kHz shelf is solved so the loud-part share above 5 kHz hits the typical median of -16.9 dB. After every loud-only bell is in place, the master is measured again; if it falls short, the shelf is raised by the missing amount (at most +2.5 dB, raise only) and the loudness re-locked, which brings back the outline of the voice. Raising the shelf also lifts the source's codec swirl above 12 kHz, so whatever the loud-part level above 12 kHz exceeds the source by is taken back with a 12 kHz shelf (at most -4 dB, aiming 0.5 dB under the source). Ballads and very dark sources are skipped.</li>
   <li><b>9–10 kHz</b>:
     <ul>
       <li>The loudness-locked master is rendered and its loud parts are measured through an 8.5 kHz high-pass and 10.5 kHz low-pass (two stages each), in 2 ms chunks.</li>
