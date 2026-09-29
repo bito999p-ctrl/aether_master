@@ -91,8 +91,10 @@
   <li>構造：<code>y = x + (g − 1)·BP(x)</code>。中心ゲイン 0 dB のバンドパスを使うので、係数を再計算せずにサンプルごとにゲインを動かせる正確なベルになります。</li>
   <li>検出：バンド信号の L/R 連動ミッド、パワーエンベロープ。</li>
   <li><b>自動校正</b>：スレッショルドは曲ごとに解析で決めます。曲の中で大きい上位 15 % の瞬間に、指定した深さ（dB）だけ効くように合わせます。EQ で同じ帯域を持ち上げている分は深さに足すので、大きい瞬間の正味のカット量が指定値になります。</li>
-  <li>主なバンド（自動）：8 kHz 刺さり抑え（Q 0.5）、2〜5 kHz の鳴り続ける共振（Q 8）、大きい場面で伸びる高域の刺さり（Q 3）、9.5 kHz シャリシャリ抑え（Q 2）、7 kHz 歯擦音（Q 2、速いアタック）。</li>
+  <li>主なバンド（自動）：8 kHz 刺さり・クラッシュ抑え（Q 0.5、2〜4 dB、リリース 200 ms。この帯域が大きい上位 15 % はほぼクラッシュシンバルが鳴っている間なので、鳴り続ける間ずっと効きます）、2〜5 kHz の鳴り続ける共振（Q 8）、大きい場面で伸びる高域の刺さり（Q 3）、9.5 kHz シャリシャリ抑え（Q 2）、7 kHz 歯擦音（Q 2、速いアタック）、11 kHz 高域のざらつき抑え（Q 1.5、条件付き）。</li>
 </ul>
+<h3>ハイハット抑え</h3>
+<p>10 kHz・Q 0.8（おおよそ 7〜14 kHz）の幅広いダイナミックベル。検出は音量ではなく「瞬間的な飛び出し」です。速いエンベロープ（0.2 ms / 5 ms）が、その帯域の平均（15 ms / 120 ms）より 1 dB 以上跳ねた分の 3/4 を、最大 6 dB、リリース 40 ms で下げます。ハイハットの一打ごとに効き、静かな場面のハイハットも対象です。シンバルの伸びや高域全体の量はほとんど変わりません。</p>
 <h3>パンチ</h3>
 <p>150 Hz の相補分割（low = LP2(x)、high = x − low なので合計は常に入力と一致）。低域側だけで速い／遅いエンベロープの差からアタックと余韻を整形するので、スネアやシンバルは硬くなりません。整形による低域の音量変化は、オフラインで測ったメイクアップで打ち消します。</p>
 <h3>グルーコンプ</h3>
@@ -127,10 +129,10 @@
 <div class="tw"><table>
   <tr><th>判定</th><th>条件</th><th>主な変化</th></tr>
   <tr><td>808</td><td>ベース p10 &lt; 45 Hz かつ p50 &lt; 50 Hz</td><td>-10.0 LUFS、HPF 25 Hz、低域シェルフなし</td></tr>
-  <tr><td>バラード</td><td>クレスト ≥ 15 dB かつセクション差 ≥ 6 dB</td><td>-13 LUFS、半分のテンポでリリース、共振カットは浅め、8k・シャリシャリ処理なし</td></tr>
+  <tr><td>バラード</td><td>クレスト ≥ 15 dB かつセクション差 ≥ 6 dB</td><td>-13 LUFS、半分のテンポでリリース、共振カットは浅め、8k・シャリシャリ・ハイハット抑えなし</td></tr>
   <tr><td>密な音源</td><td>クレスト &lt; 12.5 dB</td><td>キック・倍音・空間・低域の足し算を控えめに</td></tr>
   <tr><td>ドラムが少ない</td><td>低域オンセット &lt; 0.6 / 秒</td><td>パンチ控えめ、低域ベルなし</td></tr>
-  <tr><td>明るい音源</td><td>低域／高域比 &lt; 10 dB</td><td>8k は -1 dB のみ、歯擦音処理オフ</td></tr>
+  <tr><td>明るい音源</td><td>低域／高域比 &lt; 10 dB</td><td>8k は -2 dB のみ、歯擦音処理オフ</td></tr>
   <tr><td>とても暗い音源</td><td>低域／高域比 ≥ 15 dB</td><td>高域の持ち上げは最大 +1 dB</td></tr>
 </table></div>
 <h3>高域の合わせ込み（一般的な楽曲の目安）</h3>
@@ -141,8 +143,10 @@
       <li><b>量</b>（帯域の比率）：一般的な楽曲の上限 <span class="m">-26.6 dB</span> を 0.5 dB 以上超えたら、超えた分（最大 3 dB）だけシャリシャリ抑え（9.5 kHz）を深くし、高域シェルフは超過分の 0.3 倍だけ下げます（暗くしすぎないよう、主役はシャリシャリ抑え）。</li>
       <li><b>瞬間的な突き出し</b>（2 ms ごとの最大と中央値の差）：一般的な楽曲の上限 <span class="m">11.1 dB</span> を超えたら、シャリシャリ抑えを 3 dB にします。シェルフは触りません。</li>
     </ul>
-    そのあと、もう一度ラウドネスを解きます。バラードととても暗い音源は対象外です。</li>
-  <li>共振：一般的な楽曲では周囲より +3〜4 dB に収まっているので、+3.5 dB 以上突き出たピークを狭く（Q 8）、大きい瞬間だけカットします。1/12 オクターブ以内のピークは、1 つのカットにまとめます。大きい瞬間だけのカットは曲全体では半分ほどしか効かないため、深さは超過分の 2 倍（最大 6 dB）。バラードは浅め（最大 1.5 dB）。</li>
+    バラードととても暗い音源は対象外です。</li>
+  <li><b>10.5〜12.5 kHz</b>：同じマスターの大きい場面（100 ms ブロックの上位 15 %）で、この帯域の p95 と中央値の差を測ります。一般的な楽曲の目安 <span class="m">4.3 dB</span> を超えたら、11.3 kHz（Q 1.5）を大きい瞬間だけ超過分の 6 倍（1.5〜4 dB）抑えます。バラードは対象外です。</li>
+  <li><b>ハイハット抑え</b>：バラード以外は常にオン（最大 6 dB）。上の 2 つの測定はハイハット抑えなしのマスターで行い、そのあとで加えます。最後にもう一度ラウドネスを解きます。</li>
+  <li>共振：周囲より +4 dB 以上突き出て鳴り続けるピークを狭く（Q 8）、大きい瞬間だけ、はみ出し分（突出量 − 2.5 dB、1〜4 dB）カットします。1/12 オクターブ以内のピークは 1 つのカットにまとめます。深く削ると声の艶が消えるので、はみ出し分だけにしています。バラードは浅め（最大 1.5 dB）。</li>
 </ol>
 
 <h2 id="t7"><span class="n">07</span>ラウドネス制御</h2>
@@ -237,6 +241,7 @@
       <li>Static EQ boosts at the same frequency are added to the depth.</li>
     </ul>
   </li>
+  <li><b>Hi-hat tamer</b>: a wide dynamic bell at 10 kHz, Q 0.8 (about 7–14 kHz), keyed on jumps rather than level: when a fast envelope (0.2 / 5 ms) rises more than 1 dB over the band's own average (15 / 120 ms), 3/4 of the jump is taken off, at most 6 dB, released in 40 ms. It acts on every hit, quiet hats included; cymbal ring and the overall top end are barely touched.</li>
   <li><b>Punch</b>: a complementary split at 150 Hz, with transient shaping on the low band only and a measured makeup.</li>
   <li><b>Glue</b>: a feed-forward, linked compressor.
     <ul>
@@ -281,7 +286,7 @@
   <li><b>Special cases</b>:
     <ul>
       <li>808 → -10 LUFS, HPF 25 Hz;</li>
-      <li>ballad (crest ≥ 15 dB, section spread ≥ 6 dB) → -13 LUFS, half-tempo releases;</li>
+      <li>ballad (crest ≥ 15 dB, section spread ≥ 6 dB) → -13 LUFS, half-tempo releases, no 8k / fizz / hi-hat control;</li>
       <li>dense source (crest &lt; 12.5 dB) → lighter additive moves;</li>
       <li>bright source → lighter high control;</li>
       <li>very dark source → treble lift of +1 dB at most.</li>
@@ -293,10 +298,12 @@
       <li>The loudness-locked master is rendered and its loud parts are measured through an 8.5 kHz high-pass and 10.5 kHz low-pass (two stages each), in 2 ms chunks.</li>
       <li><b>Amount</b> (band share): if it is more than 0.5 dB above the upper end of typical masters (-26.6 dB), the 9.5 kHz bell is deepened by the excess (at most 3 dB) and the shelf is lowered by only 0.3 × the excess, so the bell does the work and the song does not get dull.</li>
       <li><b>Spikes</b> (loudest 2 ms chunk vs. the median): if they exceed the typical upper end of 11.1 dB, the 9.5 kHz bell is set to 3 dB and the shelf is left alone.</li>
-      <li>The loudness is then solved again.</li>
     </ul>
   </li>
-  <li><b>Resonances</b>: typical masters keep them within +3–4 dB of their neighbourhood, so peaks ≥ +3.5 dB are cut narrowly (Q 8) on loud moments only; peaks within 1/12 octave of each other share one cut. Loud-only cuts act at about half strength over the whole song, so the depth is 2× the excess (max 6 dB); shallower for ballads (max 1.5 dB).</li>
+  <li><b>10.5–12.5 kHz</b>: on the same master's loud parts (top 15 % of 100 ms blocks), the band's p95 over its median is measured. Above the typical 4.3 dB, 11.3 kHz (Q 1.5) is cut on loud moments by 6× the excess (1.5–4 dB). Not for ballads.</li>
+  <li><b>Hi-hat tamer</b>: on for every song except ballads (up to 6 dB). The two measurements above are made without it; it is added afterwards and the loudness is solved again.</li>
+  <li><b>8 kHz bell</b>: 4 dB (2 dB for bright sources), 200 ms release. The band's loudest 15 % is mostly crash cymbal ring, so it holds while the crash rings.</li>
+  <li><b>Resonances</b>: persistent peaks ≥ +4 dB over their neighbourhood are cut narrowly (Q 8) on loud moments only, by the excess (prominence − 2.5 dB, 1–4 dB); peaks within 1/12 octave of each other share one cut. Deeper cuts took the gloss off the vocal, so only the excess is cut. Shallower for ballads (max 1.5 dB).</li>
 </ul>
 
 <h2><span class="n">07</span>Loudness lock</h2>

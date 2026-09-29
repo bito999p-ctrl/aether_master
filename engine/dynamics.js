@@ -145,3 +145,47 @@ export class Glue {
   }
   reset() { this.rms = this.pk = this.gdb = 0; this.hp.reset(); }
 }
+
+// ---------------------------------------------------------------------------
+// Hi-hat / cymbal stab tamer: a wide dynamic bell (same exact-bell trick as DynBand)
+// keyed on *transients*, not level. fast = band power env (0.2 ms / 5 ms), slow = its
+// running average (15 ms / 120 ms); each hit that jumps `sens` dB over the band's own
+// average gets up to `depth` dB, released in `rel` ms. Quiet hats are caught as well as loud ones.
+export class HatTamer {
+  constructor(fs) {
+    this.fs = fs;
+    this.bp = new Biquad(2);
+    this.cf = coef(0.2, fs); this.cfr = coef(5, fs); this.cs = coef(15, fs); this.csr = coef(120, fs);
+    this.fast = 0; this.slow = 0; this.gr = 0;
+    this.set({ hz: 10000, q: 0.8, depth: 0, sens: 6, ratio: 4, rel: 40 });
+  }
+  set(p) {
+    this.p = { ...this.p, ...p };
+    this.bp.set('bandpass', this.fs, this.p.hz, this.p.q);
+    this.crel = coef(this.p.rel, this.fs);
+    this.slope = 1 - 1 / Math.max(1, this.p.ratio);
+  }
+  process(L, R, n) {
+    const { depth, sens } = this.p;
+    if (!(depth > 0)) { this.gr = 0; return; }
+    const bp = this.bp, slope = this.slope, cf = this.cf, cfr = this.cfr, cs = this.cs, csr = this.csr, crel = this.crel;
+    let fast = this.fast, slow = this.slow, gr = this.gr, k = dbToLin(-gr) - 1;
+    for (let i = 0; i < n; i++) {
+      const bl = bp.tick(L[i], 0), br = bp.tick(R[i], 1);
+      const m = 0.5 * (bl + br), d = m * m;
+      fast += (d > fast ? cf : cfr) * (d - fast);
+      slow += (fast > slow ? cs : csr) * (fast - slow);
+      if ((i & 3) === 0) {
+        const x = 10 * Math.log10((fast + 1e-20) / (slow + 1e-20)) - sens;
+        const t = x > 0 ? Math.min(depth, x * slope) : 0;
+        gr = t > gr ? t : gr + crel * 4 * (t - gr);
+        k = dbToLin(-gr) - 1;
+      }
+      L[i] += k * bl;
+      R[i] += k * br;
+    }
+    this.fast = fast; this.slow = slow; this.gr = gr;
+  }
+  reset() { this.fast = this.slow = this.gr = 0; this.bp.reset(); }
+}
+

@@ -17,7 +17,7 @@ self.onmessage = (e) => {
       let auto = s.auto();
       let p = s.calibrate(applyPrefs(auto.params, m.prefs));
       p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
-      const tamed = tameAir(auto, s.airExcess(p)); // 9-10 kHz brighter than typical masters: re-solve once
+      const tamed = tameAir(auto, s.airExcess(p)); // master-measured high-end fixes (9-10k, 11k, hi-hat): re-solve once
       if (tamed !== auto) {
         auto = tamed;
         p = s.calibrate(applyPrefs(auto.params, m.prefs));

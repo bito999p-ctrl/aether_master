@@ -94,27 +94,28 @@ export function prescribe(d) {
   // dynamic bells (loud-moment only)
   const dyn = [];
   if (!ballad) {
-    const depth = brightSource ? 1.0 : 2.0;
-    dyn.push({ id: 'dyn8k', label: tr('高域の刺さり抑え (8k)', 'High bite control (8k)'), hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 120, on: true });
-    why('dyn8k', tr(`大きい瞬間だけ 8 kHz 帯を ${depth} dB 抑える（痛さ対策、普段は触らない）`, `8 kHz band reduced by ${depth} dB only at loud moments (against harshness, untouched otherwise)`));
-  } else why('dyn8k', tr('非常に暗い音源 → 8 kHz のダイナミック処理なし', 'Very dark source → no dynamic 8 kHz processing'));
-  // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): reference masters stay
-  // <= 3 dB over their neighbourhood, so cut the excess, narrow and on loud moments only.
-  // Loud-only cuts land at about half their depth in the loud-frame LTAS, so depth = 2x excess
-  // (reference tracks 3.0-4.1 dB, median 3.9; 1x left 3.7-4.3, 2x lands ~3-3.5; 2026-09-28)
+    // The band's own loudest 15% are mostly crash / ride wash, which rings for 1-2 s. 4 dB with a
+    // 200 ms release holds through the ring (YK/E1 A/B 2026-09-29: "crash is loud", 4 dB chosen over 6).
+    const depth = brightSource ? 2.0 : 4.0;
+    dyn.push({ id: 'dyn8k', label: tr('高域・クラッシュ抑え (8k)', 'High bite / crash control (8k)'), hz: 8000, q: 0.5, depth, ratio: 1.5, att: 5, rel: 200, on: true });
+    why('dyn8k', tr(`8 kHz 帯が大きい瞬間（主にクラッシュシンバルが鳴っている間）だけ ${depth} dB 抑える（普段は触らない）`, `8 kHz band reduced by ${depth} dB only while it is loud (mostly while a crash cymbal rings; untouched otherwise)`));
+  } else why('dyn8k', tr('バラード → 8 kHz のダイナミック処理・ハイハット抑えなし', 'Ballad → no dynamic 8 kHz processing or hi-hat control'));
+  // fixed narrow peaks 2-5 kHz (Suno's ~2.1/2.2/2.35/2.5 and 3.5-3.7 kHz): cut the excess over
+  // +2.5 dB, narrow and on loud moments only. A 2x-excess rule (max 6) matched the loud-frame LTAS
+  // of typical masters better but lost vocal gloss (E1 A/B 2026-09-29), so back to 1x (max 4).
   const soft = ballad; // dark non-ballads get full cuts (鳴動 A/B 2026-09-28: silkier, less bite)
   // Peaks within 1/12 octave are one resonance: keep the strongest only, or two Q8 bells stack
   // (N2 2789 + 2810 Hz = up to 12 dB at 2.8 kHz; 2026-09-28).
   const peaks = [];
-  for (const r of (d.fixedPeaks || []).filter((r) => r.promDb >= (soft ? 4 : 3.5) && r.persist >= 0.15).sort((a, b) => b.promDb - a.promDb))
+  for (const r of (d.fixedPeaks || []).filter((r) => r.promDb >= 4 && r.persist >= 0.15).sort((a, b) => b.promDb - a.promDb))
     if (!peaks.some((k) => Math.abs(Math.log2(r.hz / k.hz)) < 1 / 12)) peaks.push(r);
   peaks.sort((a, b) => a.hz - b.hz);
   peaks.forEach((r, i) => {
-    const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(2 * (r.promDb - 3), 1, 6)).toFixed(1);
+    const depth = +(soft ? clamp(0.5 * (r.promDb - 3), 0.5, 1.5) : clamp(r.promDb - 2.5, 1, 4)).toFixed(1);
     dyn.push({ id: `res${i}`, label: tr(`共振 ${r.hz} Hz`, `Resonance ${r.hz} Hz`), hz: r.hz, q: 8, depth, ratio: 3, att: 5, rel: 80, on: true });
   });
   if (peaks.length) {
-    why('res', tr(`鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ一般的な楽曲の目安（+3〜3.5 dB）まで抑える`, `Persistent resonances ${peaks.map((r) => `${r.hz} Hz (+${r.promDb} dB)`).join(' / ')} narrowly cut (Q8) at loud moments only, down to the typical range (+3–3.5 dB)`)
+    why('res', tr(`鳴り続ける共振 ${peaks.map((r) => `${r.hz} Hz（+${r.promDb} dB）`).join(' / ')} を狭く（Q8）、大きい瞬間だけ抑える（艶を残すため、はみ出し分だけ）`, `Persistent resonances ${peaks.map((r) => `${r.hz} Hz (+${r.promDb} dB)`).join(' / ')} narrowly cut (Q8) at loud moments only (by the excess only, to keep the gloss)`)
       + (soft ? tr('。ピアノなど曲自身の音の可能性もあるので浅め。耳で確認を', '. Kept shallow since it may be the song\'s own notes (e.g. piano). Check by ear') : ''));
   }
   if (growthHigh >= 6 && !ballad) {
@@ -166,20 +167,43 @@ export function prescribe(d) {
 // - spikes above the spikiest reference track (crest 11.1 dB; 夜響 11.8 at a normal share): fizz bell
 //   to full depth, since the loud-only bell is what catches spikes.
 // Ballads and very dark songs are left alone.
+// 10.5-12.5 kHz surges on the loud parts of the master (Session.airExcess, analyze.topSurge).
+// E1 A/B 2026-09-29: a loud-only -3 dB bell at 11.3 kHz was "楽" where a -3 treble step dulled the
+// song. Songs that feel fine stay <= 4.2 dB (NS 2.4 .. SL 4.2); E1 4.8 needed 3 dB (-> 3.8), YK 5.7.
+// Measured on the master, not the source (MC: 4.8 source, 3.9 master). Ballads read high only
+// because they are sparse, so they are left alone; dark songs get it (full peak cuts).
+export const TOP_CAP = 4.3;
 export const AIR_CAP = -26.6;
 export const SPIKE_CAP = 11.1;
 export function tameAir(auto, x) {
   const p = structuredClone(auto.params), dec = auto.decisions || {};
-  const e = Math.min(3, x.shareDb), k = x.spikeDb;
-  const share = e > 0.5, spike = k > 0.3;
-  if (!(share || spike) || dec.ballad || dec.veryDark) return auto;
-  const sh = p.dyn.find((y) => y.id === 'shimmer');
-  if (sh) { sh.depth = +Math.min(3, spike ? 3 : sh.depth + e).toFixed(1); sh.on = true; }
-  if (share) p.highShelfDb = +Math.max(-8, p.highShelfDb - 0.3 * e).toFixed(1);
-  const why = [share && tr(`9〜10 kHz の量が一般的な楽曲の上限より ${e.toFixed(1)} dB 多い`, `9–10 kHz level ${e.toFixed(1)} dB above the upper end of typical masters`),
-    spike && tr(`9〜10 kHz の瞬間的な突き出しが一般的な楽曲の上限より ${k.toFixed(1)} dB 強い`, `9–10 kHz spikes ${k.toFixed(1)} dB above the upper end of typical masters`)].filter(Boolean).join(tr('／', ' / '));
-  const reasons = [...auto.reasons, { key: 'air', text: why + tr(` → シャリシャリ抑えを ${sh ? sh.depth : 0} dB${share ? `、4.3 kHz 以上を ${p.highShelfDb} dB` : ''} に（大きい瞬間だけ）`, ` → fizz control ${sh ? sh.depth : 0} dB${share ? `, ${p.highShelfDb} dB above 4.3 kHz` : ''} (loud moments only)`) }];
-  return { ...auto, params: p, reasons, decisions: { ...dec, airExcessDb: +e.toFixed(1), airSpikeDb: +k.toFixed(1) } };
+  const e = Math.min(3, x.shareDb), k = x.spikeDb, tx = x.topDb || 0;
+  const share = e > 0.5, spike = k > 0.3, air = (share || spike) && !dec.ballad && !dec.veryDark;
+  const top = tx > 0 && !dec.ballad, hat = !dec.ballad;
+  if (!air && !top && !hat) return auto;
+  const reasons = [...auto.reasons];
+  // Hi-hat stabs: each hit that jumps over the 7-14 kHz average gets up to 6 dB for ~40 ms, quiet
+  // hats included (loud-only bells can't see single hits; YK/E1 A/B 2026-09-29, strong chosen).
+  // Added here, after the air / top measurement: those caps were set on masters without it.
+  if (hat) {
+    p.hatDb = 6; p.hatSens = 1;
+    reasons.push({ key: 'hat', text: tr('ハイハットの一打ごとの刺さり（7〜14 kHz の瞬間的な突き出し）を最大 6 dB、約 40 ms だけ抑える（シンバルの伸びや空気感はそのまま）', 'Hi-hat stabs (momentary 7–14 kHz jumps) reduced by up to 6 dB for about 40 ms per hit (cymbal ring and air kept)') });
+  }
+  if (air) {
+    const sh = p.dyn.find((y) => y.id === 'shimmer');
+    if (sh) { sh.depth = +Math.min(3, spike ? 3 : sh.depth + e).toFixed(1); sh.on = true; }
+    if (share) p.highShelfDb = +Math.max(-8, p.highShelfDb - 0.3 * e).toFixed(1);
+    const why = [share && tr(`9〜10 kHz の量が一般的な楽曲の上限より ${e.toFixed(1)} dB 多い`, `9–10 kHz level ${e.toFixed(1)} dB above the upper end of typical masters`),
+      spike && tr(`9〜10 kHz の瞬間的な突き出しが一般的な楽曲の上限より ${k.toFixed(1)} dB 強い`, `9–10 kHz spikes ${k.toFixed(1)} dB above the upper end of typical masters`)].filter(Boolean).join(tr('／', ' / '));
+    reasons.push({ key: 'air', text: why + tr(` → シャリシャリ抑えを ${sh ? sh.depth : 0} dB${share ? `、4.3 kHz 以上を ${p.highShelfDb} dB` : ''} に（大きい瞬間だけ）`, ` → fizz control ${sh ? sh.depth : 0} dB${share ? `, ${p.highShelfDb} dB above 4.3 kHz` : ''} (loud moments only)`) });
+  }
+  if (top) {
+    const depth = +Math.min(4, Math.max(1.5, 6 * tx)).toFixed(1), surge = (TOP_CAP + tx).toFixed(1);
+    p.dyn.push({ id: 'top', label: tr('高域のざらつき抑え (11k)', 'Top-end grit control (11k)'), hz: 11300, q: 1.5, depth, ratio: 3, att: 2, rel: 80, on: true });
+    reasons.push({ key: 'top', text: tr(`大きい所で 10.5〜12.5 kHz が波打つように突き出る（${surge} dB、目安 ${TOP_CAP} dB 以下）→ 11 kHz 付近を大きい瞬間だけ ${depth} dB 抑える（高域全体は削らないのでこもらない）`,
+      `10.5–12.5 kHz surges on the loud parts (${surge} dB, typical ≤ ${TOP_CAP} dB) → ${depth} dB around 11 kHz at loud moments only (the rest of the top is kept, so it doesn't dull)`) });
+  }
+  return { ...auto, params: p, reasons, decisions: { ...dec, airExcessDb: +e.toFixed(1), airSpikeDb: +k.toFixed(1), topSurgeDb: +(TOP_CAP + tx).toFixed(1) } };
 }
 
 const HF_TARGET = -16.9;

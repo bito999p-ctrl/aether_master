@@ -354,6 +354,29 @@ export function airShare(L, R, fs) {
   return { share: median(s9.filter(loud)), crest: median(cr.filter(loud)) };
 }
 
+// Loud-part 10.5-12.5 kHz surges (E1 A/B 2026-09-29: a loud-only -3 dB bell at 11.3 kHz fixed the
+// "painful" top that a -3 treble step only fixed by dulling it): per 100 ms block, band energy
+// through 2x (HP 10.5 kHz + LP 12.5 kHz); over the loud 15% of blocks, 95th percentile over the
+// median in dB. Smooth tops stay low (NS 4.1 .. N2 4.7 on FFT frames), E1 5.9, YK 6.0.
+export function topSurge(L, R, fs) {
+  const bq = [];
+  for (let i = 0; i < 2; i++) bq.push(new Biquad(1).set('highpass', fs, 10500, 0.707), new Biquad(1).set('lowpass', fs, 12500, 0.707));
+  const G = Math.round(0.1 * fs), blocks = Math.floor(L.length / G), t = [], e = [];
+  for (let b = 0; b < blocks; b++) {
+    let tt = 0, ee = 0;
+    for (let i = b * G, z = i + G; i < z; i++) {
+      const m = 0.5 * (L[i] + R[i]);
+      let y = m;
+      for (const f of bq) y = f.tick(y, 0);
+      tt += m * m; ee += y * y;
+    }
+    t.push(tt); e.push(ee);
+  }
+  if (!blocks) return 0;
+  const thr = pct(t, 85), el = e.filter((_, i) => t[i] >= thr);
+  return db(pct(el, 95) / (median(el) + 1e-30));
+}
+
 // ---------------------------------------------------------------- calibration
 // Envelope (dB, every 8 samples) of a dynamic bell's detector on the mono mid,
 // exactly as DynBand computes it, plus the 100 ms band loudness for "loud" frames.

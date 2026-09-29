@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Sonografica. All rights reserved.
 // The mastering chain (2-mix port of the AIDAW "J" chain):
-// input trim -> HPF -> tone EQ -> dynamic bells -> low punch -> M/S presence
-// -> glue comp -> colour -> space -> stereo -> true-peak limiter.
+// input trim -> HPF -> tone EQ -> dynamic bells -> hat tamer -> low punch
+// -> M/S presence -> glue comp -> colour -> space -> stereo -> true-peak limiter.
 import { Biquad, design, dbToLin } from './filters.js';
-import { DynBand, Punch, Glue } from './dynamics.js';
+import { DynBand, HatTamer, Punch, Glue } from './dynamics.js';
 import { Color, Space, Stereo } from './color.js';
 import { Limiter } from './limiter.js';
 
@@ -24,6 +24,8 @@ export const DEFAULTS = {
   eq4Hz: 8000, eq4Db: 0, eq4Q: 1.4,
   // dynamic bells: {id, label, hz, q, depth (dB on loud 15%), ratio, att, rel, thr (calibrated), on}
   dyn: [],
+  // hi-hat stab tamer: max cut (dB, 0 = off) on hits that jump hatSens dB over the 7-14 kHz average
+  hatDb: 0, hatSens: 6,
   punchDb: 0, tightDb: 0, lowGainDb: 0, punchMakeupDb: 0,
   presenceDb: 0,
   // glueDepth (dB on the loud 15%): when set, Session.calibrate solves glueThr for it; null = manual glueThr
@@ -43,7 +45,7 @@ function effective(p) {
   const e = { ...p };
   if (o.tone) Object.assign(e, { hpfHz: 10, bassDb: 0, lowDb: 0, mudDb: 0, highShelfDb: 0, airDb: 0 });
   if (o.eq) Object.assign(e, { eq1Db: 0, eq2Db: 0, eq3Db: 0, eq4Db: 0 });
-  if (o.dyn) e.dyn = [];
+  if (o.dyn) Object.assign(e, { dyn: [], hatDb: 0 });
   if (o.punch) Object.assign(e, { punchDb: 0, tightDb: 0, lowGainDb: 0, punchMakeupDb: 0 });
   if (o.glue) e.glueRatio = 1;
   if (o.color) Object.assign(e, { colorDrive: 0, spaceMix: 0 });
@@ -83,6 +85,7 @@ export class MasterChain {
     this.eq = { bass: new Biquad(2), low: new Biquad(2), mud: new Biquad(2), high: new Biquad(2), air: new Biquad(2),
       u1: new Biquad(2), u2: new Biquad(2), u3: new Biquad(2), u4: new Biquad(2) };
     this.dyn = Array.from({ length: MAX_DYN }, () => new DynBand(fs));
+    this.hat = new HatTamer(fs);
     this.punch = new Punch(fs);
     this.stereo = new Stereo(fs);
     this.glue = new Glue(fs);
@@ -120,6 +123,7 @@ export class MasterChain {
         // thr is calibrated on the raw source; follow the input trim and static EQ
         thr: d.thr + p.inputDb + this.staticGainAt(d.hz), on: true });
     }
+    this.hat.set({ depth: p.hatDb, sens: p.hatSens });
     this.punch.set({ attackDb: p.punchDb, sustainDb: p.tightDb, lowGainDb: p.lowGainDb, makeupDb: p.punchMakeupDb });
     this.stereo.set({ monoHz: p.monoHz, width: p.width, presenceDb: p.presenceDb });
     this.glue.set({ thr: p.glueThr, ratio: p.glueRatio, attack: p.glueAttack, releasePeak: p.glueRelPeak, releaseRms: p.glueRelRms });
@@ -138,6 +142,7 @@ export class MasterChain {
       for (let i = 0; i < n; i++) { L[i] = b.tick(L[i], 0); R[i] = b.tick(R[i], 1); }
     }
     for (const d of this.dyn) d.process(L, R, n);
+    this.hat.process(L, R, n);
     this.punch.process(L, R, n);
     this.glue.process(L, R, n);
     this.color.process(L, R, n);
@@ -151,6 +156,7 @@ export class MasterChain {
   meters() {
     return {
       dyn: this.dyn.map((d) => d.gr),
+      hat: this.hat.gr,
       glue: this.glue.gr,
       limiter: this.limiter.gr,
     };
@@ -158,6 +164,7 @@ export class MasterChain {
   reset() {
     [...this.hpf, ...Object.values(this.eq)].forEach((b) => b.reset());
     this.dyn.forEach((d) => d.reset());
+    this.hat.reset();
     [this.punch, this.stereo, this.glue, this.color, this.space, this.limiter].forEach((m) => m.reset());
   }
 }
