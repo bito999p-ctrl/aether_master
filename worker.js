@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Sonografica. All rights reserved.
 // Offline side: analysis, auto prescription, calibration, loudness lock, export render.
 import { Session } from './engine/session.js';
-import { applyPrefs, tameAir } from './engine/prescribe.js';
+import { applyPrefs, tameAir, liftHigh } from './engine/prescribe.js';
 import { tr } from './engine/i18n.js';
 
 let s = null;
@@ -23,6 +23,13 @@ self.onmessage = (e) => {
         p = s.calibrate(applyPrefs(auto.params, m.prefs));
         p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
       }
+      // highs the loud-only bells took too far: raise the broad shelf to the target, re-solve once
+      const lifted = liftHigh(auto, s.masterHf(p), diag.loudSpec);
+      if (lifted.params !== auto.params) {
+        auto = lifted;
+        p = s.calibrate(applyPrefs(auto.params, m.prefs));
+        p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
+      } else auto = lifted;
       post('analyzed', { diag: { ...diag, sectionLufs: undefined }, auto, params: p,
         ltas: { src: s.sourceLtas(p.targetLufs), master: s.masterLtas(p) } });
     } else if (m.type === 'solve') {

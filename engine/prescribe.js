@@ -220,6 +220,26 @@ export function tameAir(auto, x) {
   return { ...out, params: p, reasons };
 }
 
+// Over-cut highs (2026-09-29, user: raising the broad shelf after the resonance cuts brings the outline back
+// without harshness): the shelf is solved on the source, but the resonance / fizz / crash / hat / 11k bells
+// then take 0-2.3 dB more off the loud parts (E1 -19.2, YK -19.1 vs -16.9). Measured on the finished master
+// and the shelf raised by what is missing, at most HF_LIFT_MAX. Only raises; ballads and dark songs keep theirs.
+export const HF_LIFT_MAX = 2.5;
+export function liftHigh(auto, masterDb, spec) {
+  const dec = auto.decisions || {}, miss = HF_TARGET - masterDb;
+  const out = { ...auto, decisions: { ...dec, masterHfDb: +masterDb.toFixed(1) } };
+  if (miss < 0.3 || dec.ballad || dec.veryDark || !spec) return out;
+  const p = structuredClone(auto.params), g0 = p.highShelfDb;
+  const d0 = hfShift(spec, p.highHz, g0, p.airDb);
+  let lo = g0, hi = Math.min(4, g0 + HF_LIFT_MAX);
+  for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (hfShift(spec, p.highHz, m, p.airDb) - d0 > miss) hi = m; else lo = m; }
+  p.highShelfDb = +((lo + hi) / 2).toFixed(1);
+  if (p.highShelfDb - g0 < 0.2) return out;
+  const reasons = [...auto.reasons, { key: 'hfLift', text: tr(`共振・シンバル抑えのあと大きい場面の 5 kHz 以上が ${masterDb.toFixed(1)} dB（目標 ${HF_TARGET} dB）→ 削りすぎた分を戻して 4.3 kHz 以上を ${g0} → ${p.highShelfDb} dB（音の輪郭）`,
+    `After the resonance / cymbal control the loud parts' >5 kHz share is ${masterDb.toFixed(1)} dB (target ${HF_TARGET} dB) → shelf above 4.3 kHz ${g0} → ${p.highShelfDb} dB to restore the outline`) }];
+  return { ...out, params: p, reasons };
+}
+
 const HF_TARGET = -16.9;
 const AIR_LIFT = 0.75, CRASH_DB = 3;
 const HF_OFFSET = -1.25; // renders land ~1.25 dB darker than the static prediction (fit on 5 v2 renders)

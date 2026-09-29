@@ -262,7 +262,7 @@ function fixedPeaks(spec, tot, loud, freqs, maxBin) {
 // High-frequency level in the loud 30% of 400 ms blocks, dB re the block's full-band energy:
 // band9kDb = 8.5-10.5 kHz (4th-order band), above5kDb = > 5 kHz (RBJ HPF). Suno 2-mixes sit
 // 3-8 dB above finished masters here, and their 9-10 kHz is a steady wash rather than spikes.
-function hfLoud(M, fs) {
+export function hfLoud(M, fs) {
   const bp = [new Biquad(1).set('highpass', fs, 8500, 0.707), new Biquad(1).set('lowpass', fs, 10500, 0.707),
     new Biquad(1).set('highpass', fs, 8500, 0.707), new Biquad(1).set('lowpass', fs, 10500, 0.707)];
   const hp = new Biquad(1).set('highpass', fs, 5000, 0.707);

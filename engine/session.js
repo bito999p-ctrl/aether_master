@@ -2,7 +2,7 @@
 // High-level engine API shared by the browser worker and the Node harness.
 import { resample } from './resample.js';
 import { renderOffline, renderLimiter, boostAt } from './chain.js';
-import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup, airShare, topSurge, glueLevels, calibrateGlue } from './analyze.js';
+import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup, airShare, topSurge, glueLevels, calibrateGlue, hfLoud } from './analyze.js';
 import { prescribe, AIR_CAP, SPIKE_CAP, TOP_CAP } from './prescribe.js';
 import { kPower100ms, integratedFromPowers, integrated, truePeakDb } from './loudness.js';
 
@@ -28,8 +28,10 @@ export class Session {
     for (const d of p.dyn) {
       const key = `${d.hz}|${d.q}|${d.att}|${d.rel}`;
       if (!this.envCache.has(key)) this.envCache.set(key, bandEnvelope(this.M, this.fs, d));
-      // cut back what the EQ stages add at this frequency, so the loud-moment net is -depth
-      const depth = d.depth > 0 ? d.depth + Math.max(0, boostAt(p, d.hz, this.fs)) : 0;
+      // narrow resonance bells cut back what the EQ stages add at their frequency, so the loud-moment
+      // net is -depth. Broad bands (crash / fizz / de-ess / 11k / harsh) don't: there it would cancel the
+      // high shelf on every loud moment (E1: +2.1 dB shelf, loud >5 kHz still 2.3 dB under target).
+      const depth = d.depth > 0 ? d.depth + (d.q >= 4 ? Math.max(0, boostAt(p, d.hz, this.fs)) : 0) : 0;
       d.cut = depth;
       d.thr = depth > 0 ? calibrateThreshold(this.envCache.get(key), depth, d.ratio, Math.max(6, depth * 3)) : 0;
     }
@@ -67,6 +69,14 @@ export class Session {
     const s = airShare(o.L, o.R, this.fs);
     const topDb = +(topSurge(o.L, o.R, this.fs) - TOP_CAP).toFixed(2);
     return s == null ? { shareDb: 0, spikeDb: 0, topDb } : { shareDb: +(s.share - AIR_CAP).toFixed(2), spikeDb: +(s.crest - SPIKE_CAP).toFixed(2), topDb };
+  }
+
+  // Loud-part >5 kHz share (dB) of the loudness-locked master, with every loud-only bell in place.
+  masterHf(params) {
+    if (preKey(params) !== this.preKey) throw new Error('masterHf: run solveLoudness first');
+    const o = renderLimiter(this.pre.L, this.pre.R, this.fs, params), M = new Float32Array(o.L.length);
+    for (let i = 0; i < M.length; i++) M[i] = 0.5 * (o.L[i] + o.R[i]);
+    return hfLoud(M, this.fs).above5kDb;
   }
 
   // Loudness lock: find the limiter drive that hits targetLufs (pre-limiter render cached).
