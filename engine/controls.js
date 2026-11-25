@@ -9,6 +9,9 @@ export const GROUPS = [
     ['lowDb', tr('低域ベル', 'Low bell'), -4, 4, 0.1, 'dB'],
     ['mudHz', tr('こもり 周波数', 'Mud freq'), 150, 500, 5, 'Hz'],
     ['mudDb', tr('こもり', 'Mud'), -4, 2, 0.1, 'dB'],
+    ['lowMidDb', tr('低中域のもたつき (160)', 'Low-mid build-up (160)'), -4, 2, 0.1, 'dB'],
+    ['outlineDb', tr('丸い輪郭 (1.3k)', 'Round outline (1.3k)'), -3, 3, 0.1, 'dB'],
+    ['pointDb', tr('とがり (3.8k)', 'Pointiness (3.8k)'), -4, 3, 0.1, 'dB'],
     ['highHz', tr('高域シェルフ 周波数', 'High shelf freq'), 2000, 10000, 100, 'Hz'],
     ['highShelfDb', tr('高域シェルフ', 'High shelf'), -8, 3, 0.1, 'dB'],
     ['airDb', tr('エア (16k)', 'Air (16k)'), -4, 5, 0.1, 'dB'],
@@ -35,6 +38,7 @@ export const GROUPS = [
     ['spaceMix', tr('空間 量', 'Space amount'), 0, 15, 0.1, '%'],
     ['spaceDecay', tr('空間 長さ', 'Space length'), 0.3, 3, 0.05, 's'],
     ['spacePredelay', tr('プリディレイ', 'Pre-delay'), 0, 250, 1, 'ms'],
+    ['endTail', tr('終わりの余韻（書き出し時、急に切れる曲）', 'End tail (export, abrupt endings)'), 0, 3, 0.1, 's'],
   ]],
   [tr('ステレオ', 'Stereo'), [
     ['presenceDb', tr('センター前に', 'Centre forward'), -3, 4, 0.1, 'dB'],

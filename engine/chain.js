@@ -14,6 +14,9 @@ export const DEFAULTS = {
   hpfHz: 30,
   lowHz: 60, lowDb: 0,
   mudHz: 280, mudDb: -1,
+  lowMidDb: 0,         // 160 Hz bell (Q1.2): low-mid build-up below the mud band
+  outlineDb: 0,        // 1.3 kHz bell (Q0.9): round outline (organic preset / round spice)
+  pointDb: 0,          // 3.8 kHz bell (Q0.8): Suno's pointy upper presence
   bassDb: 0,           // low shelf 90 Hz
   highHz: 7000, highShelfDb: 0, // broad high shelf (Q 0.45)
   airDb: 0,
@@ -32,6 +35,7 @@ export const DEFAULTS = {
   glueDepth: null, glueThr: -22, glueRatio: 1.25, glueAttack: 30, glueRelPeak: 125, glueRelRms: 250,
   colorDrive: 0,
   spaceMix: 0, spaceDecay: 1.2, spacePredelay: 30,
+  endTail: 0,          // export only: seconds of room tail added after an abrupt (cut-off) ending; 0 = off
   monoHz: 100, width: 0,
   targetLufs: -10.8, ceilingDb: -1.0, limRelease: 60,
   driveDb: 0, // solved by the loudness lock
@@ -43,7 +47,7 @@ function effective(p) {
   const o = p.off;
   if (!o) return p;
   const e = { ...p };
-  if (o.tone) Object.assign(e, { hpfHz: 10, bassDb: 0, lowDb: 0, mudDb: 0, highShelfDb: 0, airDb: 0, top12Db: 0 });
+  if (o.tone) Object.assign(e, { hpfHz: 10, bassDb: 0, lowDb: 0, mudDb: 0, lowMidDb: 0, outlineDb: 0, pointDb: 0, highShelfDb: 0, airDb: 0, top12Db: 0 });
   if (o.eq) Object.assign(e, { eq1Db: 0, eq2Db: 0, eq3Db: 0, eq4Db: 0 });
   if (o.dyn) e.dyn = [];
   if (o.punch) Object.assign(e, { punchDb: 0, tightDb: 0, lowGainDb: 0, punchMakeupDb: 0 });
@@ -71,6 +75,9 @@ export function boostAt(params, f, fs) {
   add('lowshelf', 90, 0.7071, p.bassDb);
   add('peaking', p.lowHz, 1.2, p.lowDb);
   add('peaking', p.mudHz, 1.0, p.mudDb);
+  add('peaking', 160, 1.2, p.lowMidDb || 0);
+  add('peaking', 1300, 0.9, p.outlineDb || 0);
+  add('peaking', 3800, 0.8, p.pointDb || 0);
   add('highshelf', p.highHz, 0.45, p.highShelfDb);
   add('highshelf', 16000, 0.7071, p.airDb);
   add('highshelf', 12000, 0.7071, p.top12Db || 0);
@@ -83,7 +90,7 @@ export class MasterChain {
   constructor(fs) {
     this.fs = fs;
     this.hpf = [new Biquad(2), new Biquad(2)];
-    this.eq = { bass: new Biquad(2), low: new Biquad(2), mud: new Biquad(2), high: new Biquad(2), air: new Biquad(2), top: new Biquad(2),
+    this.eq = { bass: new Biquad(2), low: new Biquad(2), mud: new Biquad(2), lowMid: new Biquad(2), outline: new Biquad(2), point: new Biquad(2), high: new Biquad(2), air: new Biquad(2), top: new Biquad(2),
       u1: new Biquad(2), u2: new Biquad(2), u3: new Biquad(2), u4: new Biquad(2) };
     this.dyn = Array.from({ length: MAX_DYN }, () => new DynBand(fs));
     this.punch = new Punch(fs);
@@ -113,6 +120,9 @@ export class MasterChain {
     this.eq.bass.set('lowshelf', fs, 90, 0.7071, p.bassDb);
     this.eq.low.set('peaking', fs, p.lowHz, 1.2, p.lowDb);
     this.eq.mud.set('peaking', fs, p.mudHz, 1.0, p.mudDb);
+    this.eq.lowMid.set('peaking', fs, 160, 1.2, p.lowMidDb || 0);
+    this.eq.outline.set('peaking', fs, 1300, 0.9, p.outlineDb || 0);
+    this.eq.point.set('peaking', fs, 3800, 0.8, p.pointDb || 0);
     this.eq.high.set('highshelf', fs, p.highHz, 0.45, p.highShelfDb);
     this.eq.air.set('highshelf', fs, 16000, 0.7071, p.airDb);
     this.eq.top.set('highshelf', fs, 12000, 0.7071, p.top12Db || 0);

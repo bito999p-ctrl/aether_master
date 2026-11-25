@@ -477,3 +477,34 @@ export function punchMakeup(M, fs, attackDb, sustainDb, splitHz = 150) {
   }
   return +(-10 * Math.log10(num / (den + 1e-20))).toFixed(2);
 }
+
+// Kick-band punch: median peak/RMS (dB) of the <150 Hz band over the louder half of 0.4 s blocks.
+// Level-independent, so source and master compare directly (鳴動 E 「キックが痛い」, クリームソーダ E
+// 「パンチ強い」: approved masters sit at or under the source, 7.1 -> 6.7 linear).
+export function kickCrest(M, fs) {
+  const lp = [new Biquad(1).set('lowpass', fs, 150, 0.5412), new Biquad(1).set('lowpass', fs, 150, 1.3066)];
+  const B = Math.round(fs * 0.4), nb = Math.floor(M.length / B);
+  if (nb < 4) return null;
+  const pk = new Float64Array(nb), e = new Float64Array(nb);
+  for (let i = 0; i < nb * B; i++) {
+    let y = M[i]; for (const f of lp) y = f.tick(y, 0);
+    const b = (i / B) | 0, a = Math.abs(y);
+    if (a > pk[b]) pk[b] = a;
+    e[b] += y * y;
+  }
+  const thr = pct(e, 50), c = [];
+  for (let b = 0; b < nb; b++) if (e[b] >= thr && e[b] > 0) c.push(20 * Math.log10(pk[b] / Math.sqrt(e[b] / B)));
+  return c.length ? +pct(c, 50).toFixed(2) : null;
+}
+
+// Abrupt ending (Suno cut-offs): the last 0.1 s is still within 12 dB of the song's average level
+// and not digital silence. A faded or naturally decayed ending reads far lower.
+export function abruptEnd(M, fs) {
+  const n = M.length, w = Math.round(0.1 * fs);
+  if (n < 10 * fs) return false;
+  let all = 0, end = 0;
+  for (let i = 0; i < n; i++) all += M[i] * M[i];
+  for (let i = n - w; i < n; i++) end += M[i] * M[i];
+  const db = (x, k) => 10 * Math.log10(x / k + 1e-20);
+  return db(end, w) > -70 && db(end, w) >= db(all, n) - 12;
+}

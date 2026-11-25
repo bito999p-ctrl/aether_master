@@ -13,7 +13,13 @@ export const GENRES = [
   { id: 'pop', label: tr('J-POP / ポップ', 'J-Pop / Pop'), hint: tr('歌を前に、明るく聴きやすく', 'Vocals forward, bright and easy to listen to'), use: tr('歌が埋もれて聴こえる時', 'When the vocals sound buried'), lufs: -10.5, lh: 12.5,
     d: { presenceDb: 1.5, airDb: 1, highShelfDb: 0.8, mudDb: -0.5, glueRatio: 0.15, width: 5 } },
   { id: 'rock', label: tr('ロック', 'Rock'), hint: tr('倍音で太く熱く、中域に厚み', 'Thick, hot harmonics and a full midrange'), use: tr('音が薄い・軽く感じる時', 'When it sounds thin or light'), lufs: -10, lh: 12,
-    d: { colorDrive: 3, mudDb: 0.8, presenceDb: 0.5, airDb: -0.5, glueRatio: 0.4, glueAttack: 15, punchDb: 1.5, width: 8 } },
+    // cymbal bite kept (lighter crash control), 9-10 kHz fizz caught deeper instead (あー！ / vow 2026-11: a narrow
+    // 9 kHz cut made the band easier to listen to than a broad treble cut)
+    d: { colorDrive: 3, mudDb: 0.8, presenceDb: 0.5, airDb: -0.5, glueRatio: 0.4, glueAttack: 15, punchDb: 1.5, width: 8, 'dyn:high': -1, 'dyn:fizz': 1.5 } },
+  // 『閉店まぎわのクリームソーダ』 G (2026-11-25, 「ヨルシカは音が丸い、Sunoはとんがってる」): outline at 1.3 kHz instead of
+  // 3 kHz, 3.8 kHz down, 160/280 Hz box cut, kick transient near 0, light crash control, light tape, a little room.
+  { id: 'organic', label: tr('生音・バンド（丸い音）', 'Live band (round)'), hint: tr('とがりを取って丸く、部屋で鳴るバンドの音に', 'Takes the point off: a round band playing in a room'), use: tr('Suno のバンド曲がとんがって・作り物っぽく聞こえる時', 'When a Suno band song sounds pointy or artificial'), lufs: -11.5, lh: 12.5,
+    d: { outlineDb: 0.7, pointDb: -1, lowMidDb: -1, mudDb: -1, punchDb: -3.5, tightDb: 1, 'dyn:high': -2, highShelfDb: -0.5, colorDrive: -0.5, spaceMix: 1.5, glueRatio: -0.5 } },
   { id: 'edm', label: tr('EDM / ダンス', 'EDM / Dance'), hint: tr('キックと低音を強く、左右に広く', 'Strong kick and bass, wide stereo'), use: tr('ノリや迫力が足りない時', 'When it lacks groove or impact'), lufs: -9, lh: 16,
     d: { punchDb: 3, lowGainDb: 1, width: 20, monoHz: 30, airDb: 1.5, glueRatio: 0.4, spaceMix: -1, limRelease: -20 } },
   { id: 'hiphop', label: tr('ヒップホップ / トラップ', 'Hip-hop / Trap'), hint: tr('低音を太く、声を近く', 'Fat low end, close vocals'), use: tr('低音が物足りない時', 'When the bass feels weak'), lufs: -9.5, lh: 17,

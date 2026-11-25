@@ -63,7 +63,7 @@ export class Space {
     this.fb = new Float64Array(8);
     this.v = new Float64Array(8);
     this.inHp = new Biquad(2); this.inLp = new Biquad(2);
-    this.set({ mix: 0, decay: 1.2, predelay: 30, size: 1.0, damp: 6000, lowCut: 250 });
+    this.set({ mix: 0, decay: 1.2, predelay: 30, size: 1.0, damp: 6000, lowCut: 500 }); // HP 500: no low-mid smear (big mix reverbs on this user's songs: HP >= 500 Hz)
   }
   set(p) {
     this.p = { ...this.p, ...p };

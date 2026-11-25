@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Sonografica. All rights reserved.
 // Offline side: analysis, auto prescription, calibration, loudness lock, export render.
 import { Session } from './engine/session.js';
-import { applyPrefs, tameAir, liftHigh } from './engine/prescribe.js';
 import { tr } from './engine/i18n.js';
 
 let s = null;
@@ -14,22 +13,8 @@ self.onmessage = (e) => {
     if (m.type === 'load') {
       s = new Session(m.L, m.R, m.fs);
       const diag = s.analyze(progress(tr('解析', 'Analysing')));
-      let auto = s.auto();
-      let p = s.calibrate(applyPrefs(auto.params, m.prefs));
-      p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
-      const tamed = tameAir(auto, s.airExcess(p)); // master-measured high-end fixes (9-10k fizz, 11k grit): re-solve once
-      if (tamed !== auto) {
-        auto = tamed;
-        p = s.calibrate(applyPrefs(auto.params, m.prefs));
-        p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
-      }
-      // highs the loud-only bells took too far: raise the broad shelf to the target, re-solve once
-      const lifted = liftHigh(auto, s.masterHf(p), diag.loudSpec, diag.hfLoud && diag.hfLoud.above12kDb);
-      if (lifted.params !== auto.params) {
-        auto = lifted;
-        p = s.calibrate(applyPrefs(auto.params, m.prefs));
-        p.driveDb = s.solveLoudness(p, progress(tr('ラウドネス', 'Loudness')));
-      } else auto = lifted;
+      // auto prescription + master-measured fixes (fizz / grit, over-cut or too-dark highs, kick guard)
+      const { auto, params: p } = s.autoMaster(m.prefs, progress(tr('ラウドネス', 'Loudness')));
       post('analyzed', { diag: { ...diag, sectionLufs: undefined }, auto, params: p,
         ltas: { src: s.sourceLtas(p.targetLufs), master: s.masterLtas(p) } });
     } else if (m.type === 'solve') {

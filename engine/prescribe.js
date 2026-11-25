@@ -164,8 +164,14 @@ export function prescribe(d) {
   p.spaceMix = dense ? 1.0 : 3.5; p.spacePredelay = +(beat / 4).toFixed(1); p.spaceDecay = ballad ? 1.8 : 1.2;
   why('spaceMix', tr(`ごく薄い空間 ${p.spaceMix}%（プリディレイ 16 分音符 = ${p.spacePredelay} ms）`, `Very light space ${p.spaceMix}% (pre-delay one 16th = ${p.spacePredelay} ms)`));
 
+  // abrupt (cut-off) ending: a short room tail after the cut on export only; the song body is untouched
+  p.endTail = d.endAbrupt ? 1.5 : 0;
+  if (d.endAbrupt) why('endTail', tr('曲の最後がブツッと切れている → 書き出し時に最後の 0.45 秒だけから作った短い残響（500 Hz 以上、1.5 秒）を切れ目のあとに足す（曲本体は変えない）',
+    'The song ends with a hard cut → on export, a short room tail (above 500 Hz, 1.5 s) made from the last 0.45 s only is added after the cut (the song itself is unchanged)'));
+
   const decisions = { bpm: +bpm.toFixed(1), is808, dense, movingBass, subBass, brightSource, veryDark, ballad, sparseDrums,
-    highGrowthDb: +growthHigh.toFixed(1), sectionSpreadDb: +spread.toFixed(1) };
+    highGrowthDb: +growthHigh.toFixed(1), sectionSpreadDb: +spread.toFixed(1), endAbrupt: !!d.endAbrupt, srcKickCrestDb: d.kickCrestDb ?? null,
+    srcHfDb: d.hfLoud ? +d.hfLoud.above5kDb.toFixed(1) : null };
   return { params: p, reasons, decisions };
 }
 
@@ -230,9 +236,15 @@ export function tameAir(auto, x) {
 // shelf alone only fixed 16-20 kHz (12-16 kHz stayed +1.8 dB).
 export const HF_LIFT_MAX = 2.5;
 export function liftHigh(auto, m, spec, srcTopDb) {
-  const dec = auto.decisions || {}, miss = HF_TARGET - m.above5kDb;
+  const dec = auto.decisions || {};
+  // ballads and dark songs keep their darker balance, but never end up DARK_MAX dB darker than the source
+  // (Dreading Haziness / 微茫 E / 閉じた栞: the user asked for the top back each time): lift to DARK_AIM under the source
+  const keepDark = dec.ballad || dec.veryDark, src = dec.srcHfDb;
+  const darkGap = src != null ? src - m.above5kDb : 0;
+  const dark = keepDark && darkGap >= DARK_MAX;
+  const miss = dark ? darkGap - DARK_AIM : HF_TARGET - m.above5kDb;
   const out = { ...auto, decisions: { ...dec, masterHfDb: +m.above5kDb.toFixed(1) } };
-  if (miss < 0.3 || dec.ballad || dec.veryDark || !spec) return out;
+  if (miss < 0.3 || (keepDark && !dark) || !spec) return out;
   const p = structuredClone(auto.params), g0 = p.highShelfDb, a0 = p.airDb;
   const d0 = hfShift(spec, p.highHz, g0, a0);
   let lo = g0, hi = Math.min(4, g0 + HF_LIFT_MAX);
@@ -249,11 +261,28 @@ export function liftHigh(auto, m, spec, srcTopDb) {
     p.top12Db = +lo2.toFixed(1);
   }
   const airTxt = p.top12Db < 0 ? tr(`。12 kHz 以上が元の音源を超えないよう 12 kHz 以上を ${p.top12Db} dB（音源のシュワシュワを持ち上げない）`, `; ${p.top12Db} dB above 12 kHz so the top octave stays at the source (doesn't lift the codec swirl)`) : '';
-  const reasons = [...auto.reasons, { key: 'hfLift', text: tr(`共振・シンバル抑えのあと大きい場面の 5 kHz 以上が ${m.above5kDb.toFixed(1)} dB（目標 ${HF_TARGET} dB）→ 削りすぎた分を戻して 4.3 kHz 以上を ${g0} → ${p.highShelfDb} dB（音の輪郭）`,
-    `After the resonance / cymbal control the loud parts' >5 kHz share is ${m.above5kDb.toFixed(1)} dB (target ${HF_TARGET} dB) → shelf above 4.3 kHz ${g0} → ${p.highShelfDb} dB to restore the outline`) + airTxt }];
+  const reasons = [...auto.reasons, { key: 'hfLift', text: (dark ? tr(`大きい場面の 5 kHz 以上が元の音源より ${darkGap.toFixed(1)} dB 暗い（${m.above5kDb.toFixed(1)} dB、音源 ${src} dB）→ 暗めの曲でも暗くしすぎないよう 4.3 kHz 以上を ${g0} → ${p.highShelfDb} dB`,
+    `The loud parts' >5 kHz share is ${darkGap.toFixed(1)} dB darker than the source (${m.above5kDb.toFixed(1)} vs ${src} dB) → shelf above 4.3 kHz ${g0} → ${p.highShelfDb} dB so a dark song doesn't end up duller than its source`) : tr(`共振・シンバル抑えのあと大きい場面の 5 kHz 以上が ${m.above5kDb.toFixed(1)} dB（目標 ${HF_TARGET} dB）→ 削りすぎた分を戻して 4.3 kHz 以上を ${g0} → ${p.highShelfDb} dB（音の輪郭）`,
+    `After the resonance / cymbal control the loud parts' >5 kHz share is ${m.above5kDb.toFixed(1)} dB (target ${HF_TARGET} dB) → shelf above 4.3 kHz ${g0} → ${p.highShelfDb} dB to restore the outline`)) + airTxt }];
   return { ...out, params: p, reasons };
 }
 const TOP_MIN = -4;
+const DARK_MAX = 3, DARK_AIM = 1.5;
+
+// Kick guard (鳴動 E 「キックが痛い」, クリームソーダ E 「バスドラ少しパンチ強い」): the kick band's peak/RMS on the
+// finished master must not exceed the source's (approved masters sat at or under it: 7.1 -> 6.7). x = Session.kickExcess
+// (dB over the source). The punch attack comes down by twice the excess (it adds roughly half its dB to the crest).
+export const KICK_TOL = 0.2;
+export function tameKick(auto, x) {
+  const dec = auto.decisions || {};
+  const out = { ...auto, decisions: { ...dec, kickExcessDb: x } };
+  if (!(x > KICK_TOL) || !(auto.params.punchDb > 0)) return out;
+  const p = structuredClone(auto.params), p0 = p.punchDb;
+  p.punchDb = +Math.max(0, p0 - 2 * x).toFixed(1);
+  if (x > 1 && p.tightDb < 0) p.tightDb = +Math.min(0, p.tightDb + 0.5).toFixed(1);
+  return { ...out, params: p, reasons: [...auto.reasons, { key: 'kickGuard', text: tr(`キックの「頭」が元の音源より ${x.toFixed(1)} dB 強くなった → 痛くならないようアタック強調を ${p0} → ${p.punchDb} dB`,
+    `The kick hits ${x.toFixed(1)} dB harder than in the source → attack boost ${p0} → ${p.punchDb} dB so it doesn't hurt`) }] };
+}
 
 const HF_TARGET = -16.9;
 const AIR_LIFT = 0.75, CRASH_DB = 3;
@@ -288,7 +317,7 @@ function pct(a, p) {
 
 // ---------------------------------------------------------------- preferences
 // The user's typical deviation from the auto settings, learned per slider.
-export const PREF_KEYS = ['bassDb', 'lowDb', 'mudDb', 'highShelfDb', 'airDb', 'punchDb', 'tightDb', 'lowGainDb', 'presenceDb',
+export const PREF_KEYS = ['bassDb', 'lowDb', 'mudDb', 'lowMidDb', 'outlineDb', 'pointDb', 'highShelfDb', 'airDb', 'punchDb', 'tightDb', 'lowGainDb', 'presenceDb',
   'glueDepth', 'colorDrive', 'spaceMix', 'width', 'monoHz', 'targetLufs'];
 
 export function applyPrefs(params, prefs) {

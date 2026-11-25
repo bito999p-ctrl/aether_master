@@ -82,6 +82,9 @@
   <tr><td>低域シェルフ</td><td>ローシェルフ</td><td class="m">90 Hz</td><td class="m">0.707</td><td class="m">±6 dB</td></tr>
   <tr><td>低域ベル</td><td>ピーキング</td><td class="m">40–120 Hz</td><td class="m">1.2</td><td class="m">±4 dB</td></tr>
   <tr><td>こもり</td><td>ピーキング</td><td class="m">150–500 Hz</td><td class="m">1.0</td><td class="m">-4〜+2 dB</td></tr>
+  <tr><td>低中域</td><td>ピーキング</td><td class="m">160 Hz</td><td class="m">1.2</td><td class="m">-4〜+2 dB</td></tr>
+  <tr><td>丸い輪郭</td><td>ピーキング</td><td class="m">1.3 kHz</td><td class="m">0.9</td><td class="m">±3 dB</td></tr>
+  <tr><td>とがり</td><td>ピーキング</td><td class="m">3.8 kHz</td><td class="m">0.8</td><td class="m">-4〜+3 dB</td></tr>
   <tr><td>高域シェルフ</td><td>ハイシェルフ（なだらか）</td><td class="m">2–10 kHz</td><td class="m">0.45</td><td class="m">-8〜+3 dB</td></tr>
   <tr><td>エア</td><td>ハイシェルフ</td><td class="m">16 kHz</td><td class="m">0.707</td><td class="m">-4〜+5 dB</td></tr>
   <tr><td>手動 EQ ×4</td><td>ピーキング</td><td class="m">20 Hz–20 kHz</td><td class="m">0.3–10</td><td class="m">±12 dB</td></tr>
@@ -102,7 +105,9 @@
 <h3>カラー</h3>
 <p>2 倍オーバーサンプリングの非対称 tanh サチュレーション（偶数次＋奇数次の倍音）。小信号ゲインを 1 に正規化してあるので、ドライブを上げても音量ではなく音色だけが変わります。</p>
 <h3>空間</h3>
-<p>8 ラインのフィードバックディレイネットワーク（アダマール行列、ループ内ダンピング、プリディレイ最大 250 ms）。ウェット信号を数 % だけ加えます。自動設定のプリディレイは 16 分音符の長さです。</p>
+<p>8 ラインのフィードバックディレイネットワーク（アダマール行列、ループ内ダンピング、プリディレイ最大 250 ms）。ウェット信号を数 % だけ加えます。自動設定のプリディレイは 16 分音符の長さです。リバーブへの入力は 500 Hz 以下をカットします（低域・低中域がにごらないように）。</p>
+<h3>終わりの余韻</h3>
+<p>書き出し時だけ働きます。曲の最後 0.45 秒を同じ空間（500 Hz ハイパス）に通した残響だけを、曲の最後より 10 dB 小さく始めて指定秒数（0〜3 秒）かけて消します。曲の本体は 1 サンプルも変えません。最後の 0.1 秒が曲全体より 12 dB 以内の大きさで切れている曲（Suno の急な終わり）には、自動で 1.5 秒を設定します。</p>
 <h3>ステレオ</h3>
 <p>M/S 処理。サイドを 4 次でハイパスして指定周波数以下をモノラル化します。サイドゲインでステレオ幅を調整します。プレゼンスはミッドの 3 kHz ベルを上げ、同じ帯域のサイドを半分だけ下げて、ボーカルを前に出します。</p>
 <h3>True Peak リミッター</h3>
@@ -146,6 +151,8 @@
     バラードととても暗い音源は対象外です。</li>
   <li><b>10.5〜12.5 kHz</b>：同じマスターの大きい場面（100 ms ブロックの上位 15 %）で、この帯域の p95 と中央値の差を測ります。一般的な楽曲の目安 <span class="m">4.3 dB</span> を超えたら、11.3 kHz（Q 1.5）を大きい瞬間だけ超過分の 6 倍（1.5〜4 dB）抑えます。バラードは対象外です。</li>
   <li><b>ハイハット抑え</b>：バラード以外は常にオン（最大 6 dB）。上の 2 つの測定はハイハット抑えなしのマスターで行い、そのあとで、11 kHz のバンドより後ろに加えます。最後にもう一度ラウドネスを解きます。</li>
+  <li><b>暗めの曲を暗くしすぎない</b>：バラードと とても暗い曲は高域を持ち上げませんが、大きい場面の 5 kHz 以上が元の音源より 3 dB 以上暗くなったときだけ、音源の 1.5 dB 下まで高域シェルフを戻します。</li>
+  <li><b>キックの出すぎ防止</b>：マスターの低域（150 Hz 以下）のピーク／RMS（0.4 秒ブロックの大きい半分の中央値）が元の音源を 0.2 dB 超えたら、パンチを超過分の 2 倍だけ下げ、1 dB 超えたらタイトさも 0.5 戻します。そのあとラウドネスを解き直します。</li>
   <li>共振：周囲より +4 dB 以上突き出て鳴り続けるピークを狭く（Q 8）、大きい瞬間だけ、はみ出し分（突出量 − 2.5 dB、1〜4 dB）カットします。1/12 オクターブ以内のピークは 1 つのカットにまとめます。深く削ると声の艶が消えるので、はみ出し分だけにしています。バラードは浅め（最大 1.5 dB）。</li>
 </ol>
 
@@ -159,7 +166,7 @@
 <h2 id="t8"><span class="n">08</span>ジャンルと好み</h2>
 <ul>
   <li><b>ジャンル</b>：自動設定の上に重ねる層です。各ジャンルは目標（LUFS、低域／高域比、幅）と固定の性格付けを持ちます。音色と幅の動かし方は曲の診断値から決めます（例：低域／高域比の差 × 0.45 を低域シェルフに、× −0.35 を高域シェルフに、それぞれ ±3 / ±2.5 dB まで）。</li>
-  <li><b>好み（スパイス）</b>：8 つの方向軸（±3 段）と 3 つの補正（0〜3 段）。1 段ごとに複数のスライダーを診断に応じた量だけ動かします。適用量は記録されるので、正確に元に戻せます。</li>
+  <li><b>好み（スパイス）</b>：9 つの方向軸（±3 段）と 3 つの補正（0〜3 段）。1 段ごとに複数のスライダーを診断に応じた量だけ動かします。適用量は記録されるので、正確に元に戻せます。</li>
   <li><b>好みの学習</b>：書き出しのたびに、自動設定と最終設定の差を学習率 0.35 の移動平均で覚え、次の曲の自動設定に加えます。</li>
 </ul>
 
@@ -229,6 +236,7 @@
       <li>90 Hz low shelf, ±6 dB;</li>
       <li>low bell, 40–120 Hz, Q 1.2;</li>
       <li>mud bell, 150–500 Hz, Q 1.0;</li>
+      <li>low-mid 160 Hz (Q 1.2), round outline 1.3 kHz (Q 0.9) and point 3.8 kHz (Q 0.8) bells;</li>
       <li>broad high shelf, 2–10 kHz, Q 0.45, -8 to +3 dB;</li>
       <li>16 kHz air shelf;</li>
       <li>4 manual peaking bands (±12 dB, Q 0.3–10).</li>
@@ -252,7 +260,8 @@
     </ul>
   </li>
   <li><b>Colour</b>: asymmetric tanh at 2× oversampling, normalised to unity small-signal gain.</li>
-  <li><b>Space</b>: an 8-line FDN (Hadamard mixing, damped loop, pre-delay up to 250 ms), used at a few percent wet.</li>
+  <li><b>Space</b>: an 8-line FDN (Hadamard mixing, damped loop, pre-delay up to 250 ms), used at a few percent wet. Its input is high-passed at 500 Hz.</li>
+  <li><b>End tail</b> (export only): the last 0.45 s goes through the same space; its wet tail starts 10 dB under the song's end and fades over 0–3 s. The song itself is untouched. Set to 1.5 s automatically when the last 0.1 s is within 12 dB of the song's RMS.</li>
   <li><b>Stereo</b>:
     <ul>
       <li>The side is high-passed (4th order) to make the lows mono.</li>
@@ -301,6 +310,8 @@
     </ul>
   </li>
   <li><b>10.5–12.5 kHz</b>: on the same master's loud parts (top 15 % of 100 ms blocks), the band's p95 over its median is measured. Above the typical 4.3 dB, 11.3 kHz (Q 1.5) is cut on loud moments by 6× the excess (1.5–4 dB). Not for ballads.</li>
+  <li><b>Dark songs</b>: ballads and very dark songs get no high lift, unless the loud parts' >5 kHz share ends up 3 dB or more under the source; then the shelf comes back to 1.5 dB under the source.</li>
+  <li><b>Kick guard</b>: if the master's low band (below 150 Hz) peak/RMS (median of the louder half of 0.4 s blocks) is over the source's by more than 0.2 dB, the punch comes down by twice the excess (and the tightness by 0.5 above 1 dB). Then the loudness is solved again.</li>
   <li><b>Hi-hat tamer</b>: on for every song except ballads (up to 6 dB). The two measurements above are made without it; it is added afterwards, after the 11 kHz bell, and the loudness is solved again.</li>
   <li><b>8 kHz bell</b>: 3 dB (1.5 dB for bright sources), 200 ms release. The band's loudest 15 % is mostly crash cymbal ring, so it holds while the crash rings.</li>
   <li><b>Resonances</b>: persistent peaks ≥ +4 dB over their neighbourhood are cut narrowly (Q 8) on loud moments only, by the excess (prominence − 2.5 dB, 1–4 dB); peaks within 1/12 octave of each other share one cut. Deeper cuts took the gloss off the vocal, so only the excess is cut. Shallower for ballads (max 1.5 dB).</li>
@@ -316,7 +327,7 @@
 <h2><span class="n">08</span>Genres, taste and learning</h2>
 <ul>
   <li><b>Genres</b> are a layer on top of the auto settings. Their tone and width moves are sized from the diagnosis.</li>
-  <li><b>Taste</b>: 8 axes (±3 steps) and 3 fixes (0–3). The applied deltas are recorded, so undo is exact.</li>
+  <li><b>Taste</b>: 9 axes (±3 steps) and 3 fixes (0–3). The applied deltas are recorded, so undo is exact.</li>
   <li><b>Learning</b>: an exponential average (rate 0.35) of your final-minus-auto offsets, applied to the next song.</li>
 </ul>
 

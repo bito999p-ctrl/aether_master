@@ -2,11 +2,13 @@
 // High-level engine API shared by the browser worker and the Node harness.
 import { resample } from './resample.js';
 import { renderOffline, renderLimiter, boostAt } from './chain.js';
-import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup, airShare, topSurge, glueLevels, calibrateGlue, hfLoud } from './analyze.js';
-import { prescribe, AIR_CAP, SPIKE_CAP, TOP_CAP } from './prescribe.js';
+import { diagnose, ltas, bandEnvelope, calibrateThreshold, punchMakeup, airShare, topSurge, glueLevels, calibrateGlue, hfLoud, kickCrest, abruptEnd } from './analyze.js';
+import { Space } from './color.js';
+import { Biquad } from './filters.js';
+import { prescribe, applyPrefs, tameAir, liftHigh, tameKick, AIR_CAP, SPIKE_CAP, TOP_CAP } from './prescribe.js';
 import { kPower100ms, integratedFromPowers, integrated, truePeakDb } from './loudness.js';
 
-const preKey = (params) => JSON.stringify({ ...params, driveDb: 0, targetLufs: 0, ceilingDb: 0, limRelease: 0 });
+const preKey = (params) => JSON.stringify({ ...params, driveDb: 0, targetLufs: 0, ceilingDb: 0, limRelease: 0, endTail: 0 });
 
 export class Session {
   constructor(L, R, fs) {
@@ -18,9 +20,25 @@ export class Session {
   }
   analyze(onProgress) {
     this.diag = diagnose(this.L, this.R, this.fs, onProgress);
+    this.diag.kickCrestDb = kickCrest(this.M, this.fs);
+    this.diag.endAbrupt = abruptEnd(this.M, this.fs);
     return this.diag;
   }
   auto() { return prescribe(this.diag); }
+
+  // The whole auto pass (browser worker and Node harness): prescribe, lock loudness, then the master-measured
+  // fixes, each followed by one re-solve: 9-10k fizz / 11k grit (tameAir), over-cut or too-dark highs
+  // (liftHigh), kick harder than the source (tameKick). Returns { auto, params }.
+  autoMaster(prefs, onProgress = () => {}) {
+    let auto = this.auto();
+    const solve = () => { const p = this.calibrate(applyPrefs(auto.params, prefs)); p.driveDb = this.solveLoudness(p, onProgress); return p; };
+    let p = solve();
+    const step = (next) => { const changed = next.params !== auto.params; auto = next; if (changed) p = solve(); };
+    step(tameAir(auto, this.airExcess(p)));
+    step(liftHigh(auto, this.masterHf(p), this.diag.loudSpec, this.diag.hfLoud && this.diag.hfLoud.above12kDb));
+    step(tameKick(auto, this.kickExcess(p)));
+    return { auto, params: p };
+  }
 
   // Fill calibrated values: dyn thresholds (per depth) and punch makeup.
   calibrate(params) {
@@ -77,6 +95,16 @@ export class Session {
     const o = renderLimiter(this.pre.L, this.pre.R, this.fs, params), M = new Float32Array(o.L.length);
     for (let i = 0; i < M.length; i++) M[i] = 0.5 * (o.L[i] + o.R[i]);
     return hfLoud(M, this.fs);
+  }
+
+  // Kick-band peak/RMS of the loudness-locked master minus the source's (dB; > 0 = the kick hits harder than the source).
+  kickExcess(params) {
+    if (preKey(params) !== this.preKey) throw new Error('kickExcess: run solveLoudness first');
+    if (this.diag.kickCrestDb == null) return 0;
+    const o = renderLimiter(this.pre.L, this.pre.R, this.fs, params), M = new Float32Array(o.L.length);
+    for (let i = 0; i < M.length; i++) M[i] = 0.5 * (o.L[i] + o.R[i]);
+    const c = kickCrest(M, this.fs);
+    return c == null ? 0 : +(c - this.diag.kickCrestDb).toFixed(2);
   }
 
   // Loudness lock: find the limiter drive that hits targetLufs (pre-limiter render cached).
@@ -207,7 +235,41 @@ export class Session {
         tp = truePeakDb(out.L, out.R);
       }
     }
+    if (params.endTail > 0) out = addEndTail(out, outFs, params.endTail);
     const P = kPower100ms(out.L, out.R, outFs);
     return { L: out.L, R: out.R, fs: outFs, qc: { lufs: +integratedFromPowers(P).toFixed(2), truePeakDb: +tp.toFixed(2), ceilingUsed: +p.ceilingDb.toFixed(2) } };
   }
+}
+
+// End tail for an abrupt (cut-off) ending: only the last 0.45 s of the finished master feeds a room
+// (input HP 500 Hz), and only the part after the cut is kept, faded out over `sec` seconds. The song
+// itself is unchanged sample for sample; the file gets `sec` seconds longer.
+export function addEndTail(out, fs, sec) {
+  const N = out.L.length, feed = Math.min(N, Math.round(0.45 * fs)), T = Math.round(sec * fs);
+  const sp = new Space(fs);
+  sp.set({ mix: 1, decay: Math.max(0.8, sec), predelay: 15, lowCut: 500, damp: 6000 });
+  const hp = new Biquad(2).set('highpass', fs, 500, 0.7071);
+  const len = feed + T, wl = new Float64Array(len), wr = new Float64Array(len);
+  for (let i = 0; i < feed; i++) {
+    // fade the feed in over 50 ms so the room does not start on a click
+    const g = Math.min(1, i / (0.05 * fs));
+    wl[i] = hp.tick(out.L[N - feed + i] * g, 0); wr[i] = hp.tick(out.R[N - feed + i] * g, 1);
+  }
+  // Space adds mix*wet to the input: keep the wet only
+  const dl = Float64Array.from(wl), dr = Float64Array.from(wr);
+  sp.process(wl, wr, len);
+  for (let i = 0; i < len; i++) { wl[i] -= dl[i]; wr[i] -= dr[i]; }
+  // level: the tail starts 10 dB under the last 0.1 s of the song
+  const w = Math.min(N, Math.round(0.1 * fs));
+  let es = 0, et = 0;
+  for (let i = N - w; i < N; i++) es += out.L[i] ** 2 + out.R[i] ** 2;
+  for (let i = feed; i < feed + w; i++) et += wl[i] ** 2 + wr[i] ** 2;
+  const g = et > 0 ? Math.sqrt(es / et) * 10 ** (-10 / 20) : 0;
+  const L = new Float32Array(N + T), R = new Float32Array(N + T);
+  L.set(out.L); R.set(out.R);
+  for (let i = 0; i < T; i++) {
+    const f = g * 0.5 * (1 + Math.cos(Math.PI * i / T));
+    L[N + i] = wl[feed + i] * f; R[N + i] = wr[feed + i] * f;
+  }
+  return { L, R };
 }
