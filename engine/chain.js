@@ -204,17 +204,25 @@ export function renderOffline(L0, R0, fs, params, { stage = 'full', block = 4096
 }
 
 // Limiter only, on a cached pre-limiter render.
+// The undriven true peaks of a pre render are cached per array (drive-independent), so each
+// limiter pass of the loudness search skips the 4x interpolation.
+const peakCache = new WeakMap();
 export function renderLimiter(L0, R0, fs, params) {
-  const chain = new MasterChain(fs);
-  const lim = chain.limiter;
+  const lim = new Limiter(fs);
   lim.set({ driveDb: params.driveDb, ceilingDb: params.ceilingDb, release: params.limRelease });
   const lat = lim.latency, N = L0.length, block = 8192;
+  let c = peakCache.get(L0);
+  if (!c || c.R !== R0) {
+    c = { R: R0, P: Limiter.peaks((k) => (k < N ? L0[k] : 0), (k) => (k < N ? R0[k] : 0), N + lat, lim.tp.P) };
+    peakCache.set(L0, c);
+  }
+  const P = c.P;
   const outL = new Float32Array(N), outR = new Float32Array(N);
   const bl = new Float64Array(block), br = new Float64Array(block);
   for (let s = 0; s < N + lat; s += block) {
     const n = Math.min(block, N + lat - s);
     for (let i = 0; i < n; i++) { const k = s + i; bl[i] = k < N ? L0[k] : 0; br[i] = k < N ? R0[k] : 0; }
-    lim.process(bl, br, n);
+    lim.processPeaks(bl, br, P, s, n);
     for (let i = 0; i < n; i++) { const k = s + i - lat; if (k >= 0 && k < N) { outL[k] = bl[i]; outR[k] = br[i]; } }
   }
   return { L: outL, R: outR };

@@ -30,16 +30,37 @@ export class Color {
     return (Math.tanh(this.k * (x + this.b)) - this.off) * this.norm;
   }
   process(L, R, n) {
-    // keep the oversampler running even when off so toggling is click-free
-    const up = this.up, down = this.down, tmp = this.tmp, on = this.on;
+    // keep the oversampler running even when off so toggling is click-free.
+    // Inlined Upsampler(2).push -> shape -> Downsampler(2).push -> dc.tick (same arithmetic, same order).
+    const up = this.up, down = this.down, on = this.on, k = this.k, b = this.b, off = this.off, norm = this.norm;
+    const P = up.P, k0 = up.ph[0], k1 = up.ph[1], N = down.N, h = down.h, c = this.dc.c;
+    const { b0, b1, b2, a1, a2 } = c, z1 = this.dc.z1, z2 = this.dc.z2;
     for (let ch = 0; ch < 2; ch++) {
-      const X = ch === 0 ? L : R;
+      const X = ch === 0 ? L : R, ub = up.buf[ch], db = down.buf[ch];
+      let up_p = up.pos[ch], dp = down.pos[ch], s1 = z1[ch], s2 = z2[ch];
       for (let i = 0; i < n; i++) {
-        const o = up.push(X[i], ch);
-        tmp[0] = on ? this.shape(o[0]) : o[0];
-        tmp[1] = on ? this.shape(o[1]) : o[1];
-        X[i] = this.dc.tick(down.push(tmp, ch), ch);
+        up_p = up_p + 1 === P ? 0 : up_p + 1;
+        const x = X[i];
+        ub[up_p] = x; ub[up_p + P] = x;
+        let o0 = 0, o1 = 0;
+        const e = up_p + P;
+        for (let j = 0; j < P; j++) o0 += k0[j] * ub[e - j];
+        for (let j = 0; j < P; j++) o1 += k1[j] * ub[e - j];
+        if (on) {
+          o0 = (Math.tanh(k * (o0 + b)) - off) * norm;
+          o1 = (Math.tanh(k * (o1 + b)) - off) * norm;
+        }
+        dp = dp + 1 === N ? 0 : dp + 1; db[dp] = o0; db[dp + N] = o0;
+        dp = dp + 1 === N ? 0 : dp + 1; db[dp] = o1; db[dp + N] = o1;
+        let d = 0;
+        const f = dp + N;
+        for (let j = 0; j < N; j++) d += h[j] * db[f - j];
+        const y = b0 * d + s1;
+        s1 = b1 * d - a1 * y + s2;
+        s2 = b2 * d - a2 * y;
+        X[i] = y;
       }
+      up.pos[ch] = up_p; down.pos[ch] = dp; z1[ch] = s1; z2[ch] = s2;
     }
   }
   reset() { this.up.reset(); this.down.reset(); this.dc.reset(); }
@@ -87,13 +108,13 @@ export class Space {
       const wp = this.prePos;
       pre[0][wp] = this.inLp.tick(this.inHp.tick(L[i], 0), 0);
       pre[1][wp] = this.inLp.tick(this.inHp.tick(R[i], 1), 1);
-      const rp = (wp - this.preN + N) % N;
+      let rp = wp - this.preN; if (rp < 0) rp += N;
       const il = pre[0][rp], ir = pre[1][rp];
-      this.prePos = (wp + 1) % N;
+      this.prePos = wp + 1 === N ? 0 : wp + 1;
       // read line outputs, damp
       for (let k = 0; k < 8; k++) {
         const buf = lines[k];
-        const r = (pos[k] - len[k] + buf.length) % buf.length;
+        let r = pos[k] - len[k]; if (r < 0) r += buf.length;
         lp[k] += dc * (buf[r] - lp[k]);
         v[k] = lp[k];
       }
@@ -105,7 +126,7 @@ export class Space {
       for (let k = 0; k < 8; k++) {
         const buf = lines[k];
         buf[pos[k]] = v[k] * 0.35355339 * fb[k] + (k & 1 ? ir : il) * 0.5;
-        pos[k] = (pos[k] + 1) % buf.length;
+        pos[k] = pos[k] + 1 === buf.length ? 0 : pos[k] + 1;
       }
       L[i] += mix * outL;
       R[i] += mix * outR;
