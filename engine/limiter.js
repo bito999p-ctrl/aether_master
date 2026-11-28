@@ -72,48 +72,33 @@ export class Limiter {
     this.env = env; this.bsum = bsum; this.bp = bp; this.dp = dp;
     this.gr = -20 * Math.log10(minGain);
   }
-  // Per-sample true peak of the undriven input (what process() computes before applying drive).
-  // The interpolator is linear, so peak(drive * x) = drive * peak(x): the loudness search
-  // computes this once per pre render and runs processPeaks() for every drive it tries.
-  static peaks(L, R, n, tpTaps = 12) {
-    // inlined Upsampler(4).push (same arithmetic and order), one channel at a time
-    const tp = new Upsampler(4, tpTaps, 1), T = tp.P, [k0, k1, k2, k3] = tp.ph, P = new Float32Array(n);
-    for (const X of [L, R]) {
-      const b = new Float64Array(2 * T);
-      let p = 0;
-      for (let i = 0; i < n; i++) {
-        p = p + 1 === T ? 0 : p + 1;
-        const x = X(i); b[p] = x; b[p + T] = x;
-        const e = p + T;
-        let s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-        for (let j = 0; j < T; j++) s0 += k0[j] * b[e - j];
-        for (let j = 0; j < T; j++) s1 += k1[j] * b[e - j];
-        for (let j = 0; j < T; j++) s2 += k2[j] * b[e - j];
-        for (let j = 0; j < T; j++) s3 += k3[j] * b[e - j];
-        P[i] = Math.max(P[i], Math.abs(s0), Math.abs(s1), Math.abs(s2), Math.abs(s3));
-      }
-    }
-    return P;
-  }
-  // Same as process() but with precomputed undriven peaks P (offset off) instead of the interpolator.
-  processPeaks(L, R, P, off, n) {
-    const drive = this.drive, ceil = this.ceil, W = this.W, D = this.delay;
-    const dl0 = this.dl[0], dl1 = this.dl[1], box = this.box;
+  // Same as process() but the true peaks come from a PeakSource (undriven input, see below)
+  // instead of the interpolator. Exact: a sample whose peak bound cannot reach the ceiling at
+  // this drive gets req = 1, as process() would; the others use the exact interpolated peak.
+  processPeaks(L, R, src, off, n) {
+    const drive = this.drive, ceil = this.ceil, W = this.W, D = this.delay, lim = ceil / drive;
+    const dl0 = this.dl[0], dl1 = this.dl[1], box = this.box, B = src.bound, P = src.P;
     let env = this.env, bsum = this.bsum, bp = this.bp, dp = this.dp, minGain = 1;
     for (let i = 0; i < n; i++) {
+      const k = off + i;
       const xl = L[i] * drive, xr = R[i] * drive;
-      const pk = P[off + i] * drive;
-      const req = pk > ceil ? ceil / pk : 1;
+      let req = 1;
+      if (B[k] > lim) {
+        let v = P[k];
+        if (v !== v) v = src.at(k);
+        const pk = v * drive;
+        req = pk > ceil ? ceil / pk : 1;
+      }
       const held = this.pushMin(req);
       if (held < env) env = held;
       else {
         const c = (1 - env) > 0.1 ? this.cr2 : this.cr;
         env += c * (held - env);
       }
-      bsum += env - box[bp]; box[bp] = env; bp = (bp + 1) % W;
+      bsum += env - box[bp]; box[bp] = env; bp = bp + 1 === W ? 0 : bp + 1;
       const g = Math.min(1, bsum / W);
       if (g < minGain) minGain = g;
-      const rp = (dp + 1) % (D + 1);
+      const rp = dp === D ? 0 : dp + 1;
       dl0[dp] = xl; dl1[dp] = xr;
       L[i] = dl0[rp] * g; R[i] = dl1[rp] * g;
       dp = rp;
@@ -124,5 +109,44 @@ export class Limiter {
   reset() {
     this.dl.forEach((b) => b.fill(0)); this.tp.reset(); this.box.fill(1); this.bsum = this.W;
     this.env = 1; this.qh = this.qt = this.t = 0;
+  }
+}
+
+// Undriven per-sample true peak of a whole pre-limiter render, as Limiter.process() computes it
+// (4x polyphase interpolation, same arithmetic and order), computed lazily per sample and cached.
+// The interpolator is linear, so peak(drive * x) = drive * peak(x): the loudness search reuses it
+// for every drive it tries, and only samples that can reach the ceiling are ever interpolated.
+export class PeakSource {
+  constructor(L, R, n, taps = 12) {
+    const up = new Upsampler(4, taps, 1);
+    this.L = L; this.R = R; this.N = L.length; this.n = n; this.T = up.P; this.ph = up.ph;
+    // |interp| <= S * max|x| over the window; the margin covers float rounding of the sum
+    this.S = Math.max(...up.ph.map((k) => k.reduce((a, v) => a + Math.abs(v), 0))) * (1 + 1e-6);
+    // bound[i] = S * max(|L|, |R|) over the filter window ending at i
+    const N = this.N, T = this.T, S = this.S, B = this.bound = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      let m = 0;
+      for (let j = i < T - 1 ? i : T - 1; j >= 0; j--) {
+        const t = i - j;
+        if (t < N) { const a = Math.abs(L[t]), b = Math.abs(R[t]); if (a > m) m = a; if (b > m) m = b; }
+      }
+      B[i] = m * S * (1 + 1e-6); // margin: float32 storage rounding
+    }
+    this.P = new Float32Array(n).fill(NaN);
+  }
+  at(i) {
+    const T = this.T, N = this.N, [k0, k1, k2, k3] = this.ph;
+    let pk = 0;
+    for (let c = 0; c < 2; c++) {
+      const X = c ? this.R : this.L;
+      let s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+      for (let j = 0; j < T; j++) {
+        const t = i - j, x = t >= 0 && t < N ? X[t] : 0;
+        s0 += k0[j] * x; s1 += k1[j] * x; s2 += k2[j] * x; s3 += k3[j] * x;
+      }
+      pk = Math.max(pk, Math.abs(s0), Math.abs(s1), Math.abs(s2), Math.abs(s3));
+    }
+    this.P[i] = pk; // stored as float32, like Limiter.process() measured it before
+    return this.P[i];
   }
 }

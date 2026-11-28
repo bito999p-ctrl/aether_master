@@ -401,12 +401,14 @@ export function bandEnvelope(M, fs, { hz, q, att, rel }) {
 }
 
 // Threshold so the loud 15% of the track gets on average `depth` dB reduction.
-export function calibrateThreshold({ env, loud }, depth, ratio, range) {
+export function calibrateThreshold(be, depth, ratio, range) {
   const slope = 1 - 1 / Math.max(1, ratio);
+  // only loud frames count: gather them once (same order, so the sums are unchanged)
+  const el = be.loudEnv ||= Float32Array.from(be.env.filter((_, j) => be.loud[j]));
   const meanGr = (thr) => {
-    let s = 0, c = 0;
-    for (let j = 0; j < env.length; j++) if (loud[j]) { const o = env[j] - thr; s += o > 0 ? Math.min(range, o * slope) : 0; c++; }
-    return s / Math.max(1, c);
+    let s = 0;
+    for (let j = 0; j < el.length; j++) { const o = el[j] - thr; s += o > 0 ? Math.min(range, o * slope) : 0; }
+    return s / Math.max(1, el.length);
   };
   let lo = -100, hi = 0;
   for (let it = 0; it < 30; it++) {

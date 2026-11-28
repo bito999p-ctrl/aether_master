@@ -5,7 +5,7 @@
 import { Biquad, design, dbToLin } from './filters.js';
 import { DynBand, Punch, Glue } from './dynamics.js';
 import { Color, Space, Stereo } from './color.js';
-import { Limiter } from './limiter.js';
+import { Limiter, PeakSource } from './limiter.js';
 
 export const MAX_DYN = 10;
 
@@ -212,17 +212,13 @@ export function renderLimiter(L0, R0, fs, params) {
   lim.set({ driveDb: params.driveDb, ceilingDb: params.ceilingDb, release: params.limRelease });
   const lat = lim.latency, N = L0.length, block = 8192;
   let c = peakCache.get(L0);
-  if (!c || c.R !== R0) {
-    c = { R: R0, P: Limiter.peaks((k) => (k < N ? L0[k] : 0), (k) => (k < N ? R0[k] : 0), N + lat, lim.tp.P) };
-    peakCache.set(L0, c);
-  }
-  const P = c.P;
+  if (!c || c.R !== R0) { c = new PeakSource(L0, R0, N + lat, lim.tp.P); peakCache.set(L0, c); }
   const outL = new Float32Array(N), outR = new Float32Array(N);
   const bl = new Float64Array(block), br = new Float64Array(block);
   for (let s = 0; s < N + lat; s += block) {
     const n = Math.min(block, N + lat - s);
     for (let i = 0; i < n; i++) { const k = s + i; bl[i] = k < N ? L0[k] : 0; br[i] = k < N ? R0[k] : 0; }
-    lim.processPeaks(bl, br, P, s, n);
+    lim.processPeaks(bl, br, c, s, n);
     for (let i = 0; i < n; i++) { const k = s + i - lat; if (k >= 0 && k < N) { outL[k] = bl[i]; outR[k] = br[i]; } }
   }
   return { L: outL, R: outR };

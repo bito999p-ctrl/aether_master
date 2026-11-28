@@ -51,9 +51,9 @@ export class Session {
       // high shelf on every loud moment (E1: +2.1 dB shelf, loud >5 kHz still 2.3 dB under target).
       const depth = d.depth > 0 ? d.depth + (d.q >= 4 ? Math.max(0, boostAt(p, d.hz, this.fs)) : 0) : 0;
       d.cut = depth;
-      d.thr = depth > 0 ? calibrateThreshold(this.envCache.get(key), depth, d.ratio, Math.max(6, depth * 3)) : 0;
+      d.thr = depth > 0 ? this.memo(`thr|${key}|${depth}|${d.ratio}`, () => calibrateThreshold(this.envCache.get(key), depth, d.ratio, Math.max(6, depth * 3))) : 0;
     }
-    p.punchMakeupDb = punchMakeup(this.M, this.fs, p.punchDb, p.tightDb);
+    p.punchMakeupDb = this.memo(`punch|${p.punchDb}|${p.tightDb}`, () => punchMakeup(this.M, this.fs, p.punchDb, p.tightDb));
     // glue: the amount on the loud parts is the setting; the threshold follows the song
     if (p.glueDepth != null && !(p.glueDepth > 0)) p.glueThr = 0;
     else if (p.glueDepth > 0) {
@@ -61,10 +61,19 @@ export class Session {
       if (!this.envCache.has(key)) this.envCache.set(key, glueLevels(this.L, this.R, this.fs, { releasePeak: p.glueRelPeak, releaseRms: p.glueRelRms }));
       // levels are on the raw source: the threshold follows the input trim and what the tone EQ does
       // to the loud-part spectrum above the 100 Hz sidechain filter
-      p.glueThr = +(calibrateGlue(this.envCache.get(key), p.glueDepth, { ratio: p.glueRatio, attack: p.glueAttack, releasePeak: p.glueRelPeak }, this.fs)
+      const thr = this.memo(`glueThr|${key}|${p.glueDepth}|${p.glueRatio}|${p.glueAttack}`,
+        () => calibrateGlue(this.envCache.get(key), p.glueDepth, { ratio: p.glueRatio, attack: p.glueAttack, releasePeak: p.glueRelPeak }, this.fs));
+      p.glueThr = +(thr
         + p.inputDb + this.eqLevelDb(p)).toFixed(2);
     }
     return p;
+  }
+
+  // Calibration results are pure functions of the source and their arguments: computed once per key.
+  memo(key, f) {
+    const m = this.calCache ||= new Map();
+    if (!m.has(key)) m.set(key, f());
+    return m.get(key);
   }
 
   // Level change (dB) of the loud-part spectrum above 100 Hz from the static EQ.
